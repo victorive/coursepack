@@ -35,4 +35,3 @@ coverage.out
 *.cover
 
 /vendor
-go.sum
