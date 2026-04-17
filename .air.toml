@@ -1,0 +1,19 @@
+root = "."
+
+watch = ["cmd", "internal", "pkg"]
+
+[build]
+cmd = "go build -o ./bin/klaro-api ./cmd/api"
+bin = "bin/klaro-api"
+delay = 1000
+
+exclude_dir = ["tmp", "vendor", "testdata"]
+exclude_regex = ["_test.go"]
+ignore = ["*.tmp", "*.md", "*.log"]
+
+include_ext = ["go", "html"]
+
+stop_on_error = false
+
+hot_reloading = true
+live_reload_delay = 200

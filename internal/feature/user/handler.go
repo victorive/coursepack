@@ -1,0 +1,42 @@
+package user
+
+import (
+	"net/http"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/victorive/klaro-backend/internal/middleware"
+	"github.com/victorive/klaro-backend/internal/pkg/response"
+	"github.com/victorive/klaro-backend/internal/pkg/validator"
+)
+
+type Handler struct {
+	svc Service
+}
+
+func NewHandler(svc Service) *Handler {
+	return &Handler{svc: svc}
+}
+
+// UpdateProfile godoc
+// @Summary      Update profile
+// @Description  Updates the authenticated user's profile fields.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        body body UpdateProfileRequest true "Update profile payload"
+// @Success      200 {object} response.Response
+// @Failure      401 {object} response.Response "Unauthorized"
+// @Failure      422 {object} response.Response "Validation error"
+// @Security     BearerAuth
+// @Router       /user [patch]
+func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
+	var req UpdateProfileRequest
+	if err := validator.ParseAndValidate(c, &req); err != nil {
+		return err
+	}
+	uuid, _ := c.Locals(middleware.LocalsUserUUID).(string)
+	if err := h.svc.UpdateProfile(c.Context(), uuid, &req); err != nil {
+		return err
+	}
+	return response.JSON(c, http.StatusOK, true, "profile updated", nil)
+}
