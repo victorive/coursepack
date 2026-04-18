@@ -34,7 +34,7 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	uuid, _ := c.Locals(middleware.LocalsUserUUID).(string)
+	uuid, _ := c.Locals(middleware.LocalsUserId).(string)
 	if err := h.svc.UpdateProfile(c.Context(), uuid, &req); err != nil {
 		return err
 	}

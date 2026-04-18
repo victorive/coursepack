@@ -25,7 +25,7 @@ type RefreshRequest struct {
 }
 
 type LogoutRequest struct {
-	RefreshToken string `json:"refresh_token" validate:"required"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type ForgotPasswordRequest struct {
@@ -40,7 +40,7 @@ type ResetPasswordRequest struct {
 type TokensResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int    `json:"expires_in"`
+	ExpiresAt    int    `json:"expires_at"`
 }
 
 type UserResponse struct {

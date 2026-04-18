@@ -8,7 +8,6 @@ import (
 )
 
 type TokenClaims struct {
-	UUID string `json:"uuid"`
 	jwt.RegisteredClaims
 }
 
@@ -29,13 +28,13 @@ func NewManager(secret string, expirationMinutes int) *Manager {
 	}
 }
 
-func (m *Manager) Sign(uuid string) (string, error) {
+func (m *Manager) Sign(sub string) (string, error) {
 	now := time.Now()
 	expiresAt := now.Add(m.expiration)
 
 	claims := &TokenClaims{
-		UUID: uuid,
 		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   sub,
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),

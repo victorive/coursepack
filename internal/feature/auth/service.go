@@ -38,7 +38,8 @@ type Service interface {
 	VerifyOTP(ctx context.Context, req *VerifyOTPRequest) error
 	ResendOTP(ctx context.Context, req *ResendOTPRequest) error
 	Refresh(ctx context.Context, req *RefreshRequest) (*TokensResponse, error)
-	Logout(ctx context.Context, req *LogoutRequest) error
+	ValidateToken(ctx context.Context, token string) (sub string, err error)
+	Logout(ctx context.Context, accessToken string, req *LogoutRequest) error
 	ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) error
 	ResetPassword(ctx context.Context, req *ResetPasswordRequest) error
 	Me(ctx context.Context, uuid string) (*UserResponse, error)
@@ -100,7 +101,7 @@ func (s *service) issueTokens(ctx context.Context, u *domain.User) (*TokensRespo
 	return &TokensResponse{
 		AccessToken:  access,
 		RefreshToken: refresh,
-		ExpiresIn:    int(s.jwt.GetExpirationTime().Seconds()),
+		ExpiresAt:    int(time.Now().Add(s.jwt.GetExpirationTime()).Unix()),
 	}, nil
 }
 
@@ -352,8 +353,36 @@ func (s *service) Refresh(ctx context.Context, req *RefreshRequest) (*TokensResp
 	return s.issueTokens(ctx, u)
 }
 
-func (s *service) Logout(ctx context.Context, req *LogoutRequest) error {
-	return s.cache.Delete(ctx, refreshKeyPrefix+req.RefreshToken)
+func (s *service) ValidateToken(ctx context.Context, token string) (string, error) {
+	claims, err := s.jwt.Verify(token)
+	if err != nil {
+		return "", apperr.New("unauthenticated", http.StatusUnauthorized)
+	}
+
+	blacklisted, _ := s.cache.Exists(ctx, "blacklist:"+token)
+	if blacklisted {
+		return "", apperr.New("unauthenticated", http.StatusUnauthorized)
+	}
+	
+	return claims.Subject, nil
+}
+
+func (s *service) Logout(ctx context.Context, accessToken string, req *LogoutRequest) error {
+	claims, err := s.jwt.Verify(accessToken)
+	if err != nil {
+		return apperr.New("unauthenticated", http.StatusUnauthorized)
+	}
+
+	ttl := time.Until(claims.ExpiresAt.Time)
+	if ttl > 0 {
+		_, _ = s.cache.SetNX(ctx, "blacklist:"+accessToken, "1", ttl)
+	}
+
+	if req.RefreshToken != "" {
+		_ = s.cache.Delete(ctx, refreshKeyPrefix+req.RefreshToken)
+	}
+
+	return nil
 }
 
 func (s *service) ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) error {

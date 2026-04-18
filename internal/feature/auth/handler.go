@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/victorive/klaro-backend/internal/middleware"
@@ -180,17 +181,18 @@ func (h *Handler) Refresh(c *fiber.Ctx) error {
 // @Summary      Logout
 // @Description  Revokes the provided refresh token.
 // @Tags         Auth
+// @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        body body LogoutRequest true "Refresh token to revoke"
+// @Param        body body LogoutRequest false "Optional: refresh token to revoke"
 // @Success      200 {object} response.Response
 // @Router       /auth/logout [post]
 func (h *Handler) Logout(c *fiber.Ctx) error {
 	var req LogoutRequest
-	if err := validator.ParseAndValidate(c, &req); err != nil {
-		return err
-	}
-	if err := h.svc.Logout(c.Context(), &req); err != nil {
+	_ = c.BodyParser(&req)
+
+	accessToken := strings.TrimPrefix(c.Get(fiber.HeaderAuthorization), "Bearer ")
+	if err := h.svc.Logout(c.Context(), accessToken, &req); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "logout successful", nil)
@@ -247,7 +249,7 @@ func (h *Handler) ResetPassword(c *fiber.Ctx) error {
 // @Failure      401 {object} response.Response
 // @Router       /auth/me [get]
 func (h *Handler) Me(c *fiber.Ctx) error {
-	uuid, _ := c.Locals(middleware.LocalsUserUUID).(string)
+	uuid, _ := c.Locals(middleware.LocalsUserId).(string)
 	u, err := h.svc.Me(c.Context(), uuid)
 	if err != nil {
 		return err

@@ -11,6 +11,6 @@ func userRoutes(r fiber.Router, c *app.Container) {
 	h := user.NewHandler(c.UserService)
 
 	user := r.Group("/user")
-	protected := user.Group("", middleware.Auth(c.JWT))
+	protected := user.Group("", middleware.Auth(c.AuthService))
 	protected.Patch("", h.UpdateProfile)
 }
