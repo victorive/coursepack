@@ -1,6 +1,7 @@
 package pagination
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,20 +15,33 @@ const (
 
 type Query struct {
 	Page    int `json:"page"`
-	PerPage int `json:"perPage"`
+	PerPage int `json:"per_page"`
+}
+
+type Links struct {
+	First *string `json:"first"`
+	Last  *string `json:"last"`
+	Prev  *string `json:"prev"`
+	Next  *string `json:"next"`
+}
+
+type Meta struct {
+	Total       int64 `json:"total"`
+	Count       int   `json:"count"`
+	PerPage     int   `json:"per_page"`
+	CurrentPage int   `json:"current_page"`
+	TotalPages  int64 `json:"total_pages"`
+	Links       Links `json:"links"`
 }
 
 type PaginatedResponse[T any] struct {
-	Items      []T `json:"items"`
-	Total      int64 `json:"total"`
-	Page       int `json:"page"`
-	PerPage    int `json:"perPage"`
-	TotalPages int64 `json:"totalPages"`
+	Items []T  `json:"items"`
+	Meta  Meta `json:"meta"`
 }
 
 func Parse(c *fiber.Ctx) *Query {
 	pageStr := c.Query("page", strconv.Itoa(DefaultPage))
-	perPageStr := c.Query("perPage", strconv.Itoa(DefaultPerPage))
+	perPageStr := c.Query("per_page", strconv.Itoa(DefaultPerPage))
 
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page < 1 {
@@ -65,7 +79,7 @@ func (q *Query) Limit() int {
 	return q.PerPage
 }
 
-func NewPaginated[T any](items []T, total int64, q *Query) *PaginatedResponse[T] {
+func NewPaginated[T any](c *fiber.Ctx, items []T, total int64, q *Query) *PaginatedResponse[T] {
 	if items == nil {
 		items = []T{}
 	}
@@ -75,11 +89,39 @@ func NewPaginated[T any](items []T, total int64, q *Query) *PaginatedResponse[T]
 		totalPages = 1
 	}
 
-	return &PaginatedResponse[T]{
-		Items:      items,
-		Total:      total,
-		Page:       q.Page,
-		PerPage:    q.PerPage,
-		TotalPages: totalPages,
+	first := pageURL(c, 1, q.PerPage)
+	last := pageURL(c, int(totalPages), q.PerPage)
+
+	var prev *string
+	if q.Page > 1 {
+		u := pageURL(c, q.Page-1, q.PerPage)
+		prev = &u
 	}
+
+	var next *string
+	if int64(q.Page) < totalPages {
+		u := pageURL(c, q.Page+1, q.PerPage)
+		next = &u
+	}
+
+	return &PaginatedResponse[T]{
+		Items: items,
+		Meta: Meta{
+			Total:       total,
+			Count:       len(items),
+			PerPage:     q.PerPage,
+			CurrentPage: q.Page,
+			TotalPages:  totalPages,
+			Links: Links{
+				First: &first,
+				Last:  &last,
+				Prev:  prev,
+				Next:  next,
+			},
+		},
+	}
+}
+
+func pageURL(c *fiber.Ctx, page, perPage int) string {
+	return fmt.Sprintf("%s%s?page=%d&per_page=%d", c.BaseURL(), c.Path(), page, perPage)
 }

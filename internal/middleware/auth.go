@@ -11,6 +11,15 @@ import (
 
 const LocalsUserId = "userId"
 
+// UserUUID extracts the authenticated user's UUID from Fiber context locals.
+func UserUUID(c *fiber.Ctx) (string, bool) {
+	uuid, ok := c.Locals(LocalsUserId).(string)
+	if !ok || uuid == "" {
+		return "", false
+	}
+	return uuid, true
+}
+
 type TokenValidator interface {
 	ValidateToken(ctx context.Context, token string) (sub string, err error)
 }

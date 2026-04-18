@@ -31,14 +31,14 @@ func NewHandler(svc Service, googleFrontendURL string) *Handler {
 // @Param        body body SignUpRequest true "Sign-up payload"
 // @Success      201 {object} response.Response{data=TokensResponse}
 // @Failure      409 {object} response.Response "Email already taken"
-// @Failure      422 {object} response.Response "Validation error"
+// @Failure      422 {object} response.ValidationErrorResponse "Validation error"
 // @Router       /auth/signup [post]
 func (h *Handler) SignUp(c *fiber.Ctx) error {
 	var req SignUpRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	tokens, err := h.svc.SignUp(c.Context(), &req)
+	tokens, err := h.svc.SignUp(c.UserContext(), &req)
 	if err != nil {
 		return err
 	}
@@ -54,14 +54,14 @@ func (h *Handler) SignUp(c *fiber.Ctx) error {
 // @Param        body body SignInRequest true "Sign-in payload"
 // @Success      200 {object} response.Response{data=TokensResponse}
 // @Failure      401 {object} response.Response "Invalid credentials"
-// @Failure      422 {object} response.Response "Validation error"
+// @Failure      422 {object} response.ValidationErrorResponse "Validation error"
 // @Router       /auth/signin [post]
 func (h *Handler) SignIn(c *fiber.Ctx) error {
 	var req SignInRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	tokens, err := h.svc.SignIn(c.Context(), &req)
+	tokens, err := h.svc.SignIn(c.UserContext(), &req)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (h *Handler) SignIn(c *fiber.Ctx) error {
 // @Failure      500 {object} response.Response
 // @Router       /auth/google [get]
 func (h *Handler) GoogleInitiate(c *fiber.Ctx) error {
-	redirectURL, err := h.svc.GoogleInitiate(c.Context())
+	redirectURL, err := h.svc.GoogleInitiate(c.UserContext())
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (h *Handler) GoogleCallback(c *fiber.Ctx) error {
 	if code == "" || state == "" {
 		return apperr.New("missing code or state parameter", http.StatusBadRequest)
 	}
-	exchangeCode, err := h.svc.GoogleCallback(c.Context(), code, state)
+	exchangeCode, err := h.svc.GoogleCallback(c.UserContext(), code, state)
 	if err != nil {
 		return err
 	}
@@ -123,14 +123,14 @@ func (h *Handler) GoogleCallback(c *fiber.Ctx) error {
 // @Param        body body ExchangeGoogleCodeRequest true "One-time code payload"
 // @Success      200 {object} response.Response{data=TokensResponse}
 // @Failure      401 {object} response.Response "Invalid or expired code"
-// @Failure      422 {object} response.Response "Validation error"
+// @Failure      422 {object} response.ValidationErrorResponse "Validation error"
 // @Router       /auth/google/exchange [post]
 func (h *Handler) ExchangeGoogleCode(c *fiber.Ctx) error {
 	var req ExchangeGoogleCodeRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	tokens, err := h.svc.ExchangeGoogleCode(c.Context(), req.Code)
+	tokens, err := h.svc.ExchangeGoogleCode(c.UserContext(), req.Code)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (h *Handler) ExchangeGoogleCode(c *fiber.Ctx) error {
 // @Produce      json
 // @Param        body body VerifyOTPRequest true "OTP payload"
 // @Success      200 {object} response.Response
-// @Failure      422 {object} response.Response "Invalid or expired OTP"
+// @Failure      422 {object} response.ValidationErrorResponse "Invalid or expired OTP"
 // @Failure      429 {object} response.Response "Too many attempts"
 // @Router       /auth/verify-otp [post]
 func (h *Handler) VerifyOTP(c *fiber.Ctx) error {
@@ -153,7 +153,7 @@ func (h *Handler) VerifyOTP(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	if err := h.svc.VerifyOTP(c.Context(), &req); err != nil {
+	if err := h.svc.VerifyOTP(c.UserContext(), &req); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "email verified", nil)
@@ -174,7 +174,7 @@ func (h *Handler) ResendOTP(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	if err := h.svc.ResendOTP(c.Context(), &req); err != nil {
+	if err := h.svc.ResendOTP(c.UserContext(), &req); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "OTP sent if account exists", nil)
@@ -195,7 +195,7 @@ func (h *Handler) Refresh(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	tokens, err := h.svc.Refresh(c.Context(), &req)
+	tokens, err := h.svc.Refresh(c.UserContext(), &req)
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ func (h *Handler) Logout(c *fiber.Ctx) error {
 	}
 
 	accessToken := strings.TrimPrefix(c.Get(fiber.HeaderAuthorization), "Bearer ")
-	if err := h.svc.Logout(c.Context(), accessToken, &req); err != nil {
+	if err := h.svc.Logout(c.UserContext(), accessToken, &req); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "logout successful", nil)
@@ -243,7 +243,7 @@ func (h *Handler) ForgotPassword(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	if err := h.svc.ForgotPassword(c.Context(), &req); err != nil {
+	if err := h.svc.ForgotPassword(c.UserContext(), &req); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "if that address exists, a reset link was sent", nil)
@@ -264,7 +264,7 @@ func (h *Handler) ResetPassword(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	if err := h.svc.ResetPassword(c.Context(), &req); err != nil {
+	if err := h.svc.ResetPassword(c.UserContext(), &req); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "password updated", nil)
@@ -278,10 +278,10 @@ func (h *Handler) ResetPassword(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Success      200 {object} response.Response{data=UserResponse}
 // @Failure      401 {object} response.Response
-// @Router       /auth/me [get]
+// @Router       /users/me [get]
 func (h *Handler) Me(c *fiber.Ctx) error {
 	uuid, _ := c.Locals(middleware.LocalsUserId).(string)
-	u, err := h.svc.Me(c.Context(), uuid)
+	u, err := h.svc.Me(c.UserContext(), uuid)
 	if err != nil {
 		return err
 	}

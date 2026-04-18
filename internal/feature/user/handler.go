@@ -26,16 +26,16 @@ func NewHandler(svc Service) *Handler {
 // @Param        body body UpdateProfileRequest true "Update profile payload"
 // @Success      200 {object} response.Response
 // @Failure      401 {object} response.Response "Unauthorized"
-// @Failure      422 {object} response.Response "Validation error"
+// @Failure      422 {object} response.ValidationErrorResponse "Validation error"
 // @Security     BearerAuth
-// @Router       /user [patch]
+// @Router       /users/me [patch]
 func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 	var req UpdateProfileRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
 	uuid, _ := c.Locals(middleware.LocalsUserId).(string)
-	if err := h.svc.UpdateProfile(c.Context(), uuid, &req); err != nil {
+	if err := h.svc.UpdateProfile(c.UserContext(), uuid, &req); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "profile updated", nil)

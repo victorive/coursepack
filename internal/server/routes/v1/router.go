@@ -10,6 +10,8 @@ func Register(r fiber.Router, c *app.Container) {
 	authRoutes(v1, c)
 	userRoutes(v1, c)
 	departmentRoutes(v1, c)
+	cohortRoutes(v1, c)
+	academicRoutes(v1, c)
 	courseRoutes(v1, c)
 	fileRoutes(v1, c)
 	miscRoutes(v1, c)

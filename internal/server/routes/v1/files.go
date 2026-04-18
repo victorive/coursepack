@@ -3,8 +3,20 @@ package v1
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/victorive/klaro-backend/internal/app"
+	"github.com/victorive/klaro-backend/internal/feature/file"
+	"github.com/victorive/klaro-backend/internal/middleware"
 )
 
-func fileRoutes(r fiber.Router, _ *app.Container) {
-	_ = r.Group("/past-questions")
+func fileRoutes(r fiber.Router, c *app.Container) {
+	h := file.NewHandler(c.FileService)
+
+	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
+
+	files := r.Group("/files", auth...)
+	files.Post("", h.Upload)
+	files.Get("/:id", h.GetFile)
+	files.Get("/:id/download", h.GetDownloadURL)
+	files.Patch("/:id/review", h.Review)
+	files.Patch("/:id/archive", h.Archive)
 }
+

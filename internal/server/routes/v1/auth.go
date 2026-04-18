@@ -22,7 +22,6 @@ func authRoutes(r fiber.Router, c *app.Container) {
 	auth.Post("/forgot-password", h.ForgotPassword)
 	auth.Post("/reset-password", h.ResetPassword)
 
-	protected := auth.Group("", middleware.Auth(c.AuthService))
-	protected.Get("/me", h.Me)
+	protected := auth.Group("", middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService))
 	protected.Post("/logout", h.Logout)
 }

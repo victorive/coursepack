@@ -12,9 +12,15 @@ import (
 	"github.com/victorive/klaro-backend/internal/email"
 	"github.com/victorive/klaro-backend/internal/email/smtp"
 	"github.com/victorive/klaro-backend/internal/email/templates"
+	"github.com/victorive/klaro-backend/internal/feature/academic"
 	"github.com/victorive/klaro-backend/internal/feature/auth"
+	"github.com/victorive/klaro-backend/internal/feature/cohort"
+	"github.com/victorive/klaro-backend/internal/feature/course"
+	"github.com/victorive/klaro-backend/internal/feature/department"
+	"github.com/victorive/klaro-backend/internal/feature/file"
 	"github.com/victorive/klaro-backend/internal/feature/user"
 	jwt "github.com/victorive/klaro-backend/internal/pkg/jwt"
+	"github.com/victorive/klaro-backend/internal/rbac"
 	"github.com/victorive/klaro-backend/internal/storage"
 	"github.com/victorive/klaro-backend/internal/storage/local"
 	"gorm.io/driver/postgres"
@@ -22,16 +28,22 @@ import (
 )
 
 type Container struct {
-	Config      *config.Config
-	Logger      *slog.Logger
-	DB          *pgxpool.Pool
-	GORM        *gorm.DB
-	JWT         *jwt.Manager
-	Cache       cache.Cache
-	Storage     storage.Storage
-	Mailer      email.Mailer
-	AuthService auth.Service
-	UserService user.Service
+	Config            *config.Config
+	Logger            *slog.Logger
+	DB                *pgxpool.Pool
+	GORM              *gorm.DB
+	JWT               *jwt.Manager
+	Cache             cache.Cache
+	Storage           storage.Storage
+	Mailer            email.Mailer
+	AuthService       auth.Service
+	AuthRepository    auth.Repository
+	UserService       user.Service
+	DepartmentService department.Service
+	CohortService     cohort.Service
+	AcademicService   academic.Service
+	CourseService     course.Service
+	FileService       file.Service
 }
 
 func New(ctx context.Context, cfg *config.Config, logger *slog.Logger) (*Container, error) {
@@ -112,8 +124,10 @@ func (c *Container) initServices() {
 		googleRedirectURL = cfg.App.AppURL + "/api/v1/auth/google/callback"
 	}
 
+	authRepo := auth.NewRepository(c.GORM)
+	c.AuthRepository = authRepo
 	c.AuthService = auth.NewService(
-		auth.NewRepository(c.GORM),
+		authRepo,
 		c.Cache,
 		c.Mailer,
 		c.JWT,
@@ -124,6 +138,7 @@ func (c *Container) initServices() {
 			GoogleClientID:           cfg.Google.ClientID,
 			GoogleClientSecret:       cfg.Google.ClientSecret,
 			GoogleRedirectURL:        googleRedirectURL,
+			FrontendURL:              cfg.App.FrontendURL,
 		},
 		c.Logger,
 	)
@@ -132,6 +147,13 @@ func (c *Container) initServices() {
 		user.NewRepository(c.GORM),
 		c.Logger,
 	)
+
+	rbacRepo := rbac.NewRepository(c.GORM)
+	c.DepartmentService = department.NewService(department.NewRepository(c.GORM), c.Logger)
+	c.CohortService = cohort.NewService(cohort.NewRepository(c.GORM), authRepo, rbacRepo, c.Logger)
+	c.AcademicService = academic.NewService(academic.NewRepository(c.GORM), c.Logger)
+	c.CourseService = course.NewService(course.NewRepository(c.GORM), c.Logger)
+	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, c.Storage, cfg.Storage.MaxFileSize, c.Logger)
 }
 
 func (c *Container) Close() error {

@@ -28,6 +28,7 @@ type Config struct {
 	GoogleClientID           string
 	GoogleClientSecret       string
 	GoogleRedirectURL        string
+	FrontendURL              string
 }
 
 type Service interface {
@@ -44,6 +45,7 @@ type Service interface {
 	ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) error
 	ResetPassword(ctx context.Context, req *ResetPasswordRequest) error
 	Me(ctx context.Context, uuid string) (*UserResponse, error)
+	CheckEmailVerified(ctx context.Context, uuid string) (emailVerified bool, isOAuthUser bool, err error)
 }
 
 type service struct {
@@ -109,11 +111,14 @@ func (s *service) issueTokens(ctx context.Context, u *domain.User) (*TokensRespo
 
 func (s *service) sendOTPAsync(ctx context.Context, userEmail string) {
 	expiry := s.cfg.OTPExpirationMinutes
+	logger := s.logger
 	job.FireAndForget(ctx, "send_otp", func(bgCtx context.Context) error {
 		otp, err := hash.GenerateOTP()
 		if err != nil {
 			return fmt.Errorf("generate otp: %w", err)
 		}
+		// TODO: remove once SMTP is configured
+		logger.Info("DEV OTP", "email", userEmail, "otp", otp)
 		ttl := time.Duration(expiry) * time.Minute
 		if err := s.cache.Set(bgCtx, otpKeyPrefix+userEmail, otp, ttl); err != nil {
 			return fmt.Errorf("store otp: %w", err)
@@ -422,6 +427,8 @@ func (s *service) Logout(ctx context.Context, accessToken string, req *LogoutReq
 
 func (s *service) ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) error {
 	reqEmail := req.Email
+	frontendURL := s.cfg.FrontendURL
+	logger := s.logger
 	job.FireAndForget(ctx, "forgot_password", func(bgCtx context.Context) error {
 		u, err := s.repo.FindByEmail(bgCtx, reqEmail)
 		if err != nil {
@@ -437,8 +444,11 @@ func (s *service) ForgotPassword(ctx context.Context, req *ForgotPasswordRequest
 		if err := s.cache.Set(bgCtx, pwdResetKeyPrefix+token, strconv.FormatInt(u.ID, 10), 15*time.Minute); err != nil {
 			return fmt.Errorf("store reset token: %w", err)
 		}
+		resetLink := frontendURL + "/reset-password?token=" + token
+		// TODO: remove once SMTP is configured
+		logger.Info("DEV password reset link", "email", u.Email, "link", resetLink)
 		if err := s.mailer.Send(bgCtx, u.Email, "Reset your password", "password_reset.html", map[string]any{
-			"Token": token,
+			"ResetLink": resetLink,
 		}); err != nil {
 			return fmt.Errorf("send reset email: %w", err)
 		}
@@ -470,6 +480,18 @@ func (s *service) ResetPassword(ctx context.Context, req *ResetPasswordRequest) 
 
 	_ = s.cache.Delete(ctx, key)
 	return nil
+}
+
+func (s *service) CheckEmailVerified(ctx context.Context, userUUID string) (bool, bool, error) {
+	u, err := s.repo.FindByUUID(ctx, userUUID)
+	if err != nil {
+		return false, false, err
+	}
+	if u == nil {
+		return false, false, nil
+	}
+	
+	return u.EmailVerified, u.Provider != nil, nil
 }
 
 func (s *service) Me(ctx context.Context, userUUID string) (*UserResponse, error) {

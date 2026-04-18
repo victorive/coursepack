@@ -5,10 +5,15 @@ import (
 )
 
 type Response struct {
-	Success bool        `json:"success" example:"true"`
-	Message string      `json:"message" example:"success"`
-	Data    any         `json:"data,omitempty"`
-	Errors  FieldErrors `json:"errors,omitempty"`
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"success"`
+	Data    any    `json:"data,omitempty"`
+}
+
+type ValidationErrorResponse struct {
+	Success bool        `json:"success" example:"false"`
+	Message string      `json:"message" example:"invalid input"`
+	Errors  FieldErrors `json:"errors"`
 }
 
 type FieldErrors map[string]string

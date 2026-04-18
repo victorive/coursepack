@@ -93,12 +93,12 @@ func errorHandler(log *slog.Logger) fiber.ErrorHandler {
 	return func(c *fiber.Ctx, err error) error {
 		if appErr, ok := err.(*apperr.AppError); ok {
 			if appErr.HTTPStatus >= fiber.StatusInternalServerError {
-				log.Error("server error", "path", c.Path(), "method", c.Method(), "error", appErr.Err)
+				log.Error("server error", "request_id", c.GetRespHeader(fiber.HeaderXRequestID), "path", c.Path(), "method", c.Method(), "error", appErr.Err)
 				return c.Status(appErr.HTTPStatus).JSON(&response.Response{Success: false, Message: msgServerError})
 			}
 			
 			if fe, ok := appErr.Data.(response.FieldErrors); ok {
-				return c.Status(appErr.HTTPStatus).JSON(&response.Response{Success: false, Message: appErr.Message, Errors: fe})
+				return c.Status(appErr.HTTPStatus).JSON(&response.ValidationErrorResponse{Success: false, Message: appErr.Message, Errors: fe})
 			}
 
 			return c.Status(appErr.HTTPStatus).JSON(&response.Response{Success: false, Message: appErr.Message})
@@ -115,7 +115,7 @@ func errorHandler(log *slog.Logger) fiber.ErrorHandler {
 		}
 
 		if code >= fiber.StatusInternalServerError {
-			log.Error("unhandled error", "status", code, "path", c.Path(), "method", c.Method(), "error", err)
+			log.Error("unhandled error", "request_id", c.GetRespHeader(fiber.HeaderXRequestID), "status", code, "path", c.Path(), "method", c.Method(), "error", err)
 		}
 
 		return c.Status(code).JSON(&response.Response{Success: false, Message: message})

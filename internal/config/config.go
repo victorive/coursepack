@@ -21,12 +21,13 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Env      string `env:"APP_ENV" env-default:"development"`
-	Name     string `env:"APP_NAME" env-default:"klaro-api"`
-	Port     string `env:"APP_PORT" env-default:"8000"`
-	Host     string `env:"APP_HOST" env-default:"localhost"`
-	AppURL   string `env:"APP_URL" env-default:"http://localhost:8000"`
-	LogLevel string `env:"LOG_LEVEL" env-default:"debug"`
+	Env         string `env:"APP_ENV" env-default:"development"`
+	Name        string `env:"APP_NAME" env-default:"klaro-api"`
+	Port        string `env:"APP_PORT" env-default:"8000"`
+	Host        string `env:"APP_HOST" env-default:"localhost"`
+	AppURL      string `env:"APP_URL" env-default:"http://localhost:8000"`
+	FrontendURL string `env:"FRONTEND_URL" env-default:"http://localhost:3000"`
+	LogLevel    string `env:"LOG_LEVEL" env-default:"debug"`
 }
 
 type DBConfig struct {

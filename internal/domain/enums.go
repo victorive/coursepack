@@ -48,14 +48,7 @@ const (
 	FileStatusPending  FileStatus = "pending"
 	FileStatusApproved FileStatus = "approved"
 	FileStatusRejected FileStatus = "rejected"
-)
-
-type JoinRequestStatus string
-
-const (
-	JoinStatusPending  JoinRequestStatus = "pending"
-	JoinStatusApproved JoinRequestStatus = "approved"
-	JoinStatusRejected JoinRequestStatus = "rejected"
+	FileStatusArchived FileStatus = "archived"
 )
 
 type SemesterKind string
@@ -73,6 +66,21 @@ const (
 	LectureKindTest    LectureKind = "test"
 	LectureKindExam    LectureKind = "exam"
 	LectureKindLab     LectureKind = "lab"
+)
+
+type LectureStatus string
+
+const (
+	LectureStatusPublished LectureStatus = "published"
+	LectureStatusArchived  LectureStatus = "archived"
+)
+
+type JoinRequestStatus string
+
+const (
+	JoinStatusPending  JoinRequestStatus = "pending"
+	JoinStatusApproved JoinRequestStatus = "approved"
+	JoinStatusRejected JoinRequestStatus = "rejected"
 )
 
 type PointSource string

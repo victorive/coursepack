@@ -1,0 +1,84 @@
+package domain
+
+import "time"
+
+type Department struct {
+	ID         int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	Name       string    `gorm:"column:name;not null"`
+	Code       string    `gorm:"column:code;not null"`
+	Faculty    string    `gorm:"column:faculty;not null"`
+	University string    `gorm:"column:university;not null"`
+	CreatedAt  time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt  time.Time `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+type AcademicSession struct {
+	ID        int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	Label     string    `gorm:"column:label;uniqueIndex;not null"`
+	IsCurrent bool      `gorm:"column:is_current;not null;default:false"`
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+type Semester struct {
+	ID        int64      `gorm:"column:id;primaryKey;autoIncrement"`
+	CohortID  int64      `gorm:"column:cohort_id;not null"`
+	SessionID int64      `gorm:"column:session_id;not null"`
+	Kind      string     `gorm:"column:kind;not null"`
+	IsCurrent bool       `gorm:"column:is_current;not null;default:false"`
+	StartsAt  *time.Time `gorm:"column:starts_at"`
+	EndsAt    *time.Time `gorm:"column:ends_at"`
+	CreatedAt time.Time  `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt time.Time  `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+type Cohort struct {
+	ID           int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	DepartmentID int64     `gorm:"column:department_id;not null"`
+	Level        int16     `gorm:"column:level;not null"`
+	InviteCode   string    `gorm:"column:invite_code;uniqueIndex;not null"`
+	CreatedBy    *int64    `gorm:"column:created_by"`
+	CreatedAt    time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt    time.Time `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+type JoinRequest struct {
+	ID          int64             `gorm:"column:id;primaryKey;autoIncrement"`
+	CohortID    int64             `gorm:"column:cohort_id;not null"`
+	UserID      int64             `gorm:"column:user_id;not null"`
+	Status      JoinRequestStatus `gorm:"column:status;not null;default:pending"`
+	ReviewedBy  *int64            `gorm:"column:reviewed_by"`
+	RequestedAt time.Time         `gorm:"column:requested_at;autoCreateTime"`
+	ResolvedAt  *time.Time        `gorm:"column:resolved_at"`
+}
+
+type CohortMember struct {
+	ID       int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	CohortID int64     `gorm:"column:cohort_id;not null"`
+	UserID   int64     `gorm:"column:user_id;not null"`
+	JoinedAt time.Time `gorm:"column:joined_at;autoCreateTime"`
+}
+
+type Course struct {
+	ID         int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	CohortID   int64     `gorm:"column:cohort_id;not null"`
+	SemesterID int64     `gorm:"column:semester_id;not null"`
+	Code       string    `gorm:"column:code;not null"`
+	Title      string    `gorm:"column:title;not null"`
+	Units      int16     `gorm:"column:units;not null;default:2"`
+	CreatedAt  time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt  time.Time `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+type Lecture struct {
+	ID           int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	CourseID     int64     `gorm:"column:course_id;not null"`
+	Topic        string    `gorm:"column:topic;not null"`
+	Description  *string   `gorm:"column:description"`
+	LecturerName *string   `gorm:"column:lecturer_name"`
+	WeekNumber   *int16    `gorm:"column:week_number"`
+	Kind         string    `gorm:"column:kind;not null;default:lecture"`
+	Status       string    `gorm:"column:status;not null;default:published"`
+	CreatedAt    time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt    time.Time `gorm:"column:updated_at;autoUpdateTime"`
+}
