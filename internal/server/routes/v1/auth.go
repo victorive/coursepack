@@ -15,6 +15,7 @@ func authRoutes(r fiber.Router, c *app.Container) {
 	auth.Post("/signin", h.SignIn)
 	auth.Get("/google", h.GoogleInitiate)
 	auth.Get("/google/callback", h.GoogleCallback)
+	auth.Post("/google/exchange", h.ExchangeGoogleCode)
 	auth.Post("/verify-otp", h.VerifyOTP)
 	auth.Post("/resend-otp", h.ResendOTP)
 	auth.Post("/refresh", h.Refresh)

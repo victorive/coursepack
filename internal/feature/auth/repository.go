@@ -15,6 +15,7 @@ type Repository interface {
 	Create(ctx context.Context, u *domain.User) error
 	UpdateEmailVerified(ctx context.Context, id int64, verified bool) error
 	UpdatePassword(ctx context.Context, id int64, hash string) error
+	UpdateGoogleProfile(ctx context.Context, id int64, fullName string, avatarURL *string) error
 }
 
 type repository struct {
@@ -64,4 +65,9 @@ func (r *repository) UpdateEmailVerified(ctx context.Context, id int64, verified
 func (r *repository) UpdatePassword(ctx context.Context, id int64, h string) error {
 	return r.db.WithContext(ctx).Model(&domain.User{}).Where("id = ?", id).
 		Update("password", h).Error
+}
+
+func (r *repository) UpdateGoogleProfile(ctx context.Context, id int64, fullName string, avatarURL *string) error {
+	updates := map[string]any{"full_name": fullName, "avatar_url": avatarURL}
+	return r.db.WithContext(ctx).Model(&domain.User{}).Where("id = ?", id).Updates(updates).Error
 }

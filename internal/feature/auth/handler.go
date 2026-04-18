@@ -72,7 +72,7 @@ func (h *Handler) SignIn(c *fiber.Ctx) error {
 // @Summary      Start Google OAuth2
 // @Description  Redirects the user to Google's authorization page.
 // @Tags         Auth
-// @Success      302
+// @Success      307
 // @Failure      500 {object} response.Response
 // @Router       /auth/google [get]
 func (h *Handler) GoogleInitiate(c *fiber.Ctx) error {
@@ -85,29 +85,54 @@ func (h *Handler) GoogleInitiate(c *fiber.Ctx) error {
 
 // GoogleCallback godoc
 // @Summary      Google OAuth2 callback
-// @Description  Exchanges the authorization code for JWT tokens. Redirects to GOOGLE_FRONTEND_URL with tokens if configured; returns JSON otherwise.
+// @Description  Validates state, exchanges authorization code, upserts user, and redirects to GOOGLE_FRONTEND_URL with a short-lived one-time code. The client exchanges the code via POST /auth/google/exchange.
 // @Tags         Auth
-// @Param        code  query string true "Authorization code from Google"
-// @Param        state query string true "CSRF state token"
-// @Success      200   {object} response.Response{data=TokensResponse}
-// @Failure      401   {object} response.Response
+// @Param        code  query string true  "Authorization code from Google"
+// @Param        state query string true  "CSRF state token"
+// @Param        error query string false "Error code from Google (e.g. access_denied)"
+// @Success      307
+// @Failure      400 {object} response.Response "OAuth error or missing parameters"
+// @Failure      401 {object} response.Response "Invalid state or code"
 // @Router       /auth/google/callback [get]
 func (h *Handler) GoogleCallback(c *fiber.Ctx) error {
+	if oauthErr := c.Query("error"); oauthErr != "" {
+		return apperr.New("Google OAuth error: "+oauthErr, http.StatusBadRequest)
+	}
 	code := c.Query("code")
 	state := c.Query("state")
 	if code == "" || state == "" {
 		return apperr.New("missing code or state parameter", http.StatusBadRequest)
 	}
-	tokens, err := h.svc.GoogleCallback(c.Context(), code, state)
+	exchangeCode, err := h.svc.GoogleCallback(c.Context(), code, state)
 	if err != nil {
 		return err
 	}
 	if h.googleFrontendURL != "" {
-		dest := fmt.Sprintf("%s?access_token=%s&refresh_token=%s",
-			h.googleFrontendURL,
-			url.QueryEscape(tokens.AccessToken),
-			url.QueryEscape(tokens.RefreshToken))
+		dest := fmt.Sprintf("%s?code=%s", h.googleFrontendURL, url.QueryEscape(exchangeCode))
 		return c.Redirect(dest, http.StatusTemporaryRedirect)
+	}
+	return response.JSON(c, http.StatusOK, true, "use code to retrieve tokens", map[string]string{"code": exchangeCode})
+}
+
+// ExchangeGoogleCode godoc
+// @Summary      Exchange one-time Google OAuth2 code for tokens
+// @Description  Exchanges the short-lived code issued by the Google callback for an access token and refresh token. The code is single-use and expires in 5 minutes.
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        body body ExchangeGoogleCodeRequest true "One-time code payload"
+// @Success      200 {object} response.Response{data=TokensResponse}
+// @Failure      401 {object} response.Response "Invalid or expired code"
+// @Failure      422 {object} response.Response "Validation error"
+// @Router       /auth/google/exchange [post]
+func (h *Handler) ExchangeGoogleCode(c *fiber.Ctx) error {
+	var req ExchangeGoogleCodeRequest
+	if err := validator.ParseAndValidate(c, &req); err != nil {
+		return err
+	}
+	tokens, err := h.svc.ExchangeGoogleCode(c.Context(), req.Code)
+	if err != nil {
+		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "login successful", tokens)
 }
@@ -192,7 +217,7 @@ func (h *Handler) Logout(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return apperr.New("invalid request payload", http.StatusBadRequest)
 	}
-	
+
 	if err := validator.Validate(req); err != nil {
 		return err
 	}

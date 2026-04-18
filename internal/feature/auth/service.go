@@ -34,7 +34,8 @@ type Service interface {
 	SignUp(ctx context.Context, req *SignUpRequest) (*TokensResponse, error)
 	SignIn(ctx context.Context, req *SignInRequest) (*TokensResponse, error)
 	GoogleInitiate(ctx context.Context) (redirectURL string, err error)
-	GoogleCallback(ctx context.Context, code, state string) (*TokensResponse, error)
+	GoogleCallback(ctx context.Context, code, state string) (oneTimeCode string, err error)
+	ExchangeGoogleCode(ctx context.Context, code string) (*TokensResponse, error)
 	VerifyOTP(ctx context.Context, req *VerifyOTPRequest) error
 	ResendOTP(ctx context.Context, req *ResendOTPRequest) error
 	Refresh(ctx context.Context, req *RefreshRequest) (*TokensResponse, error)
@@ -79,6 +80,7 @@ const (
 	refreshKeyPrefix     = "refresh_token:"
 	pwdResetKeyPrefix    = "pwd_reset:"
 	googleStateKeyPrefix = "google_state:"
+	googleCodeKeyPrefix  = "google_code:"
 )
 
 func (s *service) issueTokens(ctx context.Context, u *domain.User) (*TokensResponse, error) {
@@ -195,6 +197,9 @@ func (s *service) googleOAuthConfig() *oauth2.Config {
 }
 
 func (s *service) GoogleInitiate(ctx context.Context) (string, error) {
+	if s.cfg.GoogleClientID == "" || s.cfg.GoogleClientSecret == "" {
+		return "", apperr.New("Google OAuth is not configured", http.StatusInternalServerError)
+	}
 	state, err := hash.GenerateSecureToken()
 	if err != nil {
 		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
@@ -212,38 +217,38 @@ type googleUserInfo struct {
 	Picture       string `json:"picture"`
 }
 
-func (s *service) GoogleCallback(ctx context.Context, code, state string) (*TokensResponse, error) {
+func (s *service) GoogleCallback(ctx context.Context, code, state string) (string, error) {
 	val, err := s.cache.Get(ctx, googleStateKeyPrefix+state)
 	if err != nil || val == "" {
-		return nil, apperr.New("invalid or expired state", http.StatusUnauthorized)
+		return "", apperr.New("invalid or expired state", http.StatusUnauthorized)
 	}
 	_ = s.cache.Delete(ctx, googleStateKeyPrefix+state)
 
 	oauthCfg := s.googleOAuthConfig()
 	googleToken, err := oauthCfg.Exchange(ctx, code)
 	if err != nil {
-		return nil, apperr.New("failed to exchange authorization code", http.StatusUnauthorized).Wrap(err)
+		return "", apperr.New("failed to exchange authorization code", http.StatusUnauthorized).Wrap(err)
 	}
 
 	client := oauthCfg.Client(ctx, googleToken)
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, apperr.New("failed to fetch Google user info", http.StatusInternalServerError)
+		return "", apperr.New("failed to fetch Google user info", http.StatusInternalServerError)
 	}
 
 	var info googleUserInfo
 	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 
 	u, err := s.repo.FindByEmail(ctx, info.Email)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 
 	if u == nil {
@@ -261,13 +266,45 @@ func (s *service) GoogleCallback(ctx context.Context, code, state string) (*Toke
 			EmailVerified: info.VerifiedEmail,
 		}
 		if err := s.repo.Create(ctx, u); err != nil {
-			return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+			return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 		}
 	} else if u.Provider == nil || *u.Provider != string(domain.ProviderGoogle) {
-		return nil, apperr.New("account registered with a different sign-in method", http.StatusUnprocessableEntity)
+		return "", apperr.New("account registered with a different sign-in method", http.StatusUnprocessableEntity)
+	} else {
+		picture := (*string)(nil)
+		if info.Picture != "" {
+			picture = &info.Picture
+		}
+		if err := s.repo.UpdateGoogleProfile(ctx, u.ID, info.Name, picture); err != nil {
+			s.logger.Error("failed to update google profile", "user_id", u.ID, "error", err)
+		}
 	}
 
-	return s.issueTokens(ctx, u)
+	tokens, err := s.issueTokens(ctx, u)
+	if err != nil {
+		return "", err
+	}
+
+	exchangeCode, err := hash.GenerateSecureToken()
+	if err != nil {
+		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+
+	if err := s.cache.SetJSON(ctx, googleCodeKeyPrefix+exchangeCode, tokens, 5*time.Minute); err != nil {
+		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+
+	return exchangeCode, nil
+}
+
+func (s *service) ExchangeGoogleCode(ctx context.Context, code string) (*TokensResponse, error) {
+	var tokens TokensResponse
+	if err := s.cache.GetJSON(ctx, googleCodeKeyPrefix+code, &tokens); err != nil {
+		return nil, apperr.New("invalid or expired code", http.StatusUnauthorized)
+	}
+
+	_ = s.cache.Delete(ctx, googleCodeKeyPrefix+code)
+	return &tokens, nil
 }
 
 func (s *service) VerifyOTP(ctx context.Context, req *VerifyOTPRequest) error {
@@ -363,7 +400,7 @@ func (s *service) ValidateToken(ctx context.Context, token string) (string, erro
 	if blacklisted {
 		return "", apperr.New("unauthenticated", http.StatusUnauthorized)
 	}
-	
+
 	return claims.Subject, nil
 }
 
