@@ -378,9 +378,7 @@ func (s *service) Logout(ctx context.Context, accessToken string, req *LogoutReq
 		_, _ = s.cache.SetNX(ctx, "blacklist:"+accessToken, "1", ttl)
 	}
 
-	if req.RefreshToken != "" {
-		_ = s.cache.Delete(ctx, refreshKeyPrefix+req.RefreshToken)
-	}
+	_ = s.cache.Delete(ctx, refreshKeyPrefix+req.RefreshToken)
 
 	return nil
 }

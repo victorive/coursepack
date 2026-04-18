@@ -184,12 +184,18 @@ func (h *Handler) Refresh(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        body body LogoutRequest false "Optional: refresh token to revoke"
+// @Param        body body LogoutRequest true "Refresh token to revoke"
 // @Success      200 {object} response.Response
 // @Router       /auth/logout [post]
 func (h *Handler) Logout(c *fiber.Ctx) error {
 	var req LogoutRequest
-	_ = c.BodyParser(&req)
+	if err := c.BodyParser(&req); err != nil {
+		return apperr.New("invalid request payload", http.StatusBadRequest)
+	}
+	
+	if err := validator.Validate(req); err != nil {
+		return err
+	}
 
 	accessToken := strings.TrimPrefix(c.Get(fiber.HeaderAuthorization), "Bearer ")
 	if err := h.svc.Logout(c.Context(), accessToken, &req); err != nil {

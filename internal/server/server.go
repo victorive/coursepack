@@ -96,7 +96,12 @@ func errorHandler(log *slog.Logger) fiber.ErrorHandler {
 				log.Error("server error", "path", c.Path(), "method", c.Method(), "error", appErr.Err)
 				return c.Status(appErr.HTTPStatus).JSON(&response.Response{Success: false, Message: msgServerError})
 			}
-			return c.Status(appErr.HTTPStatus).JSON(&response.Response{Success: false, Message: appErr.Message, Data: appErr.Data})
+			
+			if fe, ok := appErr.Data.(response.FieldErrors); ok {
+				return c.Status(appErr.HTTPStatus).JSON(&response.Response{Success: false, Message: appErr.Message, Errors: fe})
+			}
+
+			return c.Status(appErr.HTTPStatus).JSON(&response.Response{Success: false, Message: appErr.Message})
 		}
 
 		code := fiber.StatusInternalServerError

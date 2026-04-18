@@ -3,6 +3,7 @@ package validator
 import (
 	"errors"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -11,10 +12,29 @@ import (
 	"github.com/victorive/klaro-backend/internal/pkg/response"
 )
 
-var globalValidator = validator.New()
+var globalValidator = func() *validator.Validate {
+	v := validator.New()
+	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" || name == "" {
+			return fld.Name
+		}
+		return name
+	})
+	
+	return v
+}()
 
 func Validate(s interface{}) error {
-	return globalValidator.Struct(s)
+	if err := globalValidator.Struct(s); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			return buildValidationError(ve)
+		}
+		return apperr.New("invalid input", http.StatusUnprocessableEntity)
+	}
+
+	return nil
 }
 
 func ParseAndValidate(c *fiber.Ctx, dst interface{}) error {
@@ -25,19 +45,21 @@ func ParseAndValidate(c *fiber.Ctx, dst interface{}) error {
 	if err := globalValidator.Struct(dst); err != nil {
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
-			errs := make([]response.ValidationError, 0, len(ve))
-			for _, e := range ve {
-				errs = append(errs, response.ValidationError{
-					Field:   toCamelCase(e.Field()),
-					Message: getValidationMessage(e),
-				})
-			}
-			return apperr.New("validation failed", http.StatusUnprocessableEntity).WithData(errs)
+			return buildValidationError(ve)
 		}
-		return apperr.New("validation failed", http.StatusBadRequest)
+		return apperr.New("invalid input", http.StatusBadRequest)
 	}
 
 	return nil
+}
+
+func buildValidationError(ve validator.ValidationErrors) error {
+	fields := make(response.FieldErrors, len(ve))
+	for _, e := range ve {
+		fields[e.Field()] = getValidationMessage(e)
+	}
+
+	return apperr.New("invalid input", http.StatusUnprocessableEntity).WithData(fields)
 }
 
 func getValidationMessage(e validator.FieldError) string {
@@ -73,15 +95,4 @@ func getValidationMessage(e validator.FieldError) string {
 	default:
 		return "Validation failed: " + e.Tag()
 	}
-}
-
-func toCamelCase(s string) string {
-	parts := strings.Split(s, "_")
-	if len(parts) == 1 {
-		return s
-	}
-	for i := 1; i < len(parts); i++ {
-		parts[i] = strings.ToUpper(string(parts[i][0])) + parts[i][1:]
-	}
-	return strings.Join(parts, "")
 }
