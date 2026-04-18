@@ -18,10 +18,10 @@ func authRoutes(r fiber.Router, c *app.Container) {
 	auth.Post("/verify-otp", h.VerifyOTP)
 	auth.Post("/resend-otp", h.ResendOTP)
 	auth.Post("/refresh", h.Refresh)
-	auth.Post("/logout", h.Logout)
 	auth.Post("/forgot-password", h.ForgotPassword)
 	auth.Post("/reset-password", h.ResetPassword)
 
 	protected := auth.Group("", middleware.Auth(c.JWT))
 	protected.Get("/me", h.Me)
+	protected.Post("/logout", h.Logout)
 }
