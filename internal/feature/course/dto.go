@@ -7,7 +7,7 @@ import (
 )
 
 type CreateCourseRequest struct {
-	CohortID   int64  `json:"cohort_id"   validate:"required,min=1"`
+	LevelID    int64  `json:"level_id"    validate:"required,min=1"`
 	SemesterID int64  `json:"semester_id" validate:"required,min=1"`
 	Code       string `json:"code"        validate:"required,min=1,max=20"`
 	Title      string `json:"title"       validate:"required,min=2,max=200"`
@@ -22,7 +22,7 @@ type UpdateCourseRequest struct {
 
 type CourseResponse struct {
 	ID         int64     `json:"id"`
-	CohortID   int64     `json:"cohort_id"`
+	LevelID    int64     `json:"level_id"`
 	SemesterID int64     `json:"semester_id"`
 	Code       string    `json:"code"`
 	Title      string    `json:"title"`
@@ -33,7 +33,7 @@ type CourseResponse struct {
 func toCourseResponse(c *domain.Course) *CourseResponse {
 	return &CourseResponse{
 		ID:         c.ID,
-		CohortID:   c.CohortID,
+		LevelID:    c.LevelID,
 		SemesterID: c.SemesterID,
 		Code:       c.Code,
 		Title:      c.Title,

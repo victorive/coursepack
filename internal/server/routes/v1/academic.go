@@ -23,5 +23,5 @@ func academicRoutes(r fiber.Router, c *app.Container) {
 	semesters.Patch("/:id", h.UpdateSemester)
 	semesters.Delete("/:id", h.DeleteSemester)
 
-	r.Group("/cohorts", auth...).Get("/:cohortId/semesters", h.ListSemestersByCohort)
+	r.Group("/levels", auth...).Get("/:levelId/semesters", h.ListSemestersByLevel)
 }

@@ -12,9 +12,9 @@ import (
 // Repository abstracts RBAC role checks and assignments.
 type Repository interface {
 	HasGlobalRole(ctx context.Context, userID int64, role domain.RoleName) (bool, error)
-	HasCohortRole(ctx context.Context, userID, cohortID int64, role domain.RoleName) (bool, error)
+	HasLevelRole(ctx context.Context, userID, levelID int64, role domain.RoleName) (bool, error)
 	AssignGlobalRole(ctx context.Context, userID, grantedByID int64, role domain.RoleName) error
-	AssignCohortRole(ctx context.Context, userID, cohortID, grantedByID int64, role domain.RoleName) error
+	AssignLevelRole(ctx context.Context, userID, levelID, grantedByID int64, role domain.RoleName) error
 }
 
 type gormRepository struct {
@@ -39,15 +39,15 @@ func (r *gormRepository) HasGlobalRole(ctx context.Context, userID int64, role d
 	return count > 0, nil
 }
 
-func (r *gormRepository) HasCohortRole(ctx context.Context, userID, cohortID int64, role domain.RoleName) (bool, error) {
+func (r *gormRepository) HasLevelRole(ctx context.Context, userID, levelID int64, role domain.RoleName) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Table("user_roles ur").
 		Joins("JOIN roles r ON r.id = ur.role_id").
-		Where("ur.user_id = ? AND ur.scope_type = 'cohort' AND ur.scope_id = ? AND r.name = ?", userID, cohortID, string(role)).
+		Where("ur.user_id = ? AND ur.scope_type = 'level' AND ur.scope_id = ? AND r.name = ?", userID, levelID, string(role)).
 		Count(&count).Error
 	if err != nil {
-		return false, fmt.Errorf("rbac.HasCohortRole: %w", err)
+		return false, fmt.Errorf("rbac.HasLevelRole: %w", err)
 	}
 	return count > 0, nil
 }
@@ -72,7 +72,7 @@ func (r *gormRepository) AssignGlobalRole(ctx context.Context, userID, grantedBy
 	return nil
 }
 
-func (r *gormRepository) AssignCohortRole(ctx context.Context, userID, cohortID, grantedByID int64, role domain.RoleName) error {
+func (r *gormRepository) AssignLevelRole(ctx context.Context, userID, levelID, grantedByID int64, role domain.RoleName) error {
 	roleID, err := r.roleIDByName(ctx, role)
 	if err != nil {
 		return err
@@ -80,14 +80,14 @@ func (r *gormRepository) AssignCohortRole(ctx context.Context, userID, cohortID,
 	ur := domain.UserRole{
 		UserID:    userID,
 		RoleID:    roleID,
-		ScopeType: "cohort",
-		ScopeID:   &cohortID,
+		ScopeType: "level",
+		ScopeID:   &levelID,
 		GrantedBy: &grantedByID,
 	}
 	if err := r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{DoNothing: true}).
 		Create(&ur).Error; err != nil {
-		return fmt.Errorf("rbac.AssignCohortRole: %w", err)
+		return fmt.Errorf("rbac.AssignLevelRole: %w", err)
 	}
 	return nil
 }

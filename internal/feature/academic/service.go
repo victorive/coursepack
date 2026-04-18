@@ -16,7 +16,7 @@ type Service interface {
 	GetSession(ctx context.Context, id int64) (*SessionResponse, error)
 	UpdateSession(ctx context.Context, id int64, req *UpdateSessionRequest) (*SessionResponse, error)
 	CreateSemester(ctx context.Context, req *CreateSemesterRequest) (*SemesterResponse, error)
-	ListSemestersByCohort(ctx context.Context, cohortID int64) ([]*SemesterResponse, error)
+	ListSemestersByLevel(ctx context.Context, levelID int64) ([]*SemesterResponse, error)
 	GetSemester(ctx context.Context, id int64) (*SemesterResponse, error)
 	UpdateSemester(ctx context.Context, id int64, req *UpdateSemesterRequest) (*SemesterResponse, error)
 	DeleteSemester(ctx context.Context, id int64) error
@@ -94,12 +94,12 @@ func (s *service) UpdateSession(ctx context.Context, id int64, req *UpdateSessio
 
 func (s *service) CreateSemester(ctx context.Context, req *CreateSemesterRequest) (*SemesterResponse, error) {
 	if req.IsCurrent {
-		if err := s.repo.UnsetCurrentSemesterForCohort(ctx, req.CohortID); err != nil {
+		if err := s.repo.UnsetCurrentSemesterForLevel(ctx, req.LevelID); err != nil {
 			return nil, apperr.New("failed to unset current semester", http.StatusInternalServerError).Wrap(err)
 		}
 	}
 	sem := &domain.Semester{
-		CohortID:  req.CohortID,
+		LevelID:   req.LevelID,
 		SessionID: req.SessionID,
 		Kind:      req.Kind,
 		IsCurrent: req.IsCurrent,
@@ -112,8 +112,8 @@ func (s *service) CreateSemester(ctx context.Context, req *CreateSemesterRequest
 	return toSemesterResponse(sem), nil
 }
 
-func (s *service) ListSemestersByCohort(ctx context.Context, cohortID int64) ([]*SemesterResponse, error) {
-	semesters, err := s.repo.FindSemestersByCohortID(ctx, cohortID)
+func (s *service) ListSemestersByLevel(ctx context.Context, levelID int64) ([]*SemesterResponse, error) {
+	semesters, err := s.repo.FindSemestersByLevelID(ctx, levelID)
 	if err != nil {
 		return nil, apperr.New("failed to list semesters", http.StatusInternalServerError).Wrap(err)
 	}
@@ -144,7 +144,7 @@ func (s *service) UpdateSemester(ctx context.Context, id int64, req *UpdateSemes
 		return nil, apperr.New("semester not found", http.StatusNotFound)
 	}
 	if req.IsCurrent && !sem.IsCurrent {
-		if err := s.repo.UnsetCurrentSemesterForCohort(ctx, sem.CohortID); err != nil {
+		if err := s.repo.UnsetCurrentSemesterForLevel(ctx, sem.LevelID); err != nil {
 			return nil, apperr.New("failed to unset current semester", http.StatusInternalServerError).Wrap(err)
 		}
 	}

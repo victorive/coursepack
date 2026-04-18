@@ -15,10 +15,10 @@ type Repository interface {
 	UpdateSession(ctx context.Context, s *domain.AcademicSession) error
 	UnsetCurrentSession(ctx context.Context) error
 	CreateSemester(ctx context.Context, s *domain.Semester) error
-	FindSemestersByCohortID(ctx context.Context, cohortID int64) ([]*domain.Semester, error)
+	FindSemestersByLevelID(ctx context.Context, levelID int64) ([]*domain.Semester, error)
 	FindSemesterByID(ctx context.Context, id int64) (*domain.Semester, error)
 	UpdateSemester(ctx context.Context, s *domain.Semester) error
-	UnsetCurrentSemesterForCohort(ctx context.Context, cohortID int64) error
+	UnsetCurrentSemesterForLevel(ctx context.Context, levelID int64) error
 	DeleteSemester(ctx context.Context, id int64) error
 }
 
@@ -76,9 +76,9 @@ func (r *repository) CreateSemester(ctx context.Context, s *domain.Semester) err
 	return r.db.WithContext(ctx).Create(s).Error
 }
 
-func (r *repository) FindSemestersByCohortID(ctx context.Context, cohortID int64) ([]*domain.Semester, error) {
+func (r *repository) FindSemestersByLevelID(ctx context.Context, levelID int64) ([]*domain.Semester, error) {
 	var semesters []*domain.Semester
-	if err := r.db.WithContext(ctx).Where("cohort_id = ?", cohortID).Order("session_id DESC, kind ASC").Find(&semesters).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("level_id = ?", levelID).Order("session_id DESC, kind ASC").Find(&semesters).Error; err != nil {
 		return nil, err
 	}
 	return semesters, nil
@@ -99,10 +99,10 @@ func (r *repository) UpdateSemester(ctx context.Context, s *domain.Semester) err
 	return r.db.WithContext(ctx).Save(s).Error
 }
 
-func (r *repository) UnsetCurrentSemesterForCohort(ctx context.Context, cohortID int64) error {
+func (r *repository) UnsetCurrentSemesterForLevel(ctx context.Context, levelID int64) error {
 	return r.db.WithContext(ctx).
 		Model(&domain.Semester{}).
-		Where("cohort_id = ? AND is_current = TRUE", cohortID).
+		Where("level_id = ? AND is_current = TRUE", levelID).
 		Update("is_current", false).Error
 }
 

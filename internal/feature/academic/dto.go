@@ -33,7 +33,7 @@ func toSessionResponse(s *domain.AcademicSession) *SessionResponse {
 }
 
 type CreateSemesterRequest struct {
-	CohortID  int64      `json:"cohort_id"  validate:"required,min=1"`
+	LevelID   int64      `json:"level_id"   validate:"required,min=1"`
 	SessionID int64      `json:"session_id" validate:"required,min=1"`
 	Kind      string     `json:"kind"       validate:"required,oneof=first second summer"`
 	IsCurrent bool       `json:"is_current"`
@@ -50,7 +50,7 @@ type UpdateSemesterRequest struct {
 
 type SemesterResponse struct {
 	ID        int64      `json:"id"`
-	CohortID  int64      `json:"cohort_id"`
+	LevelID   int64      `json:"level_id"`
 	SessionID int64      `json:"session_id"`
 	Kind      string     `json:"kind"`
 	IsCurrent bool       `json:"is_current"`
@@ -62,7 +62,7 @@ type SemesterResponse struct {
 func toSemesterResponse(s *domain.Semester) *SemesterResponse {
 	return &SemesterResponse{
 		ID:        s.ID,
-		CohortID:  s.CohortID,
+		LevelID:   s.LevelID,
 		SessionID: s.SessionID,
 		Kind:      s.Kind,
 		IsCurrent: s.IsCurrent,

@@ -126,20 +126,20 @@ func (h *Handler) CreateSemester(c *fiber.Ctx) error {
 	return response.JSON(c, http.StatusCreated, true, "semester created", sem)
 }
 
-// ListSemestersByCohort godoc
-// @Summary      List semesters for a cohort
+// ListSemestersByLevel godoc
+// @Summary      List semesters for a level
 // @Tags         Academic
 // @Produce      json
-// @Param        cohortId path int true "Cohort ID"
+// @Param        levelId path int true "Level ID"
 // @Success      200 {object} response.Response{data=[]SemesterResponse}
 // @Security     BearerAuth
-// @Router       /cohorts/{cohortId}/semesters [get]
-func (h *Handler) ListSemestersByCohort(c *fiber.Ctx) error {
-	cohortID, err := strconv.ParseInt(c.Params("cohortId"), 10, 64)
+// @Router       /levels/{levelId}/semesters [get]
+func (h *Handler) ListSemestersByLevel(c *fiber.Ctx) error {
+	levelID, err := strconv.ParseInt(c.Params("levelId"), 10, 64)
 	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid cohort id", nil)
+		return response.JSON(c, http.StatusBadRequest, false, "invalid level id", nil)
 	}
-	semesters, err := h.svc.ListSemestersByCohort(c.UserContext(), cohortID)
+	semesters, err := h.svc.ListSemestersByLevel(c.UserContext(), levelID)
 	if err != nil {
 		return err
 	}

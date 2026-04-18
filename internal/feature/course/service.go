@@ -11,7 +11,7 @@ import (
 
 type Service interface {
 	CreateCourse(ctx context.Context, req CreateCourseRequest) (*CourseResponse, error)
-	ListCoursesByCohort(ctx context.Context, cohortID int64) ([]*CourseResponse, error)
+	ListCoursesByLevel(ctx context.Context, levelID int64) ([]*CourseResponse, error)
 	ListCoursesBySemester(ctx context.Context, semesterID int64) ([]*CourseResponse, error)
 	GetCourse(ctx context.Context, id int64) (*CourseResponse, error)
 	UpdateCourse(ctx context.Context, id int64, req UpdateCourseRequest) (*CourseResponse, error)
@@ -35,7 +35,7 @@ func NewService(repo Repository, logger *slog.Logger) Service {
 
 func (s *service) CreateCourse(ctx context.Context, req CreateCourseRequest) (*CourseResponse, error) {
 	c := &domain.Course{
-		CohortID:   req.CohortID,
+		LevelID:    req.LevelID,
 		SemesterID: req.SemesterID,
 		Code:       req.Code,
 		Title:      req.Title,
@@ -47,8 +47,8 @@ func (s *service) CreateCourse(ctx context.Context, req CreateCourseRequest) (*C
 	return toCourseResponse(c), nil
 }
 
-func (s *service) ListCoursesByCohort(ctx context.Context, cohortID int64) ([]*CourseResponse, error) {
-	courses, err := s.repo.FindCoursesByCohort(ctx, cohortID)
+func (s *service) ListCoursesByLevel(ctx context.Context, levelID int64) ([]*CourseResponse, error) {
+	courses, err := s.repo.FindCoursesByLevel(ctx, levelID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch courses", http.StatusInternalServerError).Wrap(err)
 	}

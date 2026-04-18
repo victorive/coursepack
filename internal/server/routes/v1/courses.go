@@ -22,7 +22,7 @@ func courseRoutes(r fiber.Router, c *app.Container) {
 	courses.Post("/:courseId/lectures", h.CreateLecture)
 	courses.Get("/:courseId/files", fh.ListByCourse)
 
-	r.Group("/cohorts", auth...).Get("/:cohortId/courses", h.ListCoursesByCohort)
+	r.Group("/levels", auth...).Get("/:levelId/courses", h.ListCoursesByLevel)
 	r.Group("/semesters", auth...).Get("/:semesterId/courses", h.ListCoursesBySemester)
 
 	lectures := r.Group("/lectures", auth...)

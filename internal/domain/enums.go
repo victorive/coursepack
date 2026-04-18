@@ -24,7 +24,7 @@ type ScopeType string
 
 const (
 	ScopeGlobal ScopeType = "global"
-	ScopeCohort ScopeType = "cohort"
+	ScopeLevel  ScopeType = "level"
 )
 
 type Provider string

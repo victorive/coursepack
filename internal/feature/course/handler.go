@@ -19,7 +19,7 @@ func NewHandler(svc Service) *Handler {
 
 // CreateCourse godoc
 // @Summary      Create course
-// @Description  Creates a new course linked to a cohort and semester.
+// @Description  Creates a new course linked to a level and semester.
 // @Tags         Courses
 // @Accept       json
 // @Produce      json
@@ -41,23 +41,23 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 	return response.JSON(c, http.StatusCreated, true, "course created", resp)
 }
 
-// ListCoursesByCohort godoc
-// @Summary      List courses by cohort
-// @Description  Returns all courses belonging to a cohort.
+// ListCoursesByLevel godoc
+// @Summary      List courses by level
+// @Description  Returns all courses belonging to a level.
 // @Tags         Courses
 // @Produce      json
-// @Param        cohortId path int true "Cohort ID"
+// @Param        levelId path int true "Level ID"
 // @Success      200 {object} response.Response{data=[]CourseResponse}
 // @Failure      400 {object} response.Response
 // @Failure      401 {object} response.Response
 // @Security     BearerAuth
-// @Router       /cohorts/{cohortId}/courses [get]
-func (h *Handler) ListCoursesByCohort(c *fiber.Ctx) error {
-	cohortID, err := strconv.ParseInt(c.Params("cohortId"), 10, 64)
+// @Router       /levels/{levelId}/courses [get]
+func (h *Handler) ListCoursesByLevel(c *fiber.Ctx) error {
+	levelID, err := strconv.ParseInt(c.Params("levelId"), 10, 64)
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
-	resp, err := h.svc.ListCoursesByCohort(c.UserContext(), cohortID)
+	resp, err := h.svc.ListCoursesByLevel(c.UserContext(), levelID)
 	if err != nil {
 		return err
 	}

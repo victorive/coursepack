@@ -22,7 +22,7 @@ type AcademicSession struct {
 
 type Semester struct {
 	ID        int64      `gorm:"column:id;primaryKey;autoIncrement"`
-	CohortID  int64      `gorm:"column:cohort_id;not null"`
+	LevelID   int64      `gorm:"column:level_id;not null"`
 	SessionID int64      `gorm:"column:session_id;not null"`
 	Kind      string     `gorm:"column:kind;not null"`
 	IsCurrent bool       `gorm:"column:is_current;not null;default:false"`
@@ -32,10 +32,10 @@ type Semester struct {
 	UpdatedAt time.Time  `gorm:"column:updated_at;autoUpdateTime"`
 }
 
-type Cohort struct {
+type Level struct {
 	ID           int64     `gorm:"column:id;primaryKey;autoIncrement"`
 	DepartmentID int64     `gorm:"column:department_id;not null"`
-	Level        int16     `gorm:"column:level;not null"`
+	Year         int16     `gorm:"column:year;not null"`
 	InviteCode   string    `gorm:"column:invite_code;uniqueIndex;not null"`
 	CreatedBy    *int64    `gorm:"column:created_by"`
 	CreatedAt    time.Time `gorm:"column:created_at;autoCreateTime"`
@@ -44,7 +44,7 @@ type Cohort struct {
 
 type JoinRequest struct {
 	ID          int64             `gorm:"column:id;primaryKey;autoIncrement"`
-	CohortID    int64             `gorm:"column:cohort_id;not null"`
+	LevelID     int64             `gorm:"column:level_id;not null"`
 	UserID      int64             `gorm:"column:user_id;not null"`
 	Status      JoinRequestStatus `gorm:"column:status;not null;default:pending"`
 	ReviewedBy  *int64            `gorm:"column:reviewed_by"`
@@ -52,16 +52,16 @@ type JoinRequest struct {
 	ResolvedAt  *time.Time        `gorm:"column:resolved_at"`
 }
 
-type CohortMember struct {
+type LevelMember struct {
 	ID       int64     `gorm:"column:id;primaryKey;autoIncrement"`
-	CohortID int64     `gorm:"column:cohort_id;not null"`
+	LevelID  int64     `gorm:"column:level_id;not null"`
 	UserID   int64     `gorm:"column:user_id;not null"`
 	JoinedAt time.Time `gorm:"column:joined_at;autoCreateTime"`
 }
 
 type Course struct {
 	ID         int64     `gorm:"column:id;primaryKey;autoIncrement"`
-	CohortID   int64     `gorm:"column:cohort_id;not null"`
+	LevelID    int64     `gorm:"column:level_id;not null"`
 	SemesterID int64     `gorm:"column:semester_id;not null"`
 	Code       string    `gorm:"column:code;not null"`
 	Title      string    `gorm:"column:title;not null"`

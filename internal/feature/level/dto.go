@@ -1,4 +1,4 @@
-package cohort
+package level
 
 import (
 	"time"
@@ -6,24 +6,24 @@ import (
 	"github.com/victorive/klaro-backend/internal/domain"
 )
 
-type CreateCohortRequest struct {
-	DepartmentID int64  `json:"department_id" validate:"required,min=1"`
-	Level        int16  `json:"level"         validate:"required,oneof=100 200 300 400 500 600 700 800"`
+type CreateLevelRequest struct {
+	DepartmentID int64 `json:"department_id" validate:"required,min=1"`
+	Year         int16 `json:"year"          validate:"required,oneof=100 200 300 400 500 600 700 800"`
 }
 
-type CohortResponse struct {
+type LevelResponse struct {
 	ID           int64     `json:"id"`
 	DepartmentID int64     `json:"department_id"`
-	Level        int16     `json:"level"`
+	Year         int16     `json:"year"`
 	InviteCode   string    `json:"invite_code"`
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-func toCohortResponse(c *domain.Cohort) *CohortResponse {
-	return &CohortResponse{
+func toLevelResponse(c *domain.Level) *LevelResponse {
+	return &LevelResponse{
 		ID:           c.ID,
 		DepartmentID: c.DepartmentID,
-		Level:        c.Level,
+		Year:         c.Year,
 		InviteCode:   c.InviteCode,
 		CreatedAt:    c.CreatedAt,
 	}
@@ -39,7 +39,7 @@ type ReviewJoinRequest struct {
 
 type JoinRequestResponse struct {
 	ID          int64      `json:"id"`
-	CohortID    int64      `json:"cohort_id"`
+	LevelID     int64      `json:"level_id"`
 	UserID      int64      `json:"user_id"`
 	Status      string     `json:"status"`
 	RequestedAt time.Time  `json:"requested_at"`
@@ -49,7 +49,7 @@ type JoinRequestResponse struct {
 func toJoinRequestResponse(jr *domain.JoinRequest) *JoinRequestResponse {
 	return &JoinRequestResponse{
 		ID:          jr.ID,
-		CohortID:    jr.CohortID,
+		LevelID:     jr.LevelID,
 		UserID:      jr.UserID,
 		Status:      string(jr.Status),
 		RequestedAt: jr.RequestedAt,
@@ -59,14 +59,14 @@ func toJoinRequestResponse(jr *domain.JoinRequest) *JoinRequestResponse {
 
 type MemberResponse struct {
 	UserID   int64     `json:"user_id"`
-	CohortID int64     `json:"cohort_id"`
+	LevelID  int64     `json:"level_id"`
 	JoinedAt time.Time `json:"joined_at"`
 }
 
-func toMemberResponse(m *domain.CohortMember) *MemberResponse {
+func toMemberResponse(m *domain.LevelMember) *MemberResponse {
 	return &MemberResponse{
 		UserID:   m.UserID,
-		CohortID: m.CohortID,
+		LevelID:  m.LevelID,
 		JoinedAt: m.JoinedAt,
 	}
 }
