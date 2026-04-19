@@ -42,8 +42,8 @@ func (s *Server) setupMiddleware() {
 		AllowOrigins:     s.config.CORS.AllowedOrigins,
 		AllowMethods:     s.config.CORS.AllowedMethods,
 		AllowHeaders:     s.config.CORS.AllowedHeaders,
-		AllowCredentials: true,
-		MaxAge:           300,
+		AllowCredentials: false,
+		MaxAge:           0,
 	}))
 
 	s.app.Use(logger.New(logger.Config{
