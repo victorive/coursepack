@@ -71,7 +71,7 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 	if course == nil {
 		return nil, apperr.New("course not found", http.StatusNotFound)
 	}
-	ok, err := s.rbacSvc.HasLevelPermission(ctx, uploaderUUID, course.LevelID, domain.PermFilesUpload)
+	ok, err := s.rbacSvc.HasClassPermission(ctx, uploaderUUID, course.ClassID, domain.PermFilesUpload)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -176,7 +176,7 @@ func (s *service) Review(ctx context.Context, id int64, reviewerUUID string, req
 	if course == nil {
 		return nil, apperr.New("course not found", http.StatusNotFound)
 	}
-	ok, err := s.rbacSvc.HasLevelPermission(ctx, reviewerUUID, course.LevelID, domain.PermFilesApprove)
+	ok, err := s.rbacSvc.HasClassPermission(ctx, reviewerUUID, course.ClassID, domain.PermFilesApprove)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -221,7 +221,7 @@ func (s *service) Archive(ctx context.Context, id int64, actorUUID string) error
 		return apperr.New("course not found", http.StatusNotFound)
 	}
 
-	ok, err := s.rbacSvc.HasLevelPermission(ctx, actorUUID, course.LevelID, domain.PermFilesApprove)
+	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, course.ClassID, domain.PermFilesApprove)
 	if err != nil {
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}

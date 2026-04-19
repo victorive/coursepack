@@ -46,28 +46,28 @@ func (h *Handler) CreateCourse(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return response.JSON(c, http.StatusCreated, true, "course created", resp)
 }
 
-// ListCoursesByLevel godoc
-// @Summary      List courses by level
-// @Description  Returns all courses belonging to a level.
+// ListCoursesByClass godoc
+// @Summary      List courses by class
+// @Description  Returns all courses belonging to a class.
 // @Tags         Courses
 // @Produce      json
-// @Param        levelId path int true "Level ID"
+// @Param        classId path int true "Class ID"
 // @Success      200 {object} response.Response{data=[]CourseResponse}
 // @Failure      400 {object} response.Response
 // @Failure      401 {object} response.Response
 // @Security     BearerAuth
-// @Router       /levels/{levelId}/courses [get]
-func (h *Handler) ListCoursesByLevel(c *fiber.Ctx) error {
-	levelID, err := strconv.ParseInt(c.Params("levelId"), 10, 64)
+// @Router       /classes/{classId}/courses [get]
+func (h *Handler) ListCoursesByClass(c *fiber.Ctx) error {
+	classID, err := strconv.ParseInt(c.Params("classId"), 10, 64)
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
 
-	resp, err := h.svc.ListCoursesByLevel(c.UserContext(), levelID)
+	resp, err := h.svc.ListCoursesByClass(c.UserContext(), classID)
 	if err != nil {
 		return err
 	}

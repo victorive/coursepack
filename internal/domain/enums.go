@@ -18,9 +18,8 @@ const (
 	PermFilesApprove      PermissionName = "approve_files"
 	PermCoursesManage     PermissionName = "manage_courses"
 	PermLecturesManage    PermissionName = "manage_lectures"
-	PermManageLevels      PermissionName = "manage_levels"
+	PermManageClasses     PermissionName = "manage_classes"
 	PermManageDepartments PermissionName = "manage_departments"
-	PermManageSessions    PermissionName = "manage_sessions"
 	PermManageSemesters   PermissionName = "manage_semesters"
 )
 
@@ -28,7 +27,7 @@ type ScopeType string
 
 const (
 	ScopeGlobal ScopeType = "global"
-	ScopeLevel  ScopeType = "level"
+	ScopeClass  ScopeType = "class"
 )
 
 type Provider string

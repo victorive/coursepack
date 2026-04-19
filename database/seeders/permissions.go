@@ -18,9 +18,8 @@ func (permissionsSeeder) Run(db *gorm.DB) error {
 		{Name: string(domain.PermFilesApprove)},
 		{Name: string(domain.PermCoursesManage)},
 		{Name: string(domain.PermLecturesManage)},
-		{Name: string(domain.PermManageLevels)},
+		{Name: string(domain.PermManageClasses)},
 		{Name: string(domain.PermManageDepartments)},
-		{Name: string(domain.PermManageSessions)},
 		{Name: string(domain.PermManageSemesters)},
 	}
 	return db.Clauses(clause.OnConflict{DoNothing: true}).Create(&perms).Error

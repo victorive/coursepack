@@ -1,4 +1,4 @@
-package level
+package class
 
 import (
 	"context"
@@ -14,15 +14,17 @@ import (
 )
 
 type Service interface {
-	Create(ctx context.Context, creatorUUID string, req *CreateLevelRequest) (*LevelResponse, error)
-	List(ctx context.Context, q pagination.Query) ([]*LevelResponse, int64, error)
-	Get(ctx context.Context, id int64) (*LevelResponse, error)
+	Create(ctx context.Context, creatorUUID string, req *CreateClassRequest) (*ClassResponse, error)
+	Update(ctx context.Context, updaterUUID string, classID int64, req *UpdateClassRequest) (*ClassResponse, error)
+	List(ctx context.Context, q pagination.Query) ([]*ClassResponse, int64, error)
+	Get(ctx context.Context, id int64) (*ClassResponse, error)
 	Delete(ctx context.Context, id int64) error
 	RequestJoin(ctx context.Context, userUUID string, req *JoinRequest) (*JoinRequestResponse, error)
-	ListPendingJoinRequests(ctx context.Context, levelID int64) ([]*JoinRequestResponse, error)
-	ReviewJoinRequest(ctx context.Context, reviewerUUID string, levelID, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error)
-	ListMembers(ctx context.Context, levelID int64) ([]*MemberResponse, error)
-	RemoveMember(ctx context.Context, levelID, userID int64) error
+	ListPendingJoinRequests(ctx context.Context, classID int64) ([]*JoinRequestResponse, error)
+	ReviewJoinRequest(ctx context.Context, reviewerUUID string, classID, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error)
+	ListMembers(ctx context.Context, classID int64) ([]*MemberResponse, error)
+	RemoveMember(ctx context.Context, classID, userID int64) error
+	ListLevels(ctx context.Context) ([]*LevelResponse, error)
 }
 
 type UserRepository interface {
@@ -51,7 +53,7 @@ func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error)
 	return u.ID, nil
 }
 
-func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateLevelRequest) (*LevelResponse, error) {
+func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateClassRequest) (*ClassResponse, error) {
 	creatorID, err := s.resolveUserID(ctx, creatorUUID)
 	if err != nil {
 		return nil, err
@@ -62,49 +64,51 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateLev
 		return nil, apperr.New("failed to generate invite code", http.StatusInternalServerError).Wrap(err)
 	}
 
-	c := &domain.Level{
-		DepartmentID: req.DepartmentID,
-		Year:         req.Year,
-		InviteCode:   code,
-		CreatedBy:    &creatorID,
+	c := &domain.Class{
+		DepartmentID:     req.DepartmentID,
+		AdmissionSession: req.AdmissionSession,
+		CurrentLevelID:   req.CurrentLevelID,
+		Name:             req.Name,
+		InviteCode:       code,
+		CreatedBy:        &creatorID,
 	}
 
 	if err := s.repo.Create(ctx, c); err != nil {
-		return nil, apperr.New("failed to create level", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.New("failed to create class", http.StatusInternalServerError).Wrap(err)
 	}
 
-	if err := s.rbacSvc.AssignLevelRole(ctx, creatorID, c.ID, domain.RoleClassRep); err != nil {
+	if err := s.rbacSvc.AssignClassRole(ctx, creatorID, c.ID, domain.RoleClassRep); err != nil {
 		s.logger.Warn("failed to assign class_rep role", "error", err)
 	}
 
-	return toLevelResponse(c), nil
+	return toClassResponse(c), nil
 }
 
-func (s *service) List(ctx context.Context, q pagination.Query) ([]*LevelResponse, int64, error) {
+func (s *service) List(ctx context.Context, q pagination.Query) ([]*ClassResponse, int64, error) {
 	total, err := s.repo.Count(ctx)
 	if err != nil {
-		return nil, 0, apperr.New("failed to list levels", http.StatusInternalServerError).Wrap(err)
+		return nil, 0, apperr.New("failed to list classes", http.StatusInternalServerError).Wrap(err)
 	}
-	levels, err := s.repo.FindPaginated(ctx, q.Offset(), q.Limit())
+	classes, err := s.repo.FindPaginated(ctx, q.Offset(), q.Limit())
 	if err != nil {
-		return nil, 0, apperr.New("failed to list levels", http.StatusInternalServerError).Wrap(err)
+		return nil, 0, apperr.New("failed to list classes", http.StatusInternalServerError).Wrap(err)
 	}
-	result := make([]*LevelResponse, 0, len(levels))
-	for _, c := range levels {
-		result = append(result, toLevelResponse(c))
+	result := make([]*ClassResponse, 0, len(classes))
+	for _, c := range classes {
+		result = append(result, toClassResponse(c))
 	}
 	return result, total, nil
 }
 
-func (s *service) Get(ctx context.Context, id int64) (*LevelResponse, error) {
+func (s *service) Get(ctx context.Context, id int64) (*ClassResponse, error) {
 	c, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if c == nil {
-		return nil, apperr.New("level not found", http.StatusNotFound)
+		return nil, apperr.New("class not found", http.StatusNotFound)
 	}
-	return toLevelResponse(c), nil
+	return toClassResponse(c), nil
 }
 
 func (s *service) Delete(ctx context.Context, id int64) error {
@@ -113,12 +117,36 @@ func (s *service) Delete(ctx context.Context, id int64) error {
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if c == nil {
-		return apperr.New("level not found", http.StatusNotFound)
+		return apperr.New("class not found", http.StatusNotFound)
 	}
 	if err := s.repo.Delete(ctx, id); err != nil {
-		return apperr.New("failed to delete level", http.StatusInternalServerError).Wrap(err)
+		return apperr.New("failed to delete class", http.StatusInternalServerError).Wrap(err)
 	}
 	return nil
+}
+
+func (s *service) Update(ctx context.Context, updaterUUID string, classID int64, req *UpdateClassRequest) (*ClassResponse, error) {
+	_, err := s.resolveUserID(ctx, updaterUUID)
+	if err != nil {
+		return nil, err
+	}
+	c, err := s.repo.FindByID(ctx, classID)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if c == nil {
+		return nil, apperr.New("class not found", http.StatusNotFound)
+	}
+	if req.Name != "" {
+		c.Name = req.Name
+	}
+	if req.CurrentLevelID != 0 {
+		c.CurrentLevelID = req.CurrentLevelID
+	}
+	if err := s.repo.Update(ctx, c); err != nil {
+		return nil, apperr.New("failed to update class", http.StatusInternalServerError).Wrap(err)
+	}
+	return toClassResponse(c), nil
 }
 
 func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinRequest) (*JoinRequestResponse, error) {
@@ -126,23 +154,23 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 	if err != nil {
 		return nil, err
 	}
-	level, err := s.repo.FindByInviteCode(ctx, req.InviteCode)
+	cls, err := s.repo.FindByInviteCode(ctx, req.InviteCode)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
-	if level == nil {
+	if cls == nil {
 		return nil, apperr.New("invalid invite code", http.StatusNotFound)
 	}
 
-	isMember, err := s.repo.IsMember(ctx, level.ID, userID)
+	isMember, err := s.repo.IsMember(ctx, cls.ID, userID)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if isMember {
-		return nil, apperr.New("already a member of this level", http.StatusConflict)
+		return nil, apperr.New("already a member of this class", http.StatusConflict)
 	}
 
-	existing, err := s.repo.FindJoinRequestByLevelAndUser(ctx, level.ID, userID)
+	existing, err := s.repo.FindJoinRequestByClassAndUser(ctx, cls.ID, userID)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -151,7 +179,7 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 	}
 
 	jr := &domain.JoinRequest{
-		LevelID: level.ID,
+		ClassID: cls.ID,
 		UserID:  userID,
 		Status:  domain.JoinStatusPending,
 	}
@@ -161,8 +189,8 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 	return toJoinRequestResponse(jr), nil
 }
 
-func (s *service) ListPendingJoinRequests(ctx context.Context, levelID int64) ([]*JoinRequestResponse, error) {
-	requests, err := s.repo.FindPendingJoinRequests(ctx, levelID)
+func (s *service) ListPendingJoinRequests(ctx context.Context, classID int64) ([]*JoinRequestResponse, error) {
+	requests, err := s.repo.FindPendingJoinRequests(ctx, classID)
 	if err != nil {
 		return nil, apperr.New("failed to list join requests", http.StatusInternalServerError).Wrap(err)
 	}
@@ -173,7 +201,7 @@ func (s *service) ListPendingJoinRequests(ctx context.Context, levelID int64) ([
 	return result, nil
 }
 
-func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, levelID, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error) {
+func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, classID, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error) {
 	reviewerID, err := s.resolveUserID(ctx, reviewerUUID)
 	if err != nil {
 		return nil, err
@@ -185,7 +213,7 @@ func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, le
 	if jr == nil {
 		return nil, apperr.New("join request not found", http.StatusNotFound)
 	}
-	if jr.LevelID != levelID {
+	if jr.ClassID != classID {
 		return nil, apperr.New("join request not found", http.StatusNotFound)
 	}
 	if jr.Status != domain.JoinStatusPending {
@@ -201,11 +229,11 @@ func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, le
 		if err := s.repo.UpdateJoinRequest(ctx, jr); err != nil {
 			return nil, apperr.New("failed to approve join request", http.StatusInternalServerError).Wrap(err)
 		}
-		m := &domain.LevelMember{LevelID: jr.LevelID, UserID: jr.UserID}
+		m := &domain.ClassMember{ClassID: jr.ClassID, UserID: jr.UserID}
 		if err := s.repo.AddMember(ctx, m); err != nil {
 			return nil, apperr.New("failed to add member", http.StatusInternalServerError).Wrap(err)
 		}
-		if err := s.rbacSvc.AssignLevelRole(ctx, jr.UserID, jr.LevelID, domain.RoleStudent); err != nil {
+		if err := s.rbacSvc.AssignClassRole(ctx, jr.UserID, jr.ClassID, domain.RoleStudent); err != nil {
 			s.logger.Warn("failed to assign student role", "error", err)
 		}
 	} else {
@@ -218,8 +246,8 @@ func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, le
 	return toJoinRequestResponse(jr), nil
 }
 
-func (s *service) ListMembers(ctx context.Context, levelID int64) ([]*MemberResponse, error) {
-	members, err := s.repo.FindMembers(ctx, levelID)
+func (s *service) ListMembers(ctx context.Context, classID int64) ([]*MemberResponse, error) {
+	members, err := s.repo.FindMembers(ctx, classID)
 	if err != nil {
 		return nil, apperr.New("failed to list members", http.StatusInternalServerError).Wrap(err)
 	}
@@ -230,16 +258,30 @@ func (s *service) ListMembers(ctx context.Context, levelID int64) ([]*MemberResp
 	return result, nil
 }
 
-func (s *service) RemoveMember(ctx context.Context, levelID, userID int64) error {
-	isMember, err := s.repo.IsMember(ctx, levelID, userID)
+func (s *service) RemoveMember(ctx context.Context, classID, userID int64) error {
+	isMember, err := s.repo.IsMember(ctx, classID, userID)
 	if err != nil {
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !isMember {
-		return apperr.New("user is not a member of this level", http.StatusNotFound)
+		return apperr.New("user is not a member of this class", http.StatusNotFound)
 	}
-	if err := s.repo.RemoveMember(ctx, levelID, userID); err != nil {
+	if err := s.repo.RemoveMember(ctx, classID, userID); err != nil {
 		return apperr.New("failed to remove member", http.StatusInternalServerError).Wrap(err)
 	}
 	return nil
+}
+
+func (s *service) ListLevels(ctx context.Context) ([]*LevelResponse, error) {
+	levels, err := s.repo.FindAllLevels(ctx)
+	if err != nil {
+		return nil, apperr.New("failed to fetch levels", http.StatusInternalServerError).Wrap(err)
+	}
+
+	resp := make([]*LevelResponse, len(levels))
+	for i, l := range levels {
+		resp[i] = toLevelResponse(l)
+	}
+
+	return resp, nil
 }

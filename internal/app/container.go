@@ -14,10 +14,10 @@ import (
 	"github.com/victorive/klaro-backend/internal/email/templates"
 	"github.com/victorive/klaro-backend/internal/feature/academic"
 	"github.com/victorive/klaro-backend/internal/feature/auth"
+	"github.com/victorive/klaro-backend/internal/feature/class"
 	"github.com/victorive/klaro-backend/internal/feature/course"
 	"github.com/victorive/klaro-backend/internal/feature/department"
 	"github.com/victorive/klaro-backend/internal/feature/file"
-	"github.com/victorive/klaro-backend/internal/feature/level"
 	"github.com/victorive/klaro-backend/internal/feature/rbac"
 	"github.com/victorive/klaro-backend/internal/feature/user"
 	jwt "github.com/victorive/klaro-backend/internal/pkg/jwt"
@@ -41,7 +41,7 @@ type Container struct {
 	AuthRepository    auth.Repository
 	UserService       user.Service
 	DepartmentService department.Service
-	LevelService      level.Service
+	ClassService      class.Service
 	AcademicService   academic.Service
 	CourseService     course.Service
 	FileService       file.Service
@@ -154,7 +154,7 @@ func (c *Container) initServices() {
 
 	courseRepo := course.NewRepository(c.GORM)
 	c.DepartmentService = department.NewService(department.NewRepository(c.GORM), c.Logger)
-	c.LevelService = level.NewService(level.NewRepository(c.GORM), authRepo, c.RBAC, c.Logger)
+	c.ClassService = class.NewService(class.NewRepository(c.GORM), authRepo, c.RBAC, c.Logger)
 	c.AcademicService = academic.NewService(academic.NewRepository(c.GORM), c.Logger)
 	c.CourseService = course.NewService(courseRepo, c.RBAC, c.Logger)
 	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, courseRepo, c.RBAC, c.Storage, cfg.Storage.MaxFileSize, c.Logger)

@@ -9,6 +9,7 @@ type Seeder interface {
 
 var orderedRegistry = []Seeder{
 	permissionsSeeder{},
+	levelsSeeder{},
 	rolesSeeder{},
 	rolePermissionsSeeder{},
 	superAdminSeeder{},

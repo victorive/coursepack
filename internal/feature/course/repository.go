@@ -9,7 +9,7 @@ import (
 
 type Repository interface {
 	CreateCourse(ctx context.Context, c *domain.Course) error
-	FindCoursesByLevel(ctx context.Context, levelID int64) ([]*domain.Course, error)
+	FindCoursesByClass(ctx context.Context, classID int64) ([]*domain.Course, error)
 	FindCoursesBySemester(ctx context.Context, semesterID int64) ([]*domain.Course, error)
 	FindCourseByID(ctx context.Context, id int64) (*domain.Course, error)
 	UpdateCourse(ctx context.Context, c *domain.Course) error
@@ -32,9 +32,9 @@ func (r *repository) CreateCourse(ctx context.Context, c *domain.Course) error {
 	return r.db.WithContext(ctx).Create(c).Error
 }
 
-func (r *repository) FindCoursesByLevel(ctx context.Context, levelID int64) ([]*domain.Course, error) {
+func (r *repository) FindCoursesByClass(ctx context.Context, classID int64) ([]*domain.Course, error) {
 	var courses []*domain.Course
-	if err := r.db.WithContext(ctx).Where("level_id = ?", levelID).Order("code ASC").Find(&courses).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("class_id = ?", classID).Order("code ASC").Find(&courses).Error; err != nil {
 		return nil, err
 	}
 	return courses, nil

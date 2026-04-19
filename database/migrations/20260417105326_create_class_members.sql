@@ -1,11 +1,11 @@
 -- +goose Up
-CREATE TABLE level_members (
+CREATE TABLE class_members (
     id        BIGSERIAL   PRIMARY KEY,
-    level_id  BIGINT      NOT NULL REFERENCES levels(id) ON DELETE CASCADE,
+    class_id  BIGINT      NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
     user_id   BIGINT      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (level_id, user_id)
+    UNIQUE (class_id, user_id)
 );
 
 -- +goose Down
-DROP TABLE level_members;
+DROP TABLE class_members;

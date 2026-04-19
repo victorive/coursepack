@@ -20,9 +20,8 @@ var rolePerms = map[domain.RoleName][]domain.PermissionName{
 		domain.PermFilesApprove,
 		domain.PermCoursesManage,
 		domain.PermLecturesManage,
-		domain.PermManageLevels,
+		domain.PermManageClasses,
 		domain.PermManageDepartments,
-		domain.PermManageSessions,
 		domain.PermManageSemesters,
 	},
 	domain.RoleClassRep: {
@@ -43,7 +42,7 @@ var rolePerms = map[domain.RoleName][]domain.PermissionName{
 	domain.RoleStudent: {
 		domain.PermMembersList,
 		domain.PermFilesUpload,
-		domain.PermManageLevels,
+		domain.PermManageClasses,
 	},
 }
 

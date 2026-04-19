@@ -11,11 +11,11 @@ import (
 
 type Repository interface {
 	HasGlobalRole(ctx context.Context, userID int64, role domain.RoleName) (bool, error)
-	HasLevelRole(ctx context.Context, userID, levelID int64, role domain.RoleName) (bool, error)
+	HasClassRole(ctx context.Context, userID, classID int64, role domain.RoleName) (bool, error)
 	AssignGlobalRole(ctx context.Context, userID int64, role domain.RoleName) error
-	AssignLevelRole(ctx context.Context, userID, levelID int64, role domain.RoleName) error
+	AssignClassRole(ctx context.Context, userID, classID int64, role domain.RoleName) error
 	HasGlobalPermission(ctx context.Context, userUUID string, perm domain.PermissionName) (bool, error)
-	HasLevelPermission(ctx context.Context, userUUID string, levelID int64, perm domain.PermissionName) (bool, error)
+	HasClassPermission(ctx context.Context, userUUID string, classID int64, perm domain.PermissionName) (bool, error)
 	GetUserRoles(ctx context.Context, userUUID string) ([]string, error)
 	GetUserPermissions(ctx context.Context, userUUID string) ([]string, error)
 }
@@ -43,16 +43,16 @@ func (r *gormRepository) HasGlobalRole(ctx context.Context, userID int64, role d
 	return count > 0, nil
 }
 
-func (r *gormRepository) HasLevelRole(ctx context.Context, userID, levelID int64, role domain.RoleName) (bool, error) {
+func (r *gormRepository) HasClassRole(ctx context.Context, userID, classID int64, role domain.RoleName) (bool, error) {
 	var count int64
 
 	err := r.db.WithContext(ctx).
 		Table("user_roles ur").
 		Joins("JOIN roles r ON r.id = ur.role_id").
-		Where("ur.user_id = ? AND ur.scope_type = 'level' AND ur.scope_id = ? AND r.name = ?", userID, levelID, string(role)).
+		Where("ur.user_id = ? AND ur.scope_type = 'class' AND ur.scope_id = ? AND r.name = ?", userID, classID, string(role)).
 		Count(&count).Error
 	if err != nil {
-		return false, fmt.Errorf("rbac.HasLevelRole: %w", err)
+		return false, fmt.Errorf("rbac.HasClassRole: %w", err)
 	}
 
 	return count > 0, nil
@@ -80,7 +80,7 @@ func (r *gormRepository) AssignGlobalRole(ctx context.Context, userID int64, rol
 	return nil
 }
 
-func (r *gormRepository) AssignLevelRole(ctx context.Context, userID, levelID int64, role domain.RoleName) error {
+func (r *gormRepository) AssignClassRole(ctx context.Context, userID, classID int64, role domain.RoleName) error {
 	roleID, err := r.roleIDByName(ctx, role)
 	if err != nil {
 		return err
@@ -89,14 +89,14 @@ func (r *gormRepository) AssignLevelRole(ctx context.Context, userID, levelID in
 	ur := domain.UserRole{
 		UserID:    userID,
 		RoleID:    roleID,
-		ScopeType: "level",
-		ScopeID:   &levelID,
+		ScopeType: "class",
+		ScopeID:   &classID,
 	}
 
 	if err := r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{DoNothing: true}).
 		Create(&ur).Error; err != nil {
-		return fmt.Errorf("rbac.AssignLevelRole: %w", err)
+		return fmt.Errorf("rbac.AssignClassRole: %w", err)
 	}
 
 	return nil
@@ -120,7 +120,7 @@ func (r *gormRepository) HasGlobalPermission(ctx context.Context, userUUID strin
 	return count > 0, nil
 }
 
-func (r *gormRepository) HasLevelPermission(ctx context.Context, userUUID string, levelID int64, perm domain.PermissionName) (bool, error) {
+func (r *gormRepository) HasClassPermission(ctx context.Context, userUUID string, classID int64, perm domain.PermissionName) (bool, error) {
 	var count int64
 
 	err := r.db.WithContext(ctx).
@@ -130,12 +130,12 @@ func (r *gormRepository) HasLevelPermission(ctx context.Context, userUUID string
 		Joins("JOIN role_permissions rp ON rp.role_id = ro.id").
 		Joins("JOIN permissions p ON p.id = rp.permission_id").
 		Where(
-			"u.uuid = ? AND p.name = ? AND (ur.scope_type = 'global' OR (ur.scope_type = 'level' AND ur.scope_id = ?))",
-			userUUID, string(perm), levelID,
+			"u.uuid = ? AND p.name = ? AND (ur.scope_type = 'global' OR (ur.scope_type = 'class' AND ur.scope_id = ?))",
+			userUUID, string(perm), classID,
 		).
 		Count(&count).Error
 	if err != nil {
-		return false, fmt.Errorf("rbac.HasLevelPermission: %w", err)
+		return false, fmt.Errorf("rbac.HasClassPermission: %w", err)
 	}
 
 	return count > 0, nil

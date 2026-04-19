@@ -12,7 +12,7 @@ import (
 
 type Service interface {
 	CreateCourse(ctx context.Context, actorUUID string, req CreateCourseRequest) (*CourseResponse, error)
-	ListCoursesByLevel(ctx context.Context, levelID int64) ([]*CourseResponse, error)
+	ListCoursesByClass(ctx context.Context, classID int64) ([]*CourseResponse, error)
 	ListCoursesBySemester(ctx context.Context, semesterID int64) ([]*CourseResponse, error)
 	GetCourse(ctx context.Context, id int64) (*CourseResponse, error)
 	UpdateCourse(ctx context.Context, actorUUID string, id int64, req UpdateCourseRequest) (*CourseResponse, error)
@@ -36,7 +36,7 @@ func NewService(repo Repository, rbacSvc rbac.Service, logger *slog.Logger) Serv
 }
 
 func (s *service) CreateCourse(ctx context.Context, actorUUID string, req CreateCourseRequest) (*CourseResponse, error) {
-	ok, err := s.rbacSvc.HasLevelPermission(ctx, actorUUID, req.LevelID, domain.PermCoursesManage)
+	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, req.ClassID, domain.PermCoursesManage)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -46,7 +46,7 @@ func (s *service) CreateCourse(ctx context.Context, actorUUID string, req Create
 	}
 
 	c := &domain.Course{
-		LevelID:    req.LevelID,
+		ClassID:    req.ClassID,
 		SemesterID: req.SemesterID,
 		Code:       req.Code,
 		Title:      req.Title,
@@ -58,8 +58,8 @@ func (s *service) CreateCourse(ctx context.Context, actorUUID string, req Create
 	return toCourseResponse(c), nil
 }
 
-func (s *service) ListCoursesByLevel(ctx context.Context, levelID int64) ([]*CourseResponse, error) {
-	courses, err := s.repo.FindCoursesByLevel(ctx, levelID)
+func (s *service) ListCoursesByClass(ctx context.Context, classID int64) ([]*CourseResponse, error) {
+	courses, err := s.repo.FindCoursesByClass(ctx, classID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch courses", http.StatusInternalServerError).Wrap(err)
 	}
@@ -103,7 +103,7 @@ func (s *service) UpdateCourse(ctx context.Context, actorUUID string, id int64, 
 		return nil, apperr.New("course not found", http.StatusNotFound)
 	}
 
-	ok, err := s.rbacSvc.HasLevelPermission(ctx, actorUUID, c.LevelID, domain.PermCoursesManage)
+	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, c.ClassID, domain.PermCoursesManage)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -141,7 +141,7 @@ func (s *service) DeleteCourse(ctx context.Context, actorUUID string, id int64) 
 		return apperr.New("course not found", http.StatusNotFound)
 	}
 
-	ok, err := s.rbacSvc.HasLevelPermission(ctx, actorUUID, c.LevelID, domain.PermCoursesManage)
+	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, c.ClassID, domain.PermCoursesManage)
 	if err != nil {
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -162,7 +162,7 @@ func (s *service) CreateLecture(ctx context.Context, actorUUID string, req Creat
 		return nil, apperr.New("course not found", http.StatusNotFound)
 	}
 
-	ok, err := s.rbacSvc.HasLevelPermission(ctx, actorUUID, c.LevelID, domain.PermLecturesManage)
+	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, c.ClassID, domain.PermLecturesManage)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -234,7 +234,7 @@ func (s *service) UpdateLecture(ctx context.Context, actorUUID string, id int64,
 		return nil, apperr.New("course not found", http.StatusNotFound)
 	}
 
-	ok, err := s.rbacSvc.HasLevelPermission(ctx, actorUUID, c.LevelID, domain.PermLecturesManage)
+	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, c.ClassID, domain.PermLecturesManage)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -287,7 +287,7 @@ func (s *service) ArchiveLecture(ctx context.Context, actorUUID string, id int64
 		return apperr.New("course not found", http.StatusNotFound)
 	}
 
-	ok, err := s.rbacSvc.HasLevelPermission(ctx, actorUUID, c.LevelID, domain.PermLecturesManage)
+	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, c.ClassID, domain.PermLecturesManage)
 	if err != nil {
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -297,6 +297,6 @@ func (s *service) ArchiveLecture(ctx context.Context, actorUUID string, id int64
 	}
 
 	l.Status = string(domain.LectureStatusArchived)
-	
+
 	return s.repo.UpdateLecture(ctx, l)
 }
