@@ -9,6 +9,7 @@ func Register(r fiber.Router, c *app.Container) {
 	v1 := r.Group("/v1")
 	authRoutes(v1, c)
 	userRoutes(v1, c)
+	universityRoutes(v1, c)
 	departmentRoutes(v1, c)
 	classRoutes(v1, c)
 	academicRoutes(v1, c)

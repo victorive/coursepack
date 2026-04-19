@@ -57,6 +57,7 @@ type UserResponse struct {
 	AvatarURL     *string  `json:"avatar_url"`
 	Provider      *string  `json:"provider"`
 	EmailVerified bool     `json:"email_verified"`
+	UniversityID  *int64   `json:"university_id"`
 	Roles         []string `json:"roles"`
 	Permissions   []string `json:"permissions"`
 }

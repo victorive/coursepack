@@ -133,6 +133,7 @@ func (s *service) buildUserResponse(ctx context.Context, u *domain.User) (*UserR
 		AvatarURL:     u.AvatarURL,
 		Provider:      u.Provider,
 		EmailVerified: u.EmailVerified,
+		UniversityID:  u.UniversityID,
 		Roles:         roles,
 		Permissions:   perms,
 	}, nil

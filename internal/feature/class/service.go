@@ -16,7 +16,7 @@ import (
 type Service interface {
 	Create(ctx context.Context, creatorUUID string, req *CreateClassRequest) (*ClassResponse, error)
 	Update(ctx context.Context, updaterUUID string, classID int64, req *UpdateClassRequest) (*ClassResponse, error)
-	List(ctx context.Context, q pagination.Query) ([]*ClassResponse, int64, error)
+	List(ctx context.Context, userUUID string, q pagination.Query) ([]*ClassResponse, int64, error)
 	Get(ctx context.Context, id int64) (*ClassResponse, error)
 	Delete(ctx context.Context, id int64) error
 	RequestJoin(ctx context.Context, userUUID string, req *JoinRequest) (*JoinRequestResponse, error)
@@ -31,32 +31,56 @@ type UserRepository interface {
 	FindByUUID(ctx context.Context, uuid string) (*domain.User, error)
 }
 
+type DepartmentRepository interface {
+	FindByID(ctx context.Context, id int64) (*domain.Department, error)
+}
+
 type service struct {
 	repo     Repository
 	userRepo UserRepository
+	deptRepo DepartmentRepository
 	rbacSvc  rbac.Service
 	logger   *slog.Logger
 }
 
-func NewService(repo Repository, userRepo UserRepository, rbacSvc rbac.Service, logger *slog.Logger) Service {
-	return &service{repo: repo, userRepo: userRepo, rbacSvc: rbacSvc, logger: logger}
+func NewService(repo Repository, userRepo UserRepository, deptRepo DepartmentRepository, rbacSvc rbac.Service, logger *slog.Logger) Service {
+	return &service{repo: repo, userRepo: userRepo, deptRepo: deptRepo, rbacSvc: rbacSvc, logger: logger}
+}
+
+func (s *service) resolveUser(ctx context.Context, uuid string) (*domain.User, error) {
+	u, err := s.userRepo.FindByUUID(ctx, uuid)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if u == nil {
+		return nil, apperr.New("user not found", http.StatusNotFound)
+	}
+	return u, nil
 }
 
 func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error) {
-	u, err := s.userRepo.FindByUUID(ctx, uuid)
+	u, err := s.resolveUser(ctx, uuid)
 	if err != nil {
-		return 0, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
-	}
-	if u == nil {
-		return 0, apperr.New("user not found", http.StatusNotFound)
+		return 0, err
 	}
 	return u.ID, nil
 }
 
 func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateClassRequest) (*ClassResponse, error) {
-	creatorID, err := s.resolveUserID(ctx, creatorUUID)
+	creator, err := s.resolveUser(ctx, creatorUUID)
 	if err != nil {
 		return nil, err
+	}
+
+	dept, err := s.deptRepo.FindByID(ctx, req.DepartmentID)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if dept == nil {
+		return nil, apperr.New("department not found", http.StatusNotFound)
+	}
+	if creator.UniversityID == nil || dept.UniversityID != *creator.UniversityID {
+		return nil, apperr.New("department does not belong to your university", http.StatusForbidden)
 	}
 
 	code, err := hash.GenerateInviteCode()
@@ -70,26 +94,34 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 		CurrentLevelID:   req.CurrentLevelID,
 		Name:             req.Name,
 		InviteCode:       code,
-		CreatedBy:        &creatorID,
+		CreatedBy:        &creator.ID,
 	}
 
 	if err := s.repo.Create(ctx, c); err != nil {
 		return nil, apperr.New("failed to create class", http.StatusInternalServerError).Wrap(err)
 	}
 
-	if err := s.rbacSvc.AssignClassRole(ctx, creatorID, c.ID, domain.RoleClassRep); err != nil {
+	if err := s.rbacSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleClassRep); err != nil {
 		s.logger.Warn("failed to assign class_rep role", "error", err)
 	}
 
 	return toClassResponse(c), nil
 }
 
-func (s *service) List(ctx context.Context, q pagination.Query) ([]*ClassResponse, int64, error) {
-	total, err := s.repo.Count(ctx)
+func (s *service) List(ctx context.Context, userUUID string, q pagination.Query) ([]*ClassResponse, int64, error) {
+	user, err := s.resolveUser(ctx, userUUID)
+	if err != nil {
+		return nil, 0, err
+	}
+	if user.UniversityID == nil {
+		return []*ClassResponse{}, 0, nil
+	}
+	universityID := *user.UniversityID
+	total, err := s.repo.CountByUniversity(ctx, universityID)
 	if err != nil {
 		return nil, 0, apperr.New("failed to list classes", http.StatusInternalServerError).Wrap(err)
 	}
-	classes, err := s.repo.FindPaginated(ctx, q.Offset(), q.Limit())
+	classes, err := s.repo.FindPaginatedByUniversity(ctx, universityID, q.Offset(), q.Limit())
 	if err != nil {
 		return nil, 0, apperr.New("failed to list classes", http.StatusInternalServerError).Wrap(err)
 	}
@@ -150,15 +182,25 @@ func (s *service) Update(ctx context.Context, updaterUUID string, classID int64,
 }
 
 func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinRequest) (*JoinRequestResponse, error) {
-	userID, err := s.resolveUserID(ctx, userUUID)
+	user, err := s.resolveUser(ctx, userUUID)
 	if err != nil {
 		return nil, err
 	}
+	userID := user.ID
+
 	cls, err := s.repo.FindByInviteCode(ctx, req.InviteCode)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if cls == nil {
+		return nil, apperr.New("invalid invite code", http.StatusNotFound)
+	}
+
+	dept, err := s.deptRepo.FindByID(ctx, cls.DepartmentID)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if dept == nil || user.UniversityID == nil || dept.UniversityID != *user.UniversityID {
 		return nil, apperr.New("invalid invite code", http.StatusNotFound)
 	}
 

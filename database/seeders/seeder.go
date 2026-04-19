@@ -8,6 +8,8 @@ type Seeder interface {
 }
 
 var orderedRegistry = []Seeder{
+	universitiesSeeder{},
+	departmentsSeeder{},
 	permissionsSeeder{},
 	levelsSeeder{},
 	rolesSeeder{},

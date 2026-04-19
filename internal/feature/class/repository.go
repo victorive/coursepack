@@ -25,6 +25,8 @@ type Repository interface {
 	FindPendingJoinRequests(ctx context.Context, classID int64) ([]*domain.JoinRequest, error)
 	UpdateJoinRequest(ctx context.Context, jr *domain.JoinRequest) error
 	FindAllLevels(ctx context.Context) ([]*domain.Level, error)
+	CountByUniversity(ctx context.Context, universityID int64) (int64, error)
+	FindPaginatedByUniversity(ctx context.Context, universityID int64, offset, limit int) ([]*domain.Class, error)
 }
 
 type repository struct {
@@ -159,4 +161,27 @@ func (r *repository) FindAllLevels(ctx context.Context) ([]*domain.Level, error)
 		return nil, err
 	}
 	return levels, nil
+}
+
+func (r *repository) CountByUniversity(ctx context.Context, universityID int64) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.Class{}).
+		Joins("JOIN departments ON departments.id = classes.department_id").
+		Where("departments.university_id = ?", universityID).
+		Count(&count).Error
+
+	return count, err
+}
+
+func (r *repository) FindPaginatedByUniversity(ctx context.Context, universityID int64, offset, limit int) ([]*domain.Class, error) {
+	var classes []*domain.Class
+	err := r.db.WithContext(ctx).
+		Joins("JOIN departments ON departments.id = classes.department_id").
+		Where("departments.university_id = ?", universityID).
+		Order("classes.id ASC").
+		Offset(offset).Limit(limit).
+		Find(&classes).Error
+		
+	return classes, err
 }

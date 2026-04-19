@@ -2,14 +2,22 @@ package domain
 
 import "time"
 
+type University struct {
+	ID        int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	Name      string    `gorm:"column:name;not null;uniqueIndex"`
+	Acronym   string    `gorm:"column:acronym;not null;uniqueIndex"`
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
+}
+
 type Department struct {
-	ID         int64     `gorm:"column:id;primaryKey;autoIncrement"`
-	Name       string    `gorm:"column:name;not null"`
-	Code       string    `gorm:"column:code;not null"`
-	Faculty    string    `gorm:"column:faculty;not null"`
-	University string    `gorm:"column:university;not null"`
-	CreatedAt  time.Time `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt  time.Time `gorm:"column:updated_at;autoUpdateTime"`
+	ID           int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	UniversityID int64     `gorm:"column:university_id;not null"`
+	Name         string    `gorm:"column:name;not null"`
+	Code         string    `gorm:"column:code;not null"`
+	Faculty      *string   `gorm:"column:faculty"`
+	CreatedAt    time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt    time.Time `gorm:"column:updated_at;autoUpdateTime"`
 }
 
 type Semester struct {

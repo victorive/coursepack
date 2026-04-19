@@ -19,7 +19,7 @@ func NewHandler(svc Service) *Handler {
 
 // UpdateProfile godoc
 // @Summary      Update profile
-// @Description  Updates the authenticated user's profile fields.
+// @Description  Updates the authenticated user's profile. All fields are optional — include only what you want to change. Set university_id to link the user to a university.
 // @Tags         Users
 // @Accept       json
 // @Produce      json

@@ -55,7 +55,8 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 // @Router       /classes [get]
 func (h *Handler) List(c *fiber.Ctx) error {
 	q := pagination.Parse(c)
-	items, total, err := h.svc.List(c.UserContext(), *q)
+	uuid, _ := middleware.UserUUID(c)
+	items, total, err := h.svc.List(c.UserContext(), uuid, *q)
 	if err != nil {
 		return err
 	}

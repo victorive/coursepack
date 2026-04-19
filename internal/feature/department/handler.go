@@ -1,21 +1,43 @@
 package department
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/klaro-backend/internal/middleware"
 	"github.com/victorive/klaro-backend/internal/pkg/pagination"
 	"github.com/victorive/klaro-backend/internal/pkg/response"
 	"github.com/victorive/klaro-backend/internal/pkg/validator"
 )
 
-type Handler struct {
-	svc Service
+type UserRepository interface {
+	FindByUUID(ctx context.Context, uuid string) (*domain.User, error)
 }
 
-func NewHandler(svc Service) *Handler {
-	return &Handler{svc: svc}
+type Handler struct {
+	svc      Service
+	userRepo UserRepository
+}
+
+func NewHandler(svc Service, userRepo UserRepository) *Handler {
+	return &Handler{svc: svc, userRepo: userRepo}
+}
+
+func (h *Handler) resolveUniversityID(c *fiber.Ctx) (int64, bool) {
+	userUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return 0, false
+	}
+
+	u, err := h.userRepo.FindByUUID(c.UserContext(), userUUID)
+	if err != nil || u == nil || u.UniversityID == nil {
+		return 0, false
+	}
+
+	return *u.UniversityID, true
 }
 
 // Create godoc
@@ -44,7 +66,7 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 
 // List godoc
 // @Summary      List departments
-// @Description  Returns a paginated list of all departments.
+// @Description  Returns a paginated list of departments scoped to the authenticated user's university. Returns an empty list if the user has not yet set a university.
 // @Tags         Departments
 // @Produce      json
 // @Param        page    query int false "Page number"
@@ -55,16 +77,22 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 // @Router       /departments [get]
 func (h *Handler) List(c *fiber.Ctx) error {
 	q := pagination.Parse(c)
-	items, total, err := h.svc.List(c.UserContext(), *q)
+	universityID, hasUniversity := h.resolveUniversityID(c)
+	if !hasUniversity {
+		return response.JSON(c, http.StatusOK, true, "departments retrieved", pagination.NewPaginated(c, []*DepartmentResponse{}, 0, q))
+	}
+
+	items, total, err := h.svc.ListByUniversity(c.UserContext(), universityID, *q)
 	if err != nil {
 		return err
 	}
+
 	return response.JSON(c, http.StatusOK, true, "departments retrieved", pagination.NewPaginated(c, items, total, q))
 }
 
 // Get godoc
 // @Summary      Get department
-// @Description  Returns a single department by ID.
+// @Description  Returns a single department by ID, scoped to the authenticated user's university.
 // @Tags         Departments
 // @Produce      json
 // @Param        id path int true "Department ID"
@@ -77,7 +105,13 @@ func (h *Handler) Get(c *fiber.Ctx) error {
 	if err != nil {
 		return response.JSON(c, http.StatusBadRequest, false, "invalid id", nil)
 	}
-	dept, err := h.svc.Get(c.UserContext(), id)
+	
+	universityID, hasUniversity := h.resolveUniversityID(c)
+	if !hasUniversity {
+		return response.JSON(c, http.StatusNotFound, false, "department not found", nil)
+	}
+
+	dept, err := h.svc.GetByIDAndUniversity(c.UserContext(), id, universityID)
 	if err != nil {
 		return err
 	}

@@ -29,8 +29,17 @@ func (s *service) UpdateProfile(ctx context.Context, userUUID string, req *Updat
 	if u == nil {
 		return apperr.New("user not found", http.StatusNotFound)
 	}
-	if err := s.repo.UpdatePhone(ctx, u.ID, req.Phone); err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	if req.Phone != nil {
+		if err := s.repo.UpdatePhone(ctx, u.ID, *req.Phone); err != nil {
+			return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		}
 	}
+	
+	if req.UniversityID != nil {
+		if err := s.repo.UpdateUniversity(ctx, u.ID, *req.UniversityID); err != nil {
+			return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		}
+	}
+
 	return nil
 }
