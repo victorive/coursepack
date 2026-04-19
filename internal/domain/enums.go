@@ -12,12 +12,16 @@ const (
 type PermissionName string
 
 const (
-	PermMembersList    PermissionName = "list_members"
-	PermMembersManage  PermissionName = "manage_members"
-	PermFilesUpload    PermissionName = "upload_files"
-	PermFilesApprove   PermissionName = "approve_files"
-	PermCoursesManage  PermissionName = "manage_courses"
-	PermLecturesManage PermissionName = "manage_lectures"
+	PermMembersList       PermissionName = "list_members"
+	PermMembersManage     PermissionName = "manage_members"
+	PermFilesUpload       PermissionName = "upload_files"
+	PermFilesApprove      PermissionName = "approve_files"
+	PermCoursesManage     PermissionName = "manage_courses"
+	PermLecturesManage    PermissionName = "manage_lectures"
+	PermManageLevels      PermissionName = "manage_levels"
+	PermManageDepartments PermissionName = "manage_departments"
+	PermManageSessions    PermissionName = "manage_sessions"
+	PermManageSemesters   PermissionName = "manage_semesters"
 )
 
 type ScopeType string

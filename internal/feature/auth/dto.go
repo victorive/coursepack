@@ -42,18 +42,21 @@ type ResetPasswordRequest struct {
 }
 
 type TokensResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresAt    int    `json:"expires_at"`
+	AccessToken  string        `json:"access_token"`
+	RefreshToken string        `json:"refresh_token"`
+	ExpiresAt    int           `json:"expires_at"`
+	User         *UserResponse `json:"user"`
 }
 
 type UserResponse struct {
-	ID            int64   `json:"id"`
-	UUID          string  `json:"uuid"`
-	Email         string  `json:"email"`
-	FullName      string  `json:"full_name"`
-	Phone         *string `json:"phone"`
-	AvatarURL     *string `json:"avatar_url"`
-	Provider      *string `json:"provider"`
-	EmailVerified bool    `json:"email_verified"`
+	ID            int64    `json:"id"`
+	UUID          string   `json:"uuid"`
+	Email         string   `json:"email"`
+	FullName      string   `json:"full_name"`
+	Phone         *string  `json:"phone"`
+	AvatarURL     *string  `json:"avatar_url"`
+	Provider      *string  `json:"provider"`
+	EmailVerified bool     `json:"email_verified"`
+	Roles         []string `json:"roles"`
+	Permissions   []string `json:"permissions"`
 }

@@ -28,8 +28,6 @@ type UserRole struct {
 	RoleID    int64     `gorm:"column:role_id;not null"`
 	ScopeType string    `gorm:"column:scope_type;not null;default:global"`
 	ScopeID   *int64    `gorm:"column:scope_id"`
-	GrantedBy *int64    `gorm:"column:granted_by"`
-	GrantedAt time.Time `gorm:"column:granted_at;autoCreateTime"`
 }
 
 type UserProfile struct {

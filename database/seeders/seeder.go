@@ -7,18 +7,19 @@ type Seeder interface {
 	Run(db *gorm.DB) error
 }
 
-var registry []Seeder
-
-func register(s Seeder) {
-	registry = append(registry, s)
+var orderedRegistry = []Seeder{
+	permissionsSeeder{},
+	rolesSeeder{},
+	rolePermissionsSeeder{},
+	superAdminSeeder{},
 }
 
 func All() []Seeder {
-	return registry
+	return orderedRegistry
 }
 
 func Find(name string) Seeder {
-	for _, s := range registry {
+	for _, s := range orderedRegistry {
 		if s.Name() == name {
 			return s
 		}

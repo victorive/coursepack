@@ -199,12 +199,19 @@ func (h *Handler) Review(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /files/{id}/archive [patch]
 func (h *Handler) Archive(c *fiber.Ctx) error {
+	actorUUID, ok := c.Locals(middleware.LocalsUserId).(string)
+	if !ok || actorUUID == "" {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+
 	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
-	if err := h.svc.Archive(c.UserContext(), id); err != nil {
+
+	if err := h.svc.Archive(c.UserContext(), id, actorUUID); err != nil {
 		return err
 	}
+	
 	return response.JSON(c, http.StatusOK, true, "file archived", nil)
 }

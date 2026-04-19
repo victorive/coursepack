@@ -47,7 +47,7 @@ func (r *repository) Count(ctx context.Context) (int64, error) {
 
 func (r *repository) FindPaginated(ctx context.Context, offset, limit int) ([]*domain.Level, error) {
 	var levels []*domain.Level
-	if err := r.db.WithContext(ctx).Order("level ASC").Offset(offset).Limit(limit).Find(&levels).Error; err != nil {
+	if err := r.db.WithContext(ctx).Order("id ASC").Offset(offset).Limit(limit).Find(&levels).Error; err != nil {
 		return nil, err
 	}
 	return levels, nil

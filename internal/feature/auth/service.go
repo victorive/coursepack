@@ -13,6 +13,7 @@ import (
 	"github.com/victorive/klaro-backend/internal/cache"
 	"github.com/victorive/klaro-backend/internal/domain"
 	"github.com/victorive/klaro-backend/internal/email"
+	"github.com/victorive/klaro-backend/internal/feature/rbac"
 	"github.com/victorive/klaro-backend/internal/pkg/apperr"
 	"github.com/victorive/klaro-backend/internal/pkg/hash"
 	"github.com/victorive/klaro-backend/internal/pkg/job"
@@ -49,12 +50,13 @@ type Service interface {
 }
 
 type service struct {
-	repo   Repository
-	cache  cache.Cache
-	mailer email.Mailer
-	jwt    *jwt.Manager
-	cfg    Config
-	logger *slog.Logger
+	repo     Repository
+	cache    cache.Cache
+	mailer   email.Mailer
+	jwt      *jwt.Manager
+	cfg      Config
+	rbacSvc rbac.Service
+	logger  *slog.Logger
 }
 
 func NewService(
@@ -63,15 +65,17 @@ func NewService(
 	mailer email.Mailer,
 	jwt *jwt.Manager,
 	cfg Config,
+	rbacSvc rbac.Service,
 	logger *slog.Logger,
 ) Service {
 	return &service{
-		repo:   repo,
-		cache:  c,
-		mailer: mailer,
-		jwt:    jwt,
-		cfg:    cfg,
-		logger: logger,
+		repo:    repo,
+		cache:   c,
+		mailer:  mailer,
+		jwt:     jwt,
+		cfg:     cfg,
+		rbacSvc: rbacSvc,
+		logger:  logger,
 	}
 }
 
@@ -107,6 +111,47 @@ func (s *service) issueTokens(ctx context.Context, u *domain.User) (*TokensRespo
 		RefreshToken: refresh,
 		ExpiresAt:    int(time.Now().Add(s.jwt.GetExpirationTime()).Unix()),
 	}, nil
+}
+
+func (s *service) buildUserResponse(ctx context.Context, u *domain.User) (*UserResponse, error) {
+	roles, err := s.rbacSvc.GetUserRoles(ctx, u.UUID)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+
+	perms, err := s.rbacSvc.GetUserPermissions(ctx, u.UUID)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+
+	return &UserResponse{
+		ID:            u.ID,
+		UUID:          u.UUID,
+		Email:         u.Email,
+		FullName:      u.FullName,
+		Phone:         u.Phone,
+		AvatarURL:     u.AvatarURL,
+		Provider:      u.Provider,
+		EmailVerified: u.EmailVerified,
+		Roles:         roles,
+		Permissions:   perms,
+	}, nil
+}
+
+func (s *service) toAuthResponse(ctx context.Context, u *domain.User) (*TokensResponse, error) {
+	tokens, err := s.issueTokens(ctx, u)
+	if err != nil {
+		return nil, err
+	}
+
+	userResp, err := s.buildUserResponse(ctx, u)
+	if err != nil {
+		return nil, err
+	}
+
+	tokens.User = userResp
+
+	return tokens, nil
 }
 
 func (s *service) sendOTPAsync(ctx context.Context, userEmail string) {
@@ -156,10 +201,14 @@ func (s *service) SignUp(ctx context.Context, req *SignUpRequest) (*TokensRespon
 	if err := s.repo.Create(ctx, u); err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
+	
+	if err := s.rbacSvc.AssignGlobalRole(ctx, u.ID, domain.RoleStudent); err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
 
 	s.sendOTPAsync(ctx, u.Email)
 
-	return s.issueTokens(ctx, u)
+	return s.toAuthResponse(ctx, u)
 }
 
 func (s *service) SignIn(ctx context.Context, req *SignInRequest) (*TokensResponse, error) {
@@ -185,7 +234,7 @@ func (s *service) SignIn(ctx context.Context, req *SignInRequest) (*TokensRespon
 		return nil, apperr.New("invalid email or password", http.StatusUnauthorized)
 	}
 
-	return s.issueTokens(ctx, u)
+	return s.toAuthResponse(ctx, u)
 }
 
 func (s *service) googleOAuthConfig() *oauth2.Config {
@@ -273,6 +322,9 @@ func (s *service) GoogleCallback(ctx context.Context, code, state string) (strin
 		if err := s.repo.Create(ctx, u); err != nil {
 			return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 		}
+		if err := s.rbacSvc.AssignGlobalRole(ctx, u.ID, domain.RoleStudent); err != nil {
+			return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		}
 	} else if u.Provider == nil || *u.Provider != string(domain.ProviderGoogle) {
 		return "", apperr.New("account registered with a different sign-in method", http.StatusUnprocessableEntity)
 	} else {
@@ -285,7 +337,7 @@ func (s *service) GoogleCallback(ctx context.Context, code, state string) (strin
 		}
 	}
 
-	tokens, err := s.issueTokens(ctx, u)
+	tokens, err := s.toAuthResponse(ctx, u)
 	if err != nil {
 		return "", err
 	}
@@ -392,7 +444,7 @@ func (s *service) Refresh(ctx context.Context, req *RefreshRequest) (*TokensResp
 		return nil, apperr.New("user not found", http.StatusNotFound)
 	}
 
-	return s.issueTokens(ctx, u)
+	return s.toAuthResponse(ctx, u)
 }
 
 func (s *service) ValidateToken(ctx context.Context, token string) (string, error) {
@@ -490,7 +542,7 @@ func (s *service) CheckEmailVerified(ctx context.Context, userUUID string) (bool
 	if u == nil {
 		return false, false, nil
 	}
-	
+
 	return u.EmailVerified, u.Provider != nil, nil
 }
 
@@ -502,18 +554,5 @@ func (s *service) Me(ctx context.Context, userUUID string) (*UserResponse, error
 	if u == nil {
 		return nil, apperr.New("user not found", http.StatusNotFound)
 	}
-	return toUserResponse(u), nil
-}
-
-func toUserResponse(u *domain.User) *UserResponse {
-	return &UserResponse{
-		ID:            u.ID,
-		UUID:          u.UUID,
-		Email:         u.Email,
-		FullName:      u.FullName,
-		Phone:         u.Phone,
-		AvatarURL:     u.AvatarURL,
-		Provider:      u.Provider,
-		EmailVerified: u.EmailVerified,
-	}
+	return s.buildUserResponse(ctx, u)
 }

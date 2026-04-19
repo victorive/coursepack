@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/klaro-backend/internal/feature/rbac"
 	"github.com/victorive/klaro-backend/internal/pkg/apperr"
 	"github.com/victorive/klaro-backend/internal/pkg/hash"
 	"github.com/victorive/klaro-backend/internal/pkg/pagination"
-	"github.com/victorive/klaro-backend/internal/rbac"
 )
 
 type Service interface {
@@ -32,12 +32,12 @@ type UserRepository interface {
 type service struct {
 	repo     Repository
 	userRepo UserRepository
-	rbacRepo rbac.Repository
+	rbacSvc  rbac.Service
 	logger   *slog.Logger
 }
 
-func NewService(repo Repository, userRepo UserRepository, rbacRepo rbac.Repository, logger *slog.Logger) Service {
-	return &service{repo: repo, userRepo: userRepo, rbacRepo: rbacRepo, logger: logger}
+func NewService(repo Repository, userRepo UserRepository, rbacSvc rbac.Service, logger *slog.Logger) Service {
+	return &service{repo: repo, userRepo: userRepo, rbacSvc: rbacSvc, logger: logger}
 }
 
 func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error) {
@@ -56,22 +56,27 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateLev
 	if err != nil {
 		return nil, err
 	}
-	inviteCode, err := hash.GenerateInviteCode()
+
+	code, err := hash.GenerateInviteCode()
 	if err != nil {
 		return nil, apperr.New("failed to generate invite code", http.StatusInternalServerError).Wrap(err)
 	}
+
 	c := &domain.Level{
 		DepartmentID: req.DepartmentID,
 		Year:         req.Year,
-		InviteCode:   inviteCode,
+		InviteCode:   code,
 		CreatedBy:    &creatorID,
 	}
+
 	if err := s.repo.Create(ctx, c); err != nil {
 		return nil, apperr.New("failed to create level", http.StatusInternalServerError).Wrap(err)
 	}
-	if err := s.rbacRepo.AssignLevelRole(ctx, creatorID, c.ID, creatorID, domain.RoleClassRep); err != nil {
+
+	if err := s.rbacSvc.AssignLevelRole(ctx, creatorID, c.ID, domain.RoleClassRep); err != nil {
 		s.logger.Warn("failed to assign class_rep role", "error", err)
 	}
+
 	return toLevelResponse(c), nil
 }
 
@@ -200,7 +205,7 @@ func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, le
 		if err := s.repo.AddMember(ctx, m); err != nil {
 			return nil, apperr.New("failed to add member", http.StatusInternalServerError).Wrap(err)
 		}
-		if err := s.rbacRepo.AssignLevelRole(ctx, jr.UserID, jr.LevelID, reviewerID, domain.RoleStudent); err != nil {
+		if err := s.rbacSvc.AssignLevelRole(ctx, jr.UserID, jr.LevelID, domain.RoleStudent); err != nil {
 			s.logger.Warn("failed to assign student role", "error", err)
 		}
 	} else {

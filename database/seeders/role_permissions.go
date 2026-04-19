@@ -8,8 +8,6 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func init() { register(rolePermissionsSeeder{}) }
-
 type rolePermissionsSeeder struct{}
 
 func (rolePermissionsSeeder) Name() string { return "role_permissions" }
@@ -22,6 +20,10 @@ var rolePerms = map[domain.RoleName][]domain.PermissionName{
 		domain.PermFilesApprove,
 		domain.PermCoursesManage,
 		domain.PermLecturesManage,
+		domain.PermManageLevels,
+		domain.PermManageDepartments,
+		domain.PermManageSessions,
+		domain.PermManageSemesters,
 	},
 	domain.RoleClassRep: {
 		domain.PermMembersList,
@@ -34,12 +36,14 @@ var rolePerms = map[domain.RoleName][]domain.PermissionName{
 	domain.RoleCourseRep: {
 		domain.PermMembersList,
 		domain.PermFilesUpload,
+		domain.PermFilesApprove,
 		domain.PermCoursesManage,
 		domain.PermLecturesManage,
 	},
 	domain.RoleStudent: {
 		domain.PermMembersList,
 		domain.PermFilesUpload,
+		domain.PermManageLevels,
 	},
 }
 

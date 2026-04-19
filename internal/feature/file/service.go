@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/klaro-backend/internal/feature/rbac"
 	"github.com/victorive/klaro-backend/internal/pkg/apperr"
 	"github.com/victorive/klaro-backend/internal/storage"
 )
@@ -22,23 +23,29 @@ type Service interface {
 	Get(ctx context.Context, id int64) (*FileResponse, error)
 	GetDownloadURL(ctx context.Context, id int64) (string, error)
 	Review(ctx context.Context, id int64, reviewerUUID string, req ReviewFileRequest) (*FileResponse, error)
-	Archive(ctx context.Context, id int64) error
+	Archive(ctx context.Context, id int64, actorUUID string) error
 }
 
 type UserRepository interface {
 	FindByUUID(ctx context.Context, uuid string) (*domain.User, error)
 }
 
+type CourseRepository interface {
+	FindCourseByID(ctx context.Context, id int64) (*domain.Course, error)
+}
+
 type service struct {
 	repo        Repository
 	userRepo    UserRepository
+	courseRepo  CourseRepository
+	rbacSvc     rbac.Service
 	storage     storage.Storage
 	maxFileSize int64
 	logger      *slog.Logger
 }
 
-func NewService(repo Repository, userRepo UserRepository, stor storage.Storage, maxFileSize int64, logger *slog.Logger) Service {
-	return &service{repo: repo, userRepo: userRepo, storage: stor, maxFileSize: maxFileSize, logger: logger}
+func NewService(repo Repository, userRepo UserRepository, courseRepo CourseRepository, rbacSvc rbac.Service, stor storage.Storage, maxFileSize int64, logger *slog.Logger) Service {
+	return &service{repo: repo, userRepo: userRepo, courseRepo: courseRepo, rbacSvc: rbacSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
 }
 
 func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error) {
@@ -56,6 +63,20 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 	uploaderID, err := s.resolveUserID(ctx, uploaderUUID)
 	if err != nil {
 		return nil, err
+	}
+	course, err := s.courseRepo.FindCourseByID(ctx, req.CourseID)
+	if err != nil {
+		return nil, apperr.New("failed to fetch course", http.StatusInternalServerError).Wrap(err)
+	}
+	if course == nil {
+		return nil, apperr.New("course not found", http.StatusNotFound)
+	}
+	ok, err := s.rbacSvc.HasLevelPermission(ctx, uploaderUUID, course.LevelID, domain.PermFilesUpload)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if !ok {
+		return nil, apperr.New("unauthorized", http.StatusForbidden)
 	}
 	if size > s.maxFileSize {
 		return nil, apperr.New(fmt.Sprintf("file exceeds maximum allowed size of %d bytes", s.maxFileSize), http.StatusRequestEntityTooLarge)
@@ -147,10 +168,28 @@ func (s *service) Review(ctx context.Context, id int64, reviewerUUID string, req
 	if f == nil {
 		return nil, apperr.New("file not found", http.StatusNotFound)
 	}
+	course, err := s.courseRepo.FindCourseByID(ctx, f.CourseID)
+	if err != nil {
+		return nil, apperr.New("failed to fetch course", http.StatusInternalServerError).Wrap(err)
+	}
+
+	if course == nil {
+		return nil, apperr.New("course not found", http.StatusNotFound)
+	}
+	ok, err := s.rbacSvc.HasLevelPermission(ctx, reviewerUUID, course.LevelID, domain.PermFilesApprove)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+
+	if !ok {
+		return nil, apperr.New("unauthorized", http.StatusForbidden)
+	}
+
 	now := time.Now()
 	f.ReviewedBy = &reviewerID
 	f.ReviewedAt = &now
 	f.ReviewNote = req.ReviewNote
+
 	if req.Action == "approve" {
 		f.Status = string(domain.FileStatusApproved)
 	} else {
@@ -159,17 +198,39 @@ func (s *service) Review(ctx context.Context, id int64, reviewerUUID string, req
 	if err := s.repo.Update(ctx, f); err != nil {
 		return nil, apperr.New("failed to update file", http.StatusInternalServerError).Wrap(err)
 	}
+
 	return toFileResponse(f), nil
 }
 
-func (s *service) Archive(ctx context.Context, id int64) error {
+func (s *service) Archive(ctx context.Context, id int64, actorUUID string) error {
 	f, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
 	}
+
 	if f == nil {
 		return apperr.New("file not found", http.StatusNotFound)
 	}
+
+	course, err := s.courseRepo.FindCourseByID(ctx, f.CourseID)
+	if err != nil {
+		return apperr.New("failed to fetch course", http.StatusInternalServerError).Wrap(err)
+	}
+
+	if course == nil {
+		return apperr.New("course not found", http.StatusNotFound)
+	}
+
+	ok, err := s.rbacSvc.HasLevelPermission(ctx, actorUUID, course.LevelID, domain.PermFilesApprove)
+	if err != nil {
+		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+
+	if !ok {
+		return apperr.New("unauthorized", http.StatusForbidden)
+	}
+
 	f.Status = string(domain.FileStatusArchived)
+
 	return s.repo.Update(ctx, f)
 }

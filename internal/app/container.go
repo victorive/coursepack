@@ -18,9 +18,9 @@ import (
 	"github.com/victorive/klaro-backend/internal/feature/department"
 	"github.com/victorive/klaro-backend/internal/feature/file"
 	"github.com/victorive/klaro-backend/internal/feature/level"
+	"github.com/victorive/klaro-backend/internal/feature/rbac"
 	"github.com/victorive/klaro-backend/internal/feature/user"
 	jwt "github.com/victorive/klaro-backend/internal/pkg/jwt"
-	"github.com/victorive/klaro-backend/internal/rbac"
 	"github.com/victorive/klaro-backend/internal/storage"
 	"github.com/victorive/klaro-backend/internal/storage/local"
 	"gorm.io/driver/postgres"
@@ -36,6 +36,7 @@ type Container struct {
 	Cache             cache.Cache
 	Storage           storage.Storage
 	Mailer            email.Mailer
+	RBAC              rbac.Service
 	AuthService       auth.Service
 	AuthRepository    auth.Repository
 	UserService       user.Service
@@ -126,6 +127,8 @@ func (c *Container) initServices() {
 
 	authRepo := auth.NewRepository(c.GORM)
 	c.AuthRepository = authRepo
+	rbacRepo := rbac.NewRepository(c.GORM)
+	c.RBAC = rbac.NewService(rbacRepo, c.Logger)
 	c.AuthService = auth.NewService(
 		authRepo,
 		c.Cache,
@@ -140,6 +143,7 @@ func (c *Container) initServices() {
 			GoogleRedirectURL:        googleRedirectURL,
 			FrontendURL:              cfg.App.FrontendURL,
 		},
+		c.RBAC,
 		c.Logger,
 	)
 
@@ -148,12 +152,12 @@ func (c *Container) initServices() {
 		c.Logger,
 	)
 
-	rbacRepo := rbac.NewRepository(c.GORM)
+	courseRepo := course.NewRepository(c.GORM)
 	c.DepartmentService = department.NewService(department.NewRepository(c.GORM), c.Logger)
-	c.LevelService = level.NewService(level.NewRepository(c.GORM), authRepo, rbacRepo, c.Logger)
+	c.LevelService = level.NewService(level.NewRepository(c.GORM), authRepo, c.RBAC, c.Logger)
 	c.AcademicService = academic.NewService(academic.NewRepository(c.GORM), c.Logger)
-	c.CourseService = course.NewService(course.NewRepository(c.GORM), c.Logger)
-	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, c.Storage, cfg.Storage.MaxFileSize, c.Logger)
+	c.CourseService = course.NewService(courseRepo, c.RBAC, c.Logger)
+	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, courseRepo, c.RBAC, c.Storage, cfg.Storage.MaxFileSize, c.Logger)
 }
 
 func (c *Container) Close() error {

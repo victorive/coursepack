@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/victorive/klaro-backend/internal/middleware"
+	"github.com/victorive/klaro-backend/internal/pkg/apperr"
 	"github.com/victorive/klaro-backend/internal/pkg/response"
 	"github.com/victorive/klaro-backend/internal/pkg/validator"
 )
@@ -30,14 +32,21 @@ func NewHandler(svc Service) *Handler {
 // @Security     BearerAuth
 // @Router       /courses [post]
 func (h *Handler) CreateCourse(c *fiber.Ctx) error {
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+	
 	var req CreateCourseRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	resp, err := h.svc.CreateCourse(c.UserContext(), req)
+
+	resp, err := h.svc.CreateCourse(c.UserContext(), actorUUID, req)
 	if err != nil {
 		return err
 	}
+	
 	return response.JSON(c, http.StatusCreated, true, "course created", resp)
 }
 
@@ -57,10 +66,12 @@ func (h *Handler) ListCoursesByLevel(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
+
 	resp, err := h.svc.ListCoursesByLevel(c.UserContext(), levelID)
 	if err != nil {
 		return err
 	}
+
 	return response.JSON(c, http.StatusOK, true, "courses fetched", resp)
 }
 
@@ -80,10 +91,12 @@ func (h *Handler) ListCoursesBySemester(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
+
 	resp, err := h.svc.ListCoursesBySemester(c.UserContext(), semesterID)
 	if err != nil {
 		return err
 	}
+
 	return response.JSON(c, http.StatusOK, true, "courses fetched", resp)
 }
 
@@ -102,10 +115,12 @@ func (h *Handler) GetCourse(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
+
 	resp, err := h.svc.GetCourse(c.UserContext(), id)
 	if err != nil {
 		return err
 	}
+
 	return response.JSON(c, http.StatusOK, true, "course fetched", resp)
 }
 
@@ -122,18 +137,26 @@ func (h *Handler) GetCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{id} [patch]
 func (h *Handler) UpdateCourse(c *fiber.Ctx) error {
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+
 	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
+
 	var req UpdateCourseRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	resp, err := h.svc.UpdateCourse(c.UserContext(), id, req)
+
+	resp, err := h.svc.UpdateCourse(c.UserContext(), actorUUID, id, req)
 	if err != nil {
 		return err
 	}
+
 	return response.JSON(c, http.StatusOK, true, "course updated", resp)
 }
 
@@ -148,13 +171,20 @@ func (h *Handler) UpdateCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{id} [delete]
 func (h *Handler) DeleteCourse(c *fiber.Ctx) error {
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+
 	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
-	if err := h.svc.DeleteCourse(c.UserContext(), id); err != nil {
+
+	if err := h.svc.DeleteCourse(c.UserContext(), actorUUID, id); err != nil {
 		return err
 	}
+
 	return c.SendStatus(http.StatusNoContent)
 }
 
@@ -174,14 +204,21 @@ func (h *Handler) DeleteCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{courseId}/lectures [post]
 func (h *Handler) CreateLecture(c *fiber.Ctx) error {
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+
 	var req CreateLectureRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	resp, err := h.svc.CreateLecture(c.UserContext(), req)
+
+	resp, err := h.svc.CreateLecture(c.UserContext(), actorUUID, req)
 	if err != nil {
 		return err
 	}
+
 	return response.JSON(c, http.StatusCreated, true, "lecture created", resp)
 }
 
@@ -200,10 +237,12 @@ func (h *Handler) ListLectures(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
+
 	resp, err := h.svc.ListLectures(c.UserContext(), courseID)
 	if err != nil {
 		return err
 	}
+
 	return response.JSON(c, http.StatusOK, true, "lectures fetched", resp)
 }
 
@@ -222,10 +261,12 @@ func (h *Handler) GetLecture(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
+
 	resp, err := h.svc.GetLecture(c.UserContext(), id)
 	if err != nil {
 		return err
 	}
+
 	return response.JSON(c, http.StatusOK, true, "lecture fetched", resp)
 }
 
@@ -242,6 +283,11 @@ func (h *Handler) GetLecture(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /lectures/{id} [patch]
 func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+
 	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
 		return fiber.ErrBadRequest
@@ -250,10 +296,12 @@ func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	resp, err := h.svc.UpdateLecture(c.UserContext(), id, req)
+
+	resp, err := h.svc.UpdateLecture(c.UserContext(), actorUUID, id, req)
 	if err != nil {
 		return err
 	}
+
 	return response.JSON(c, http.StatusOK, true, "lecture updated", resp)
 }
 
@@ -268,11 +316,16 @@ func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /lectures/{id}/archive [patch]
 func (h *Handler) ArchiveLecture(c *fiber.Ctx) error {
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+
 	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
-	if err := h.svc.ArchiveLecture(c.UserContext(), id); err != nil {
+	if err := h.svc.ArchiveLecture(c.UserContext(), actorUUID, id); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "lecture archived", nil)

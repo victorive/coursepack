@@ -6,8 +6,6 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func init() { register(rolesSeeder{}) }
-
 type rolesSeeder struct{}
 
 func (rolesSeeder) Name() string { return "roles" }
