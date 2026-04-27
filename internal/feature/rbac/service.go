@@ -10,6 +10,7 @@ import (
 type Service interface {
 	HasGlobalPermission(ctx context.Context, userUUID string, perm domain.PermissionName) (bool, error)
 	HasClassPermission(ctx context.Context, userUUID string, classID int64, perm domain.PermissionName) (bool, error)
+	HasClassPermissionByUUID(ctx context.Context, userUUID, classUUID string, perm domain.PermissionName) (bool, error)
 	AssignGlobalRole(ctx context.Context, userID int64, role domain.RoleName) error
 	AssignClassRole(ctx context.Context, userID, classID int64, role domain.RoleName) error
 	GetUserRoles(ctx context.Context, userUUID string) ([]string, error)
@@ -31,6 +32,10 @@ func (s *service) HasGlobalPermission(ctx context.Context, userUUID string, perm
 
 func (s *service) HasClassPermission(ctx context.Context, userUUID string, classID int64, perm domain.PermissionName) (bool, error) {
 	return s.repo.HasClassPermission(ctx, userUUID, classID, perm)
+}
+
+func (s *service) HasClassPermissionByUUID(ctx context.Context, userUUID, classUUID string, perm domain.PermissionName) (bool, error) {
+	return s.repo.HasClassPermissionByUUID(ctx, userUUID, classUUID, perm)
 }
 
 func (s *service) AssignGlobalRole(ctx context.Context, userID int64, role domain.RoleName) error {

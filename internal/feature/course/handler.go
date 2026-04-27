@@ -1,220 +1,266 @@
 package course
 
 import (
+	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/victorive/klaro-backend/internal/domain"
 	"github.com/victorive/klaro-backend/internal/middleware"
 	"github.com/victorive/klaro-backend/internal/pkg/apperr"
+	"github.com/victorive/klaro-backend/internal/pkg/pagination"
 	"github.com/victorive/klaro-backend/internal/pkg/response"
 	"github.com/victorive/klaro-backend/internal/pkg/validator"
 )
 
+type UserRepository interface {
+	FindByUUID(ctx context.Context, uuid string) (*domain.User, error)
+}
+
 type Handler struct {
-	svc Service
+	svc      Service
+	userRepo UserRepository
 }
 
-func NewHandler(svc Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc Service, userRepo UserRepository) *Handler {
+	return &Handler{svc: svc, userRepo: userRepo}
 }
 
-// CreateCourse godoc
-// @Summary      Create course
-// @Description  Creates a new course linked to a level and semester.
+// ListCourses godoc
+// @Summary      List courses for the current user's university
+// @Description  Returns a cursor-paginated list of courses. Use `after` (last returned code) to fetch the next page. Optionally filter by department.
 // @Tags         Courses
-// @Accept       json
 // @Produce      json
-// @Param        body body CreateCourseRequest true "Create course payload"
-// @Success      201 {object} response.Response{data=CourseResponse}
-// @Failure      400 {object} response.Response
-// @Failure      401 {object} response.Response
+// @Param        department_code query string false "Filter by department code"
+// @Param        after           query string false "Cursor: last course code from previous page"
+// @Param        limit           query int    false "Items per page (default 20, max 100)"
+// @Success      200 {object} response.Response{data=course.CourseRegistryPaginatedResponse}
+// @Failure      401,422 {object} response.Response
 // @Security     BearerAuth
-// @Router       /courses [post]
-func (h *Handler) CreateCourse(c *fiber.Ctx) error {
+// @Router       /courses [get]
+func (h *Handler) ListCourses(c *fiber.Ctx) error {
 	actorUUID, ok := middleware.UserUUID(c)
 	if !ok {
 		return apperr.New("unauthorized", http.StatusUnauthorized)
 	}
-	
-	var req CreateCourseRequest
-	if err := validator.ParseAndValidate(c, &req); err != nil {
-		return err
+	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
+	if err != nil || u == nil {
+		return apperr.New("user not found", http.StatusUnauthorized)
+	}
+	if u.UniversityID == nil {
+		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
+	}
+	universityID := *u.UniversityID
+
+	var departmentCode *string
+	if s := c.Query("department_code"); s != "" {
+		departmentCode = &s
 	}
 
-	resp, err := h.svc.CreateCourse(c.UserContext(), actorUUID, req)
+	q := pagination.ParseCursor(c)
+	items, nextCursor, err := h.svc.ListCourses(c.UserContext(), universityID, departmentCode, *q)
 	if err != nil {
 		return err
 	}
-
-	return response.JSON(c, http.StatusCreated, true, "course created", resp)
-}
-
-// ListCoursesByClass godoc
-// @Summary      List courses by class
-// @Description  Returns all courses belonging to a class.
-// @Tags         Courses
-// @Produce      json
-// @Param        classId path int true "Class ID"
-// @Success      200 {object} response.Response{data=[]CourseResponse}
-// @Failure      400 {object} response.Response
-// @Failure      401 {object} response.Response
-// @Security     BearerAuth
-// @Router       /classes/{classId}/courses [get]
-func (h *Handler) ListCoursesByClass(c *fiber.Ctx) error {
-	classID, err := strconv.ParseInt(c.Params("classId"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
-
-	resp, err := h.svc.ListCoursesByClass(c.UserContext(), classID)
-	if err != nil {
-		return err
-	}
-
-	return response.JSON(c, http.StatusOK, true, "courses fetched", resp)
-}
-
-// ListCoursesBySemester godoc
-// @Summary      List courses by semester
-// @Description  Returns all courses belonging to a semester.
-// @Tags         Courses
-// @Produce      json
-// @Param        semesterId path int true "Semester ID"
-// @Success      200 {object} response.Response{data=[]CourseResponse}
-// @Failure      400 {object} response.Response
-// @Failure      401 {object} response.Response
-// @Security     BearerAuth
-// @Router       /semesters/{semesterId}/courses [get]
-func (h *Handler) ListCoursesBySemester(c *fiber.Ctx) error {
-	semesterID, err := strconv.ParseInt(c.Params("semesterId"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
-
-	resp, err := h.svc.ListCoursesBySemester(c.UserContext(), semesterID)
-	if err != nil {
-		return err
-	}
-
-	return response.JSON(c, http.StatusOK, true, "courses fetched", resp)
+	return response.JSON(c, http.StatusOK, true, "courses fetched", pagination.NewCursorResponse(items, nextCursor))
 }
 
 // GetCourse godoc
-// @Summary      Get course
-// @Description  Returns a single course by ID.
+// @Summary      Get a course
+// @Description  Returns a single course by UUID, scoped to the authenticated user's university.
 // @Tags         Courses
 // @Produce      json
-// @Param        id path int true "Course ID"
-// @Success      200 {object} response.Response{data=CourseResponse}
-// @Failure      404 {object} response.Response
+// @Param        id path string true "Course UUID"
+// @Success      200 {object} response.Response{data=CourseRegistryResponse}
+// @Failure      400,401,404,422 {object} response.Response
 // @Security     BearerAuth
 // @Router       /courses/{id} [get]
 func (h *Handler) GetCourse(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
 	}
 
-	resp, err := h.svc.GetCourse(c.UserContext(), id)
+	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
+	if err != nil || u == nil {
+		return apperr.New("user not found", http.StatusUnauthorized)
+	}
+
+	if u.UniversityID == nil {
+		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
+	}
+
+	courseUUID := c.Params("id")
+	resp, err := h.svc.GetCourse(c.UserContext(), courseUUID, *u.UniversityID)
 	if err != nil {
 		return err
 	}
-
 	return response.JSON(c, http.StatusOK, true, "course fetched", resp)
 }
 
-// UpdateCourse godoc
-// @Summary      Update course
-// @Description  Updates an existing course.
-// @Tags         Courses
+// AddClassCourse godoc
+// @Summary      Add a course to a class
+// @Description  Adds a course to a class for a given semester. Requires courses:manage permission.
+// @Tags         Class Courses
 // @Accept       json
 // @Produce      json
-// @Param        id   path int                true "Course ID"
-// @Param        body body UpdateCourseRequest true "Update course payload"
-// @Success      200 {object} response.Response{data=CourseResponse}
-// @Failure      404 {object} response.Response
+// @Param        id   path string               true "Class UUID"
+// @Param        body body AddClassCourseRequest true "Class course payload"
+// @Success      201 {object} response.Response{data=ClassCourseResponse}
+// @Failure      400,401,403,409,422 {object} response.Response
 // @Security     BearerAuth
-// @Router       /courses/{id} [patch]
-func (h *Handler) UpdateCourse(c *fiber.Ctx) error {
+// @Router       /classes/{id}/courses [post]
+func (h *Handler) AddClassCourse(c *fiber.Ctx) error {
 	actorUUID, ok := middleware.UserUUID(c)
 	if !ok {
 		return apperr.New("unauthorized", http.StatusUnauthorized)
 	}
-
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
+	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
+	if err != nil || u == nil {
+		return apperr.New("user not found", http.StatusUnauthorized)
 	}
 
-	var req UpdateCourseRequest
+	if u.UniversityID == nil {
+		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
+	}
+
+	classUUID := c.Params("id")
+	var req AddClassCourseRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-
-	resp, err := h.svc.UpdateCourse(c.UserContext(), actorUUID, id, req)
+	resp, err := h.svc.AddClassCourse(c.UserContext(), actorUUID, classUUID, *u.UniversityID, req)
 	if err != nil {
 		return err
 	}
-
-	return response.JSON(c, http.StatusOK, true, "course updated", resp)
+	return response.JSON(c, http.StatusCreated, true, "course added to class", resp)
 }
 
-// DeleteCourse godoc
-// @Summary      Delete course
-// @Description  Permanently deletes a course.
-// @Tags         Courses
+// ListClassCourses godoc
+// @Summary      List class courses
+// @Description  Returns all courses assigned to a class. Optionally filter by semester UUID or kind.
+// @Tags         Class Courses
 // @Produce      json
-// @Param        id path int true "Course ID"
-// @Success      204
-// @Failure      404 {object} response.Response
+// @Param        id            path   string true  "Class UUID"
+// @Param        semester_uuid query  string false "Filter by semester UUID"
+// @Param        kind          query  string false "Filter by semester kind (first or second)"
+// @Success      200 {object} response.Response{data=[]ClassCourseResponse}
+// @Failure      400,401,422 {object} response.Response
 // @Security     BearerAuth
-// @Router       /courses/{id} [delete]
-func (h *Handler) DeleteCourse(c *fiber.Ctx) error {
+// @Router       /classes/{id}/courses [get]
+func (h *Handler) ListClassCourses(c *fiber.Ctx) error {
 	actorUUID, ok := middleware.UserUUID(c)
 	if !ok {
 		return apperr.New("unauthorized", http.StatusUnauthorized)
 	}
-
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
+	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
+	if err != nil || u == nil {
+		return apperr.New("user not found", http.StatusUnauthorized)
+	}
+	if u.UniversityID == nil {
+		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
 	}
 
-	if err := h.svc.DeleteCourse(c.UserContext(), actorUUID, id); err != nil {
+	classUUID := c.Params("id")
+	var semesterUUID *string
+	if s := c.Query("semester_uuid"); s != "" {
+		semesterUUID = &s
+	}
+
+	var kind *string
+	if k := c.Query("kind"); k != "" {
+		kind = &k
+	}
+
+	resp, err := h.svc.ListClassCourses(c.UserContext(), classUUID, *u.UniversityID, semesterUUID, kind)
+	if err != nil {
+		return err
+	}
+	return response.JSON(c, http.StatusOK, true, "class courses fetched", resp)
+}
+
+// GetClassCourse godoc
+// @Summary      Get a class course
+// @Description  Returns a single class course by UUID.
+// @Tags         Class Courses
+// @Produce      json
+// @Param        id path string true "Class Course UUID"
+// @Success      200 {object} response.Response{data=ClassCourseResponse}
+// @Failure      400,401,404,422 {object} response.Response
+// @Security     BearerAuth
+// @Router       /courses/{id} [get]
+func (h *Handler) GetClassCourse(c *fiber.Ctx) error {
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
+	if err != nil || u == nil {
+		return apperr.New("user not found", http.StatusUnauthorized)
+	}
+	if u.UniversityID == nil {
+		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
+	}
+
+	classCourseUUID := c.Params("id")
+
+	resp, err := h.svc.GetClassCourse(c.UserContext(), classCourseUUID, *u.UniversityID)
+	if err != nil {
 		return err
 	}
 
+	return response.JSON(c, http.StatusOK, true, "class course fetched", resp)
+}
+
+// RemoveClassCourse godoc
+// @Summary      Remove a course from a class
+// @Description  Removes a class course. Requires courses:manage permission.
+// @Tags         Class Courses
+// @Produce      json
+// @Param        id            path string true "Class UUID"
+// @Param        classCourseId path string true "Class Course UUID"
+// @Success      204
+// @Failure      400,401,403,404 {object} response.Response
+// @Security     BearerAuth
+// @Router       /classes/{id}/courses/{classCourseId} [delete]
+func (h *Handler) RemoveClassCourse(c *fiber.Ctx) error {
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+	classUUID := c.Params("id")
+	classCourseUUID := c.Params("classCourseId")
+	if err := h.svc.RemoveClassCourse(c.UserContext(), actorUUID, classUUID, classCourseUUID); err != nil {
+		return err
+	}
 	return c.SendStatus(http.StatusNoContent)
 }
 
-// ---- Lectures ----
-
 // CreateLecture godoc
-// @Summary      Create lecture
-// @Description  Creates a new lecture under a course.
-// @Tags         Lectures
+// @Summary      Create a lecture
+// @Description  Creates a new lecture under a class course.
+// @Tags         Class Courses
 // @Accept       json
 // @Produce      json
-// @Param        courseId path int                  true "Course ID"
-// @Param        body     body CreateLectureRequest true "Create lecture payload"
+// @Param        id   path string                true "Class Course UUID"
+// @Param        body body CreateLectureRequest  true "Lecture payload"
 // @Success      201 {object} response.Response{data=LectureResponse}
-// @Failure      400 {object} response.Response
-// @Failure      401 {object} response.Response
+// @Failure      400,401,403,422 {object} response.Response
 // @Security     BearerAuth
-// @Router       /courses/{courseId}/lectures [post]
+// @Router       /courses/{id}/lectures [post]
 func (h *Handler) CreateLecture(c *fiber.Ctx) error {
 	actorUUID, ok := middleware.UserUUID(c)
 	if !ok {
 		return apperr.New("unauthorized", http.StatusUnauthorized)
 	}
+	classCourseUUID := c.Params("id")
 
 	var req CreateLectureRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	resp, err := h.svc.CreateLecture(c.UserContext(), actorUUID, req)
+	resp, err := h.svc.CreateLecture(c.UserContext(), actorUUID, classCourseUUID, req)
 	if err != nil {
 		return err
 	}
@@ -223,50 +269,65 @@ func (h *Handler) CreateLecture(c *fiber.Ctx) error {
 }
 
 // ListLectures godoc
-// @Summary      List lectures for a course
-// @Description  Returns all published lectures for a course.
-// @Tags         Lectures
+// @Summary      List lectures for a class course
+// @Description  Returns all published lectures for a given class course.
+// @Tags         Class Courses
 // @Produce      json
-// @Param        courseId path int true "Course ID"
+// @Param        id path string true "Class Course UUID"
 // @Success      200 {object} response.Response{data=[]LectureResponse}
-// @Failure      401 {object} response.Response
+// @Failure      400,401,422 {object} response.Response
 // @Security     BearerAuth
-// @Router       /courses/{courseId}/lectures [get]
+// @Router       /courses/{id}/lectures [get]
 func (h *Handler) ListLectures(c *fiber.Ctx) error {
-	courseID, err := strconv.ParseInt(c.Params("courseId"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
+	if err != nil || u == nil {
+		return apperr.New("user not found", http.StatusUnauthorized)
 	}
 
-	resp, err := h.svc.ListLectures(c.UserContext(), courseID)
+	if u.UniversityID == nil {
+		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
+	}
+
+	classCourseUUID := c.Params("id")
+	resp, err := h.svc.ListLectures(c.UserContext(), classCourseUUID, *u.UniversityID)
 	if err != nil {
 		return err
 	}
-
 	return response.JSON(c, http.StatusOK, true, "lectures fetched", resp)
 }
 
 // GetLecture godoc
 // @Summary      Get a lecture
-// @Description  Returns a single lecture by ID.
+// @Description  Returns a single lecture by UUID.
 // @Tags         Lectures
 // @Produce      json
-// @Param        id path int true "Lecture ID"
+// @Param        id path string true "Lecture UUID"
 // @Success      200 {object} response.Response{data=LectureResponse}
-// @Failure      400,401,404 {object} response.Response
+// @Failure      400,401,404,422 {object} response.Response
 // @Security     BearerAuth
 // @Router       /lectures/{id} [get]
 func (h *Handler) GetLecture(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
+	actorUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return apperr.New("unauthorized", http.StatusUnauthorized)
+	}
+	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
+	if err != nil || u == nil {
+		return apperr.New("user not found", http.StatusUnauthorized)
+	}
+	if u.UniversityID == nil {
+		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
 	}
 
-	resp, err := h.svc.GetLecture(c.UserContext(), id)
+	lectureUUID := c.Params("id")
+	resp, err := h.svc.GetLecture(c.UserContext(), lectureUUID, *u.UniversityID)
 	if err != nil {
 		return err
 	}
-
 	return response.JSON(c, http.StatusOK, true, "lecture fetched", resp)
 }
 
@@ -276,10 +337,10 @@ func (h *Handler) GetLecture(c *fiber.Ctx) error {
 // @Tags         Lectures
 // @Accept       json
 // @Produce      json
-// @Param        id   path     int                 true "Lecture ID"
-// @Param        body body     UpdateLectureRequest true "Update payload"
-// @Success      200  {object} response.Response{data=LectureResponse}
-// @Failure      400,401,403,404 {object} response.Response
+// @Param        id   path string               true "Lecture UUID"
+// @Param        body body UpdateLectureRequest true "Lecture update payload"
+// @Success      200 {object} response.Response{data=LectureResponse}
+// @Failure      400,401,403,404,422 {object} response.Response
 // @Security     BearerAuth
 // @Router       /lectures/{id} [patch]
 func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
@@ -287,21 +348,15 @@ func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
 	if !ok {
 		return apperr.New("unauthorized", http.StatusUnauthorized)
 	}
-
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
+	lectureUUID := c.Params("id")
 	var req UpdateLectureRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-
-	resp, err := h.svc.UpdateLecture(c.UserContext(), actorUUID, id, req)
+	resp, err := h.svc.UpdateLecture(c.UserContext(), actorUUID, lectureUUID, req)
 	if err != nil {
 		return err
 	}
-
 	return response.JSON(c, http.StatusOK, true, "lecture updated", resp)
 }
 
@@ -310,7 +365,7 @@ func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
 // @Description  Moves a lecture to the archived state.
 // @Tags         Lectures
 // @Produce      json
-// @Param        id path int true "Lecture ID"
+// @Param        id path string true "Lecture UUID"
 // @Success      200 {object} response.Response
 // @Failure      400,401,403,404 {object} response.Response
 // @Security     BearerAuth
@@ -320,12 +375,8 @@ func (h *Handler) ArchiveLecture(c *fiber.Ctx) error {
 	if !ok {
 		return apperr.New("unauthorized", http.StatusUnauthorized)
 	}
-
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
-	if err := h.svc.ArchiveLecture(c.UserContext(), actorUUID, id); err != nil {
+	lectureUUID := c.Params("id")
+	if err := h.svc.ArchiveLecture(c.UserContext(), actorUUID, lectureUUID); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "lecture archived", nil)

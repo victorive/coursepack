@@ -14,6 +14,7 @@ import (
 	"github.com/victorive/klaro-backend/internal/domain"
 	"github.com/victorive/klaro-backend/internal/email"
 	"github.com/victorive/klaro-backend/internal/feature/rbac"
+	"github.com/victorive/klaro-backend/internal/feature/university"
 	"github.com/victorive/klaro-backend/internal/pkg/apperr"
 	"github.com/victorive/klaro-backend/internal/pkg/hash"
 	"github.com/victorive/klaro-backend/internal/pkg/job"
@@ -124,8 +125,12 @@ func (s *service) buildUserResponse(ctx context.Context, u *domain.User) (*UserR
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 
+	var uniInfo *university.UniversityResponse
+	if u.University != nil {
+		uniInfo = university.ToUniversityResponse(u.University)
+	}
+
 	return &UserResponse{
-		ID:            u.ID,
 		UUID:          u.UUID,
 		Email:         u.Email,
 		FullName:      u.FullName,
@@ -133,7 +138,7 @@ func (s *service) buildUserResponse(ctx context.Context, u *domain.User) (*UserR
 		AvatarURL:     u.AvatarURL,
 		Provider:      u.Provider,
 		EmailVerified: u.EmailVerified,
-		UniversityID:  u.UniversityID,
+		University:    uniInfo,
 		Roles:         roles,
 		Permissions:   perms,
 	}, nil
@@ -155,9 +160,12 @@ func (s *service) toAuthResponse(ctx context.Context, u *domain.User) (*TokensRe
 	return tokens, nil
 }
 
-func (s *service) sendOTPAsync(ctx context.Context, userEmail string) {
+const defaultOTPScope = "email_verification"
+
+func (s *service) sendOTPAsync(ctx context.Context, userEmail, scope string) {
 	expiry := s.cfg.OTPExpirationMinutes
 	logger := s.logger
+	otpKey := otpKeyPrefix + scope + ":" + userEmail
 	job.FireAndForget(ctx, "send_otp", func(bgCtx context.Context) error {
 		otp, err := hash.GenerateOTP()
 		if err != nil {
@@ -166,7 +174,7 @@ func (s *service) sendOTPAsync(ctx context.Context, userEmail string) {
 		// TODO: remove once SMTP is configured
 		logger.Info("DEV OTP", "email", userEmail, "otp", otp)
 		ttl := time.Duration(expiry) * time.Minute
-		if err := s.cache.Set(bgCtx, otpKeyPrefix+userEmail, otp, ttl); err != nil {
+		if err := s.cache.Set(bgCtx, otpKey, otp, ttl); err != nil {
 			return fmt.Errorf("store otp: %w", err)
 		}
 		if err := s.mailer.Send(bgCtx, userEmail, "Your verification code", "otp.html", map[string]any{
@@ -207,7 +215,7 @@ func (s *service) SignUp(ctx context.Context, req *SignUpRequest) (*TokensRespon
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 
-	s.sendOTPAsync(ctx, u.Email)
+	s.sendOTPAsync(ctx, u.Email, defaultOTPScope)
 
 	return s.toAuthResponse(ctx, u)
 }
@@ -366,14 +374,16 @@ func (s *service) ExchangeGoogleCode(ctx context.Context, code string) (*TokensR
 }
 
 func (s *service) VerifyOTP(ctx context.Context, req *VerifyOTPRequest) error {
-	attemptsKey := otpAttemptsKeyPrefix + req.Email
+	scope := defaultOTPScope
+	attemptsKey := otpAttemptsKeyPrefix + scope + ":" + req.Email
 	attemptsStr, _ := s.cache.Get(ctx, attemptsKey)
 	attempts, _ := strconv.Atoi(attemptsStr)
 	if attempts >= s.cfg.OTPMaxAttempts {
 		return apperr.New("too many incorrect OTP attempts", http.StatusTooManyRequests)
 	}
 
-	stored, err := s.cache.Get(ctx, otpKeyPrefix+req.Email)
+	otpKey := otpKeyPrefix + scope + ":" + req.Email
+	stored, err := s.cache.Get(ctx, otpKey)
 	if err != nil || stored == "" || stored != req.OTP {
 		ttl := time.Duration(s.cfg.OTPExpirationMinutes) * time.Minute
 		_ = s.cache.Set(ctx, attemptsKey, strconv.Itoa(attempts+1), ttl)
@@ -391,34 +401,36 @@ func (s *service) VerifyOTP(ctx context.Context, req *VerifyOTPRequest) error {
 	if err := s.repo.UpdateEmailVerified(ctx, u.ID, true); err != nil {
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
-	_ = s.cache.Delete(ctx, otpKeyPrefix+req.Email)
+	_ = s.cache.Delete(ctx, otpKey)
 	_ = s.cache.Delete(ctx, attemptsKey)
 	return nil
 }
 
 func (s *service) ResendOTP(ctx context.Context, req *ResendOTPRequest) error {
-	resendKey := otpResendKeyPrefix + req.Email
+	scope := defaultOTPScope
+
+	u, err := s.repo.FindByEmail(ctx, req.Email)
+	if err != nil {
+		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	
+	if u != nil && u.EmailVerified && scope == defaultOTPScope {
+		return apperr.New("email already verified", http.StatusConflict)
+	}
+
+	resendKey := otpResendKeyPrefix + scope + ":" + req.Email
 	countStr, _ := s.cache.Get(ctx, resendKey)
 	count, _ := strconv.Atoi(countStr)
-	if count >= 3 {
+	if count >= 5 {
 		return apperr.New("please wait before requesting a new OTP", http.StatusTooManyRequests)
 	}
 
 	newCount := strconv.Itoa(count + 1)
-	_ = s.cache.Set(ctx, resendKey, newCount, time.Minute)
+	_ = s.cache.Set(ctx, resendKey, newCount, time.Hour)
 
-	email := req.Email
-	job.FireAndForget(ctx, "resend_otp", func(bgCtx context.Context) error {
-		u, err := s.repo.FindByEmail(bgCtx, email)
-		if err != nil {
-			return fmt.Errorf("find user: %w", err)
-		}
-		if u == nil {
-			return nil
-		}
-		s.sendOTPAsync(bgCtx, u.Email)
-		return nil
-	})
+	if u != nil {
+		s.sendOTPAsync(ctx, u.Email, scope)
+	}
 
 	return nil
 }

@@ -31,6 +31,7 @@ var rolePerms = map[domain.RoleName][]domain.PermissionName{
 		domain.PermFilesApprove,
 		domain.PermCoursesManage,
 		domain.PermLecturesManage,
+		domain.PermManageSemesters,
 	},
 	domain.RoleCourseRep: {
 		domain.PermMembersList,

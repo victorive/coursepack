@@ -11,5 +11,5 @@ func universityRoutes(r fiber.Router, c *app.Container) {
 
 	universities := r.Group("/universities")
 	universities.Get("", h.List)
-	universities.Get("/:id", h.GetByID)
+	universities.Get("/:id", h.GetByUUID)
 }

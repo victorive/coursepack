@@ -10,15 +10,17 @@ import (
 type Repository interface {
 	Create(ctx context.Context, c *domain.Class) error
 	Update(ctx context.Context, c *domain.Class) error
-	Count(ctx context.Context) (int64, error)
-	FindPaginated(ctx context.Context, offset, limit int) ([]*domain.Class, error)
+	UpdateInviteCode(ctx context.Context, classID int64, code string) error
 	FindByID(ctx context.Context, id int64) (*domain.Class, error)
+	FindByUUID(ctx context.Context, uuid string) (*domain.Class, error)
+	FindByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*domain.Class, error)
 	FindByInviteCode(ctx context.Context, code string) (*domain.Class, error)
 	Delete(ctx context.Context, id int64) error
 	AddMember(ctx context.Context, m *domain.ClassMember) error
 	RemoveMember(ctx context.Context, classID, userID int64) error
 	FindMembers(ctx context.Context, classID int64) ([]*domain.ClassMember, error)
 	IsMember(ctx context.Context, classID, userID int64) (bool, error)
+	IsActiveMemberAnywhere(ctx context.Context, userID, universityID int64) (bool, error)
 	CreateJoinRequest(ctx context.Context, jr *domain.JoinRequest) error
 	FindJoinRequestByID(ctx context.Context, id int64) (*domain.JoinRequest, error)
 	FindJoinRequestByClassAndUser(ctx context.Context, classID, userID int64) (*domain.JoinRequest, error)
@@ -45,22 +47,6 @@ func (r *repository) Update(ctx context.Context, c *domain.Class) error {
 	return r.db.WithContext(ctx).Save(c).Error
 }
 
-func (r *repository) Count(ctx context.Context) (int64, error) {
-	var count int64
-	if err := r.db.WithContext(ctx).Model(&domain.Class{}).Count(&count).Error; err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-func (r *repository) FindPaginated(ctx context.Context, offset, limit int) ([]*domain.Class, error) {
-	var classes []*domain.Class
-	if err := r.db.WithContext(ctx).Order("id ASC").Offset(offset).Limit(limit).Find(&classes).Error; err != nil {
-		return nil, err
-	}
-	return classes, nil
-}
-
 func (r *repository) FindByID(ctx context.Context, id int64) (*domain.Class, error) {
 	var c domain.Class
 	if err := r.db.WithContext(ctx).First(&c, id).Error; err != nil {
@@ -69,6 +55,34 @@ func (r *repository) FindByID(ctx context.Context, id int64) (*domain.Class, err
 		}
 		return nil, err
 	}
+	return &c, nil
+}
+
+func (r *repository) FindByUUID(ctx context.Context, uuid string) (*domain.Class, error) {
+	var c domain.Class
+	if err := r.db.WithContext(ctx).Preload("Department").Where("uuid = ?", uuid).First(&c).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+func (r *repository) FindByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*domain.Class, error) {
+	var c domain.Class
+	err := r.db.WithContext(ctx).
+		Joins("JOIN departments d ON d.id = classes.department_id").
+		Where("classes.uuid = ? AND d.university_id = ?", uuid, universityID).
+		First(&c).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
 	return &c, nil
 }
 
@@ -177,11 +191,30 @@ func (r *repository) CountByUniversity(ctx context.Context, universityID int64) 
 func (r *repository) FindPaginatedByUniversity(ctx context.Context, universityID int64, offset, limit int) ([]*domain.Class, error) {
 	var classes []*domain.Class
 	err := r.db.WithContext(ctx).
+		Preload("Department").
 		Joins("JOIN departments ON departments.id = classes.department_id").
 		Where("departments.university_id = ?", universityID).
 		Order("classes.id ASC").
 		Offset(offset).Limit(limit).
 		Find(&classes).Error
-		
+
 	return classes, err
+}
+
+func (r *repository) UpdateInviteCode(ctx context.Context, classID int64, code string) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Class{}).
+		Where("id = ?", classID).
+		Update("invite_code", code).Error
+}
+
+func (r *repository) IsActiveMemberAnywhere(ctx context.Context, userID, universityID int64) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.ClassMember{}).
+		Joins("JOIN classes ON classes.id = class_members.class_id").
+		Joins("JOIN departments ON departments.id = classes.department_id").
+		Where("class_members.user_id = ? AND departments.university_id = ?", userID, universityID).
+		Count(&count).Error
+	return count > 0, err
 }

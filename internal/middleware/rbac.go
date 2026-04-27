@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/victorive/klaro-backend/internal/domain"
@@ -29,15 +28,15 @@ func RequireGlobalPermission(repo rbac.Service, perm domain.PermissionName) fibe
 
 func RequireClassPermission(repo rbac.Service, perm domain.PermissionName, paramName string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		uuid, ok := UserUUID(c)
+		userUUID, ok := UserUUID(c)
 		if !ok {
 			return response.JSON(c, http.StatusUnauthorized, false, "unauthenticated", nil)
 		}
-		classID, err := strconv.ParseInt(c.Params(paramName), 10, 64)
-		if err != nil {
+		classUUID := c.Params(paramName)
+		if classUUID == "" {
 			return response.JSON(c, http.StatusBadRequest, false, "invalid class id", nil)
 		}
-		ok, err = repo.HasClassPermission(c.UserContext(), uuid, classID, perm)
+		ok, err := repo.HasClassPermissionByUUID(c.UserContext(), userUUID, classUUID, perm)
 		if err != nil {
 			return response.JSON(c, http.StatusInternalServerError, false, "an unexpected error occurred", nil)
 		}

@@ -10,7 +10,8 @@ import (
 type Repository interface {
 	CreateSemester(ctx context.Context, s *domain.Semester) error
 	FindSemestersByClassID(ctx context.Context, classID int64) ([]*domain.Semester, error)
-	FindSemesterByID(ctx context.Context, id int64) (*domain.Semester, error)
+	FindSemesterByUUID(ctx context.Context, uuid string) (*domain.Semester, error)
+	FindSemesterByClassSessionKind(ctx context.Context, classID int64, session, kind string) (*domain.Semester, error)
 	UpdateSemester(ctx context.Context, s *domain.Semester) error
 	UnsetCurrentSemesterForClass(ctx context.Context, classID int64) error
 	DeleteSemester(ctx context.Context, id int64) error
@@ -36,9 +37,20 @@ func (r *repository) FindSemestersByClassID(ctx context.Context, classID int64) 
 	return semesters, nil
 }
 
-func (r *repository) FindSemesterByID(ctx context.Context, id int64) (*domain.Semester, error) {
+func (r *repository) FindSemesterByUUID(ctx context.Context, uuid string) (*domain.Semester, error) {
 	var s domain.Semester
-	if err := r.db.WithContext(ctx).First(&s, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("uuid = ?", uuid).First(&s).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &s, nil
+}
+
+func (r *repository) FindSemesterByClassSessionKind(ctx context.Context, classID int64, session, kind string) (*domain.Semester, error) {
+	var s domain.Semester
+	if err := r.db.WithContext(ctx).Where("class_id = ? AND session = ? AND kind = ?", classID, session, kind).First(&s).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}

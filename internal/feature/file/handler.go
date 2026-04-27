@@ -2,7 +2,6 @@ package file
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/victorive/klaro-backend/internal/middleware"
@@ -68,22 +67,19 @@ func (h *Handler) Upload(c *fiber.Ctx) error {
 	return response.JSON(c, http.StatusCreated, true, "file uploaded", resp)
 }
 
-// ListByCourse godoc
-// @Summary      List files by course
-// @Description  Returns all non-archived files belonging to a course.
+// ListByClassCourse godoc
+// @Summary      List files by class course
+// @Description  Returns all non-archived files belonging to a class course.
 // @Tags         Files
 // @Produce      json
-// @Param        courseId path int true "Course ID"
+// @Param        id path string true "Class Course UUID"
 // @Success      200 {object} response.Response{data=[]FileResponse}
 // @Failure      400,401 {object} response.Response
 // @Security     BearerAuth
-// @Router       /courses/{courseId}/files [get]
-func (h *Handler) ListByCourse(c *fiber.Ctx) error {
-	courseID, err := strconv.ParseInt(c.Params("courseId"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
-	resp, err := h.svc.ListByCourse(c.UserContext(), courseID)
+// @Router       /courses/{id}/files [get]
+func (h *Handler) ListByClassCourse(c *fiber.Ctx) error {
+	classCourseUUID := c.Params("id")
+	resp, err := h.svc.ListByClassCourse(c.UserContext(), classCourseUUID)
 	if err != nil {
 		return err
 	}
@@ -101,11 +97,8 @@ func (h *Handler) ListByCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /lectures/{lectureId}/files [get]
 func (h *Handler) ListByLecture(c *fiber.Ctx) error {
-	lectureID, err := strconv.ParseInt(c.Params("lectureId"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
-	resp, err := h.svc.ListByLecture(c.UserContext(), lectureID)
+	lectureUUID := c.Params("lectureId")
+	resp, err := h.svc.ListByLecture(c.UserContext(), lectureUUID)
 	if err != nil {
 		return err
 	}
@@ -123,11 +116,8 @@ func (h *Handler) ListByLecture(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /files/{id} [get]
 func (h *Handler) GetFile(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
-	resp, err := h.svc.Get(c.UserContext(), id)
+	fileUUID := c.Params("id")
+	resp, err := h.svc.Get(c.UserContext(), fileUUID)
 	if err != nil {
 		return err
 	}
@@ -145,11 +135,8 @@ func (h *Handler) GetFile(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /files/{id}/download [get]
 func (h *Handler) GetDownloadURL(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
-	url, err := h.svc.GetDownloadURL(c.UserContext(), id)
+	fileUUID := c.Params("id")
+	url, err := h.svc.GetDownloadURL(c.UserContext(), fileUUID)
 	if err != nil {
 		return err
 	}
@@ -173,15 +160,12 @@ func (h *Handler) Review(c *fiber.Ctx) error {
 	if !ok || reviewerUUID == "" {
 		return apperr.New("unauthorized", http.StatusUnauthorized)
 	}
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
+	fileUUID := c.Params("id")
 	var req ReviewFileRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	resp, err := h.svc.Review(c.UserContext(), id, reviewerUUID, req)
+	resp, err := h.svc.Review(c.UserContext(), fileUUID, reviewerUUID, req)
 	if err != nil {
 		return err
 	}
@@ -204,14 +188,11 @@ func (h *Handler) Archive(c *fiber.Ctx) error {
 		return apperr.New("unauthorized", http.StatusUnauthorized)
 	}
 
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
+	fileUUID := c.Params("id")
 
-	if err := h.svc.Archive(c.UserContext(), id, actorUUID); err != nil {
+	if err := h.svc.Archive(c.UserContext(), fileUUID, actorUUID); err != nil {
 		return err
 	}
-	
+
 	return response.JSON(c, http.StatusOK, true, "file archived", nil)
 }

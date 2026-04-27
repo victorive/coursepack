@@ -65,20 +65,17 @@ func (h *Handler) List(c *fiber.Ctx) error {
 
 // Get godoc
 // @Summary      Get class
-// @Description  Returns a single class by ID.
+// @Description  Returns a single class by UUID.
 // @Tags         Classes
 // @Produce      json
-// @Param        id path int true "Class ID"
+// @Param        id path string true "Class UUID"
 // @Success      200 {object} response.Response{data=ClassResponse}
-// @Failure      404 {object} response.Response "Not found"
+// @Failure      401,404 {object} response.Response
 // @Security     BearerAuth
 // @Router       /classes/{id} [get]
 func (h *Handler) Get(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid id", nil)
-	}
-	cls, err := h.svc.Get(c.UserContext(), id)
+	classUUID := c.Params("id")
+	cls, err := h.svc.Get(c.UserContext(), classUUID)
 	if err != nil {
 		return err
 	}
@@ -90,17 +87,14 @@ func (h *Handler) Get(c *fiber.Ctx) error {
 // @Description  Permanently deletes a class.
 // @Tags         Classes
 // @Produce      json
-// @Param        id path int true "Class ID"
+// @Param        id path string true "Class UUID"
 // @Success      204
-// @Failure      404 {object} response.Response "Not found"
+// @Failure      401,403,404 {object} response.Response
 // @Security     BearerAuth
 // @Router       /classes/{id} [delete]
 func (h *Handler) Delete(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid id", nil)
-	}
-	if err := h.svc.Delete(c.UserContext(), id); err != nil {
+	classUUID := c.Params("id")
+	if err := h.svc.Delete(c.UserContext(), classUUID); err != nil {
 		return err
 	}
 	return c.SendStatus(http.StatusNoContent)
@@ -112,23 +106,20 @@ func (h *Handler) Delete(c *fiber.Ctx) error {
 // @Tags         Classes
 // @Accept       json
 // @Produce      json
-// @Param        id   path int                true "Class ID"
+// @Param        id   path string             true "Class UUID"
 // @Param        body body UpdateClassRequest true "Update class payload"
 // @Success      200 {object} response.Response{data=ClassResponse}
-// @Failure      422 {object} response.ValidationErrorResponse "Validation error"
+// @Failure      401,403,404,422 {object} response.Response
 // @Security     BearerAuth
 // @Router       /classes/{id} [patch]
 func (h *Handler) Update(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid id", nil)
-	}
+	classUUID := c.Params("id")
 	var req UpdateClassRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	uuid, _ := c.Locals(middleware.LocalsUserId).(string)
-	cls, err := h.svc.Update(c.UserContext(), uuid, id, &req)
+	userUUID, _ := c.Locals(middleware.LocalsUserId).(string)
+	cls, err := h.svc.Update(c.UserContext(), userUUID, classUUID, &req)
 	if err != nil {
 		return err
 	}
@@ -164,17 +155,14 @@ func (h *Handler) RequestJoin(c *fiber.Ctx) error {
 // @Description  Returns all pending join requests for a class.
 // @Tags         Classes
 // @Produce      json
-// @Param        id path int true "Class ID"
+// @Param        id path string true "Class UUID"
 // @Success      200 {object} response.Response{data=[]JoinRequestResponse}
-// @Failure      404 {object} response.Response "Not found"
+// @Failure      401,403,404 {object} response.Response
 // @Security     BearerAuth
 // @Router       /classes/{id}/join-requests [get]
 func (h *Handler) ListPendingJoinRequests(c *fiber.Ctx) error {
-	classID, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid class id", nil)
-	}
-	requests, err := h.svc.ListPendingJoinRequests(c.UserContext(), classID)
+	classUUID := c.Params("id")
+	requests, err := h.svc.ListPendingJoinRequests(c.UserContext(), classUUID)
 	if err != nil {
 		return err
 	}
@@ -187,18 +175,15 @@ func (h *Handler) ListPendingJoinRequests(c *fiber.Ctx) error {
 // @Tags         Classes
 // @Accept       json
 // @Produce      json
-// @Param        id        path int               true "Class ID"
+// @Param        id        path string            true "Class UUID"
 // @Param        requestId path int               true "Join request ID"
 // @Param        body      body ReviewJoinRequest true "Review payload"
 // @Success      200 {object} response.Response{data=JoinRequestResponse}
-// @Failure      422 {object} response.ValidationErrorResponse "Validation error"
+// @Failure      400,401,403,404,422 {object} response.Response
 // @Security     BearerAuth
 // @Router       /classes/{id}/join-requests/{requestId} [patch]
 func (h *Handler) ReviewJoinRequest(c *fiber.Ctx) error {
-	classID, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid class id", nil)
-	}
+	classUUID := c.Params("id")
 	requestID, err := strconv.ParseInt(c.Params("requestId"), 10, 64)
 	if err != nil {
 		return response.JSON(c, http.StatusBadRequest, false, "invalid request id", nil)
@@ -208,7 +193,7 @@ func (h *Handler) ReviewJoinRequest(c *fiber.Ctx) error {
 		return err
 	}
 	reviewerUUID, _ := c.Locals(middleware.LocalsUserId).(string)
-	jr, err := h.svc.ReviewJoinRequest(c.UserContext(), reviewerUUID, classID, requestID, &req)
+	jr, err := h.svc.ReviewJoinRequest(c.UserContext(), reviewerUUID, classUUID, requestID, &req)
 	if err != nil {
 		return err
 	}
@@ -220,17 +205,14 @@ func (h *Handler) ReviewJoinRequest(c *fiber.Ctx) error {
 // @Description  Returns all members of a class.
 // @Tags         Classes
 // @Produce      json
-// @Param        id path int true "Class ID"
+// @Param        id path string true "Class UUID"
 // @Success      200 {object} response.Response{data=[]MemberResponse}
-// @Failure      404 {object} response.Response "Not found"
+// @Failure      401,403,404 {object} response.Response
 // @Security     BearerAuth
 // @Router       /classes/{id}/members [get]
 func (h *Handler) ListMembers(c *fiber.Ctx) error {
-	classID, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid class id", nil)
-	}
-	members, err := h.svc.ListMembers(c.UserContext(), classID)
+	classUUID := c.Params("id")
+	members, err := h.svc.ListMembers(c.UserContext(), classUUID)
 	if err != nil {
 		return err
 	}
@@ -242,22 +224,16 @@ func (h *Handler) ListMembers(c *fiber.Ctx) error {
 // @Description  Removes a user from a class.
 // @Tags         Classes
 // @Produce      json
-// @Param        id     path int true "Class ID"
-// @Param        userId path int true "User ID"
+// @Param        id       path string true "Class UUID"
+// @Param        userUUID path string true "User UUID"
 // @Success      200 {object} response.Response
 // @Failure      404 {object} response.Response "Not found"
 // @Security     BearerAuth
-// @Router       /classes/{id}/members/{userId} [delete]
+// @Router       /classes/{id}/members/{userUUID} [delete]
 func (h *Handler) RemoveMember(c *fiber.Ctx) error {
-	classID, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid class id", nil)
-	}
-	userID, err := strconv.ParseInt(c.Params("userId"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid user id", nil)
-	}
-	if err := h.svc.RemoveMember(c.UserContext(), classID, userID); err != nil {
+	classUUID := c.Params("id")
+	targetUserUUID := c.Params("userUUID")
+	if err := h.svc.RemoveMember(c.UserContext(), classUUID, targetUserUUID); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "member removed", nil)
@@ -277,4 +253,30 @@ func (h *Handler) ListLevels(c *fiber.Ctx) error {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "levels retrieved", levels)
+}
+
+// RegenerateInviteCode godoc
+// @Summary      Regenerate invite code
+// @Description  Generates a new invite code for the class, invalidating the old one. Requires members:manage permission.
+// @Tags         Classes
+// @Produce      json
+// @Param        id path string true "Class UUID"
+// @Success      200 {object} response.Response{data=ClassResponse}
+// @Failure      400,401,403,404 {object} response.Response
+// @Security     BearerAuth
+// @Router       /classes/{id}/invite-code/regenerate [post]
+func (h *Handler) RegenerateInviteCode(c *fiber.Ctx) error {
+	classUUID := c.Params("id")
+
+	userUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
+
+	cls, err := h.svc.RegenerateInviteCode(c.UserContext(), userUUID, classUUID)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(c, http.StatusOK, true, "invite code regenerated", cls)
 }

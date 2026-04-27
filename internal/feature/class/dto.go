@@ -18,20 +18,39 @@ type UpdateClassRequest struct {
 	CurrentLevelID int64  `json:"current_level_id" validate:"omitempty,min=1"`
 }
 
+type DepartmentInfo struct {
+	UUID    string  `json:"uuid"`
+	Name    string  `json:"name"`
+	Code    string  `json:"code"`
+	Faculty *string `json:"faculty"`
+}
+
 type ClassResponse struct {
-	ID               int64     `json:"id"`
-	DepartmentID     int64     `json:"department_id"`
-	AdmissionSession string    `json:"admission_session"`
-	CurrentLevelID   int64     `json:"current_level_id"`
-	Name             string    `json:"name"`
-	InviteCode       string    `json:"invite_code"`
-	CreatedAt        time.Time `json:"created_at"`
+	UUID             string          `json:"uuid"`
+	Department       *DepartmentInfo `json:"department"`
+	AdmissionSession string          `json:"admission_session"`
+	CurrentLevelID   int64           `json:"current_level_id"`
+	Name             string          `json:"name"`
+	InviteCode       string          `json:"invite_code"`
+	CreatedAt        time.Time       `json:"created_at"`
+}
+
+func toDepartmentInfo(d *domain.Department) *DepartmentInfo {
+	if d == nil {
+		return nil
+	}
+	return &DepartmentInfo{
+		UUID:    d.UUID,
+		Name:    d.Name,
+		Code:    d.Code,
+		Faculty: d.Faculty,
+	}
 }
 
 func toClassResponse(c *domain.Class) *ClassResponse {
 	return &ClassResponse{
-		ID:               c.ID,
-		DepartmentID:     c.DepartmentID,
+		UUID:             c.UUID,
+		Department:       toDepartmentInfo(c.Department),
 		AdmissionSession: c.AdmissionSession,
 		CurrentLevelID:   c.CurrentLevelID,
 		Name:             c.Name,
@@ -41,7 +60,7 @@ func toClassResponse(c *domain.Class) *ClassResponse {
 }
 
 type JoinRequest struct {
-	InviteCode string `json:"invite_code" validate:"required,len=8"`
+	InviteCode string `json:"invite_code" validate:"required,len=6"`
 }
 
 type ReviewJoinRequest struct {
@@ -70,12 +89,10 @@ func toJoinRequestResponse(jr *domain.JoinRequest) *JoinRequestResponse {
 
 type MemberResponse struct {
 	User     *SimpleUserResponse `json:"user"`
-	ClassID  int64               `json:"class_id"`
 	JoinedAt time.Time           `json:"joined_at"`
 }
 
 type SimpleUserResponse struct {
-	ID        int64   `json:"id"`
 	UUID      string  `json:"uuid"`
 	Email     string  `json:"email"`
 	FullName  string  `json:"full_name"`
@@ -87,7 +104,6 @@ func toMemberResponse(m *domain.ClassMember) *MemberResponse {
 	var user *SimpleUserResponse
 	if m.User != nil {
 		user = &SimpleUserResponse{
-			ID:        m.User.ID,
 			UUID:      m.User.UUID,
 			Email:     m.User.Email,
 			FullName:  m.User.FullName,
@@ -97,7 +113,6 @@ func toMemberResponse(m *domain.ClassMember) *MemberResponse {
 	}
 	return &MemberResponse{
 		User:     user,
-		ClassID:  m.ClassID,
 		JoinedAt: m.JoinedAt,
 	}
 }

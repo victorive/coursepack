@@ -1,7 +1,9 @@
 package validator
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -16,6 +18,10 @@ var globalValidator = func() *validator.Validate {
 	v := validator.New()
 	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" || name == "" {
+			name = strings.SplitN(fld.Tag.Get("form"), ",", 2)[0]
+		}
+		
 		if name == "-" || name == "" {
 			return fld.Name
 		}
@@ -39,6 +45,13 @@ func Validate(s interface{}) error {
 
 func ParseAndValidate(c *fiber.Ctx, dst interface{}) error {
 	if err := c.BodyParser(dst); err != nil {
+		var typeErr *json.UnmarshalTypeError
+		if errors.As(err, &typeErr) {
+			fields := response.FieldErrors{
+				typeErr.Field: fmt.Sprintf("expected %s, got %s", typeErr.Type.String(), typeErr.Value),
+			}
+			return apperr.New("invalid input", http.StatusUnprocessableEntity).WithData(fields)
+		}
 		return apperr.New("invalid request body", http.StatusBadRequest)
 	}
 
@@ -82,6 +95,12 @@ func getValidationMessage(e validator.FieldError) string {
 		return "Value must be greater than or equal to " + e.Param()
 	case "lte":
 		return "Value must be less than or equal to " + e.Param()
+	case "ltefield":
+		return "Must be before " + e.Param()
+	case "gtefield":
+		return "Must be after " + e.Param()
+	case "datetime":
+		return "Invalid date format, expected: " + e.Param()
 	case "numeric":
 		return "Value must be numeric"
 	case "alpha":
