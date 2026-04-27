@@ -16,7 +16,7 @@ type Service interface {
 	ListCourses(ctx context.Context, universityID int64, departmentCode *string, q pagination.CursorQuery) ([]*CourseRegistryResponse, *string, error)
 	GetCourse(ctx context.Context, courseUUID string, universityID int64) (*CourseRegistryResponse, error)
 	AddClassCourse(ctx context.Context, actorUUID string, classUUID string, universityID int64, req AddClassCourseRequest) (*ClassCourseResponse, error)
-	ListClassCourses(ctx context.Context, classUUID string, universityID int64, semesterID *int64) ([]*ClassCourseResponse, error)
+	ListClassCourses(ctx context.Context, classUUID string, universityID int64, semesterUUID *string, kind *string) ([]*ClassCourseResponse, error)
 	GetClassCourse(ctx context.Context, uuid string, universityID int64) (*ClassCourseResponse, error)
 	RemoveClassCourse(ctx context.Context, actorUUID string, classUUID string, classCourseUUID string) error
 	CreateLecture(ctx context.Context, actorUUID string, classCourseUUID string, req CreateLectureRequest) (*LectureResponse, error)
@@ -32,7 +32,7 @@ type ClassRepository interface {
 }
 
 type SemesterRepository interface {
-	FindSemesterByID(ctx context.Context, id int64) (*domain.Semester, error)
+	FindSemesterByUUID(ctx context.Context, uuid string) (*domain.Semester, error)
 }
 
 type service struct {
@@ -95,7 +95,7 @@ func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUI
 		return nil, apperr.New("class not found", http.StatusNotFound)
 	}
 
-	sem, err := s.semRepo.FindSemesterByID(ctx, req.SemesterID)
+	sem, err := s.semRepo.FindSemesterByUUID(ctx, req.SemesterUUID)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -114,7 +114,7 @@ func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUI
 		return nil, apperr.New("course does not belong to your university", http.StatusUnprocessableEntity)
 	}
 
-	existing, err := s.repo.FindClassCourseByConstraint(ctx, cls.ID, req.SemesterID, course.ID)
+	existing, err := s.repo.FindClassCourseByConstraint(ctx, cls.ID, sem.ID, course.ID)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
@@ -125,7 +125,7 @@ func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUI
 	cc := &domain.ClassCourse{
 		UUID:       uuid.NewString(),
 		ClassID:    cls.ID,
-		SemesterID: req.SemesterID,
+		SemesterID: sem.ID,
 		CourseID:   course.ID,
 	}
 	if err := s.repo.CreateClassCourse(ctx, cc); err != nil {
@@ -140,7 +140,7 @@ func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUI
 	return toClassCourseResponse(cc), nil
 }
 
-func (s *service) ListClassCourses(ctx context.Context, classUUID string, universityID int64, semesterID *int64) ([]*ClassCourseResponse, error) {
+func (s *service) ListClassCourses(ctx context.Context, classUUID string, universityID int64, semesterUUID *string, kind *string) ([]*ClassCourseResponse, error) {
 	cls, err := s.classRepo.FindByUUIDAndUniversity(ctx, classUUID, universityID)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
@@ -150,7 +150,19 @@ func (s *service) ListClassCourses(ctx context.Context, classUUID string, univer
 		return nil, apperr.New("class not found", http.StatusNotFound)
 	}
 
-	classCourses, err := s.repo.FindClassCoursesByClass(ctx, cls.ID, semesterID)
+	var semesterID *int64
+	if semesterUUID != nil {
+		sem, err := s.semRepo.FindSemesterByUUID(ctx, *semesterUUID)
+		if err != nil {
+			return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		}
+		if sem == nil {
+			return nil, apperr.New("semester not found", http.StatusNotFound)
+		}
+		semesterID = &sem.ID
+	}
+
+	classCourses, err := s.repo.FindClassCoursesByClass(ctx, cls.ID, semesterID, kind)
 	if err != nil {
 		return nil, apperr.New("failed to fetch class courses", http.StatusInternalServerError).Wrap(err)
 	}

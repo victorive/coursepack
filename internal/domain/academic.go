@@ -25,6 +25,7 @@ type Department struct {
 
 type Semester struct {
 	ID        int64      `gorm:"column:id;primaryKey;autoIncrement"`
+	UUID      string     `gorm:"column:uuid;uniqueIndex;not null"`
 	ClassID   int64      `gorm:"column:class_id;not null"`
 	Session   string     `gorm:"column:session;not null"`
 	Kind      string     `gorm:"column:kind;not null"`

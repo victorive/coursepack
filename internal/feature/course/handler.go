@@ -3,7 +3,6 @@ package course
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/victorive/klaro-backend/internal/domain"
@@ -139,11 +138,12 @@ func (h *Handler) AddClassCourse(c *fiber.Ctx) error {
 
 // ListClassCourses godoc
 // @Summary      List class courses
-// @Description  Returns all courses assigned to a class. Optionally filter by semester.
+// @Description  Returns all courses assigned to a class. Optionally filter by semester UUID or kind.
 // @Tags         Class Courses
 // @Produce      json
-// @Param        id          path   string true  "Class UUID"
-// @Param        semester_id query  int    false "Filter by semester ID"
+// @Param        id            path   string true  "Class UUID"
+// @Param        semester_uuid query  string false "Filter by semester UUID"
+// @Param        kind          query  string false "Filter by semester kind (first or second)"
 // @Success      200 {object} response.Response{data=[]ClassCourseResponse}
 // @Failure      400,401,422 {object} response.Response
 // @Security     BearerAuth
@@ -162,16 +162,17 @@ func (h *Handler) ListClassCourses(c *fiber.Ctx) error {
 	}
 
 	classUUID := c.Params("id")
-	var semesterID *int64
-	if s := c.Query("semester_id"); s != "" {
-		sid, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			return fiber.ErrBadRequest
-		}
-		semesterID = &sid
+	var semesterUUID *string
+	if s := c.Query("semester_uuid"); s != "" {
+		semesterUUID = &s
 	}
 
-	resp, err := h.svc.ListClassCourses(c.UserContext(), classUUID, *u.UniversityID, semesterID)
+	var kind *string
+	if k := c.Query("kind"); k != "" {
+		kind = &k
+	}
+
+	resp, err := h.svc.ListClassCourses(c.UserContext(), classUUID, *u.UniversityID, semesterUUID, kind)
 	if err != nil {
 		return err
 	}

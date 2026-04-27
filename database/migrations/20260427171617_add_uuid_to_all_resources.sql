@@ -34,6 +34,11 @@ UPDATE files SET uuid = gen_random_uuid()::text WHERE uuid = '';
 ALTER TABLE files ALTER COLUMN uuid DROP DEFAULT;
 ALTER TABLE files ADD CONSTRAINT files_uuid_unique UNIQUE (uuid);
 
+ALTER TABLE semesters ADD COLUMN uuid VARCHAR(36) NOT NULL DEFAULT '';
+UPDATE semesters SET uuid = gen_random_uuid()::text WHERE uuid = '';
+ALTER TABLE semesters ALTER COLUMN uuid DROP DEFAULT;
+ALTER TABLE semesters ADD CONSTRAINT semesters_uuid_unique UNIQUE (uuid);
+
 -- +goose Down
 ALTER TABLE universities DROP CONSTRAINT IF EXISTS universities_uuid_unique;
 ALTER TABLE universities DROP COLUMN IF EXISTS uuid;
@@ -55,3 +60,6 @@ ALTER TABLE lectures DROP COLUMN IF EXISTS uuid;
 
 ALTER TABLE files DROP CONSTRAINT IF EXISTS files_uuid_unique;
 ALTER TABLE files DROP COLUMN IF EXISTS uuid;
+
+ALTER TABLE semesters DROP CONSTRAINT IF EXISTS semesters_uuid_unique;
+ALTER TABLE semesters DROP COLUMN IF EXISTS uuid;

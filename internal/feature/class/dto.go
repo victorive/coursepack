@@ -89,12 +89,10 @@ func toJoinRequestResponse(jr *domain.JoinRequest) *JoinRequestResponse {
 
 type MemberResponse struct {
 	User     *SimpleUserResponse `json:"user"`
-	ClassID  int64               `json:"class_id"`
 	JoinedAt time.Time           `json:"joined_at"`
 }
 
 type SimpleUserResponse struct {
-	ID        int64   `json:"id"`
 	UUID      string  `json:"uuid"`
 	Email     string  `json:"email"`
 	FullName  string  `json:"full_name"`
@@ -106,7 +104,6 @@ func toMemberResponse(m *domain.ClassMember) *MemberResponse {
 	var user *SimpleUserResponse
 	if m.User != nil {
 		user = &SimpleUserResponse{
-			ID:        m.User.ID,
 			UUID:      m.User.UUID,
 			Email:     m.User.Email,
 			FullName:  m.User.FullName,
@@ -116,7 +113,6 @@ func toMemberResponse(m *domain.ClassMember) *MemberResponse {
 	}
 	return &MemberResponse{
 		User:     user,
-		ClassID:  m.ClassID,
 		JoinedAt: m.JoinedAt,
 	}
 }

@@ -12,7 +12,7 @@ type Repository interface {
 	FindCourseByID(ctx context.Context, id int64) (*domain.Course, error)
 	FindCourseByUUID(ctx context.Context, uuid string) (*domain.Course, error)
 	CreateClassCourse(ctx context.Context, cc *domain.ClassCourse) error
-	FindClassCoursesByClass(ctx context.Context, classID int64, semesterID *int64) ([]*domain.ClassCourse, error)
+	FindClassCoursesByClass(ctx context.Context, classID int64, semesterID *int64, kind *string) ([]*domain.ClassCourse, error)
 	FindClassCourseByID(ctx context.Context, id int64) (*domain.ClassCourse, error)
 	FindClassCourseByUUID(ctx context.Context, uuid string) (*domain.ClassCourse, error)
 	FindClassCourseByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*domain.ClassCourse, error)
@@ -80,14 +80,20 @@ func (r *repository) CreateClassCourse(ctx context.Context, cc *domain.ClassCour
 	return r.db.WithContext(ctx).Create(cc).Error
 }
 
-func (r *repository) FindClassCoursesByClass(ctx context.Context, classID int64, semesterID *int64) ([]*domain.ClassCourse, error) {
+func (r *repository) FindClassCoursesByClass(ctx context.Context, classID int64, semesterID *int64, kind *string) ([]*domain.ClassCourse, error) {
 	var classCourses []*domain.ClassCourse
-	q := r.db.WithContext(ctx).Preload("Course").Where("class_id = ?", classID)
+	q := r.db.WithContext(ctx).Preload("Course").Preload("Semester").Where("class_courses.class_id = ?", classID)
+
 	if semesterID != nil {
-		q = q.Where("semester_id = ?", *semesterID)
+		q = q.Where("class_courses.semester_id = ?", *semesterID)
 	}
 
-	if err := q.Order("created_at ASC").Find(&classCourses).Error; err != nil {
+	if kind != nil {
+		q = q.Where("class_courses.semester_id IN (?)", 
+			r.db.Select("id").Where("kind = ?", *kind).Table("semesters"))
+	}
+
+	if err := q.Order("class_courses.created_at ASC").Find(&classCourses).Error; err != nil {
 		return nil, err
 	}
 
@@ -96,7 +102,7 @@ func (r *repository) FindClassCoursesByClass(ctx context.Context, classID int64,
 
 func (r *repository) FindClassCourseByID(ctx context.Context, id int64) (*domain.ClassCourse, error) {
 	var cc domain.ClassCourse
-	if err := r.db.WithContext(ctx).Preload("Course").First(&cc, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Course").Preload("Semester").First(&cc, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -108,7 +114,7 @@ func (r *repository) FindClassCourseByID(ctx context.Context, id int64) (*domain
 
 func (r *repository) FindClassCourseByUUID(ctx context.Context, uuid string) (*domain.ClassCourse, error) {
 	var cc domain.ClassCourse
-	if err := r.db.WithContext(ctx).Preload("Course").Where("uuid = ?", uuid).First(&cc).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Course").Preload("Semester").Where("uuid = ?", uuid).First(&cc).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -122,6 +128,7 @@ func (r *repository) FindClassCourseByUUIDAndUniversity(ctx context.Context, uui
 	var cc domain.ClassCourse
 	err := r.db.WithContext(ctx).
 		Preload("Course").
+		Preload("Semester").
 		Joins("JOIN classes ON classes.id = class_courses.class_id").
 		Joins("JOIN departments d ON d.id = classes.department_id").
 		Where("class_courses.uuid = ? AND d.university_id = ?", uuid, universityID).

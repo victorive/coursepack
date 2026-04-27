@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/klaro-backend/internal/feature/academic"
 	"github.com/victorive/klaro-backend/internal/pkg/pagination"
 )
 
@@ -29,26 +30,24 @@ func toCourseRegistryResponse(c *domain.Course) *CourseRegistryResponse {
 }
 
 type AddClassCourseRequest struct {
-	SemesterID int64  `json:"semester_id" validate:"required,min=1"`
-	CourseUUID string `json:"course_uuid"  validate:"required"`
+	SemesterUUID string `json:"semester_uuid" validate:"required"`
+	CourseUUID   string `json:"course_uuid"   validate:"required"`
 }
 
 type ClassCourseResponse struct {
-	UUID       string                  `json:"uuid"`
-	ClassID    int64                   `json:"class_id"`
-	SemesterID int64                   `json:"semester_id"`
-	CourseID   int64                   `json:"course_id"`
-	Course     *CourseRegistryResponse `json:"course,omitempty"`
-	CreatedAt  time.Time               `json:"created_at"`
+	UUID      string                  `json:"uuid"`
+	Semester  *academic.SemesterResponse `json:"semester,omitempty"`
+	Course    *CourseRegistryResponse `json:"course,omitempty"`
+	CreatedAt time.Time               `json:"created_at"`
 }
 
 func toClassCourseResponse(cc *domain.ClassCourse) *ClassCourseResponse {
 	resp := &ClassCourseResponse{
-		UUID:       cc.UUID,
-		ClassID:    cc.ClassID,
-		SemesterID: cc.SemesterID,
-		CourseID:   cc.CourseID,
-		CreatedAt:  cc.CreatedAt,
+		UUID:      cc.UUID,
+		CreatedAt: cc.CreatedAt,
+	}
+	if cc.Semester != nil {
+		resp.Semester = academic.ToSemesterResponse(cc.Semester)
 	}
 	if cc.Course != nil {
 		resp.Course = toCourseRegistryResponse(cc.Course)
@@ -73,27 +72,25 @@ type UpdateLectureRequest struct {
 }
 
 type LectureResponse struct {
-	UUID          string    `json:"uuid"`
-	ClassCourseID int64     `json:"class_course_id"`
-	Topic         string    `json:"topic"`
-	Description   *string   `json:"description"`
-	LecturerName  *string   `json:"lecturer_name"`
-	WeekNumber    *int16    `json:"week_number"`
-	Kind          string    `json:"kind"`
-	Status        string    `json:"status"`
-	CreatedAt     time.Time `json:"created_at"`
+	UUID         string    `json:"uuid"`
+	Topic        string    `json:"topic"`
+	Description  *string   `json:"description"`
+	LecturerName *string   `json:"lecturer_name"`
+	WeekNumber   *int16    `json:"week_number"`
+	Kind         string    `json:"kind"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 func toLectureResponse(l *domain.Lecture) *LectureResponse {
 	return &LectureResponse{
-		UUID:          l.UUID,
-		ClassCourseID: l.ClassCourseID,
-		Topic:         l.Topic,
-		Description:   l.Description,
-		LecturerName:  l.LecturerName,
-		WeekNumber:    l.WeekNumber,
-		Kind:          l.Kind,
-		Status:        l.Status,
-		CreatedAt:     l.CreatedAt,
+		UUID:         l.UUID,
+		Topic:        l.Topic,
+		Description:  l.Description,
+		LecturerName: l.LecturerName,
+		WeekNumber:   l.WeekNumber,
+		Kind:         l.Kind,
+		Status:       l.Status,
+		CreatedAt:    l.CreatedAt,
 	}
 }

@@ -2,7 +2,6 @@ package academic
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/victorive/klaro-backend/internal/pkg/response"
@@ -27,13 +26,14 @@ func NewHandler(svc Service) *Handler {
 // @Param        body body CreateSemesterRequest true "Create semester payload"
 // @Success      201 {object} response.Response{data=SemesterResponse}
 // @Security     BearerAuth
-// @Router       /semesters [post]
+// @Router       /classes/{classId}/semesters [post]
 func (h *Handler) CreateSemester(c *fiber.Ctx) error {
+	classUUID := c.Params("classId")
 	var req CreateSemesterRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	sem, err := h.svc.CreateSemester(c.UserContext(), &req)
+	sem, err := h.svc.CreateSemester(c.UserContext(), classUUID, &req)
 	if err != nil {
 		return err
 	}
@@ -47,9 +47,9 @@ func (h *Handler) CreateSemester(c *fiber.Ctx) error {
 // @Param        id path string true "Class UUID"
 // @Success      200 {object} response.Response{data=[]SemesterResponse}
 // @Security     BearerAuth
-// @Router       /classes/{id}/semesters [get]
+// @Router       /classes/{classId}/semesters [get]
 func (h *Handler) ListSemestersByClass(c *fiber.Ctx) error {
-	classUUID := c.Params("id")
+	classUUID := c.Params("classId")
 	semesters, err := h.svc.ListSemestersByClass(c.UserContext(), classUUID)
 	if err != nil {
 		return err
@@ -61,16 +61,14 @@ func (h *Handler) ListSemestersByClass(c *fiber.Ctx) error {
 // @Summary      Get semester
 // @Tags         Academic
 // @Produce      json
-// @Param        id path int true "Semester ID"
+// @Param        classId path string true "Class UUID"
+// @Param        semId   path string true "Semester UUID"
 // @Success      200 {object} response.Response{data=SemesterResponse}
 // @Security     BearerAuth
-// @Router       /semesters/{id} [get]
+// @Router       /classes/{classId}/semesters/{semId} [get]
 func (h *Handler) GetSemester(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid id", nil)
-	}
-	sem, err := h.svc.GetSemester(c.UserContext(), id)
+	semUUID := c.Params("semId")
+	sem, err := h.svc.GetSemester(c.UserContext(), semUUID)
 	if err != nil {
 		return err
 	}
@@ -82,21 +80,19 @@ func (h *Handler) GetSemester(c *fiber.Ctx) error {
 // @Tags         Academic
 // @Accept       json
 // @Produce      json
-// @Param        id   path int                    true "Semester ID"
-// @Param        body body UpdateSemesterRequest  true "Update semester payload"
+// @Param        classId path string               true "Class UUID"
+// @Param        semId   path string                true "Semester UUID"
+// @Param        body    body UpdateSemesterRequest true "Update semester payload"
 // @Success      200 {object} response.Response{data=SemesterResponse}
 // @Security     BearerAuth
-// @Router       /semesters/{id} [patch]
+// @Router       /classes/{classId}/semesters/{semId} [patch]
 func (h *Handler) UpdateSemester(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid id", nil)
-	}
+	semUUID := c.Params("semId")
 	var req UpdateSemesterRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	sem, err := h.svc.UpdateSemester(c.UserContext(), id, &req)
+	sem, err := h.svc.UpdateSemester(c.UserContext(), semUUID, &req)
 	if err != nil {
 		return err
 	}
@@ -107,16 +103,14 @@ func (h *Handler) UpdateSemester(c *fiber.Ctx) error {
 // @Summary      Delete semester
 // @Tags         Academic
 // @Produce      json
-// @Param        id path int true "Semester ID"
+// @Param        classId path string true "Class UUID"
+// @Param        semId   path string true "Semester UUID"
 // @Success      204
 // @Security     BearerAuth
-// @Router       /semesters/{id} [delete]
+// @Router       /classes/{classId}/semesters/{semId} [delete]
 func (h *Handler) DeleteSemester(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid id", nil)
-	}
-	if err := h.svc.DeleteSemester(c.UserContext(), id); err != nil {
+	semUUID := c.Params("semId")
+	if err := h.svc.DeleteSemester(c.UserContext(), semUUID); err != nil {
 		return err
 	}
 	return c.SendStatus(http.StatusNoContent)
