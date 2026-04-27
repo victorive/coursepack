@@ -16,7 +16,9 @@ type Repository interface {
 	FindPaginated(ctx context.Context, offset, limit int) ([]*domain.Department, error)
 	FindPaginatedByUniversity(ctx context.Context, universityID int64, offset, limit int) ([]*domain.Department, error)
 	FindByID(ctx context.Context, id int64) (*domain.Department, error)
+	FindByUUID(ctx context.Context, uuid string) (*domain.Department, error)
 	FindByIDAndUniversity(ctx context.Context, id int64, universityID int64) (*domain.Department, error)
+	FindByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*domain.Department, error)
 	Update(ctx context.Context, d *domain.Department) error
 	Delete(ctx context.Context, id int64) error
 }
@@ -107,11 +109,37 @@ func (r *repository) FindByID(ctx context.Context, id int64) (*domain.Department
 	return &d, nil
 }
 
+func (r *repository) FindByUUID(ctx context.Context, uuid string) (*domain.Department, error) {
+	var d domain.Department
+	if err := r.db.WithContext(ctx).Where("uuid = ?", uuid).First(&d).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &d, nil
+}
+
 func (r *repository) FindByIDAndUniversity(ctx context.Context, id int64, universityID int64) (*domain.Department, error) {
 	var d domain.Department
 	if err := r.db.WithContext(ctx).
 		Preload("University").
 		Where("id = ? AND university_id = ?", id, universityID).
+		First(&d).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &d, nil
+}
+
+func (r *repository) FindByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*domain.Department, error) {
+	var d domain.Department
+	if err := r.db.WithContext(ctx).
+		Preload("University").
+		Where("uuid = ? AND university_id = ?", uuid, universityID).
 		First(&d).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil

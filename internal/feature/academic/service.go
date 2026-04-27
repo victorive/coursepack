@@ -4,41 +4,64 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/victorive/klaro-backend/internal/domain"
 	"github.com/victorive/klaro-backend/internal/pkg/apperr"
 )
 
+type ClassRepository interface {
+	FindByUUID(ctx context.Context, uuid string) (*domain.Class, error)
+}
+
 type Service interface {
 	CreateSemester(ctx context.Context, req *CreateSemesterRequest) (*SemesterResponse, error)
-	ListSemestersByClass(ctx context.Context, classID int64) ([]*SemesterResponse, error)
+	ListSemestersByClass(ctx context.Context, classUUID string) ([]*SemesterResponse, error)
 	GetSemester(ctx context.Context, id int64) (*SemesterResponse, error)
 	UpdateSemester(ctx context.Context, id int64, req *UpdateSemesterRequest) (*SemesterResponse, error)
 	DeleteSemester(ctx context.Context, id int64) error
 }
 
 type service struct {
-	repo   Repository
-	logger *slog.Logger
+	repo      Repository
+	classRepo ClassRepository
+	logger    *slog.Logger
 }
 
-func NewService(repo Repository, logger *slog.Logger) Service {
-	return &service{repo: repo, logger: logger}
+func NewService(repo Repository, classRepo ClassRepository, logger *slog.Logger) Service {
+	return &service{repo: repo, classRepo: classRepo, logger: logger}
 }
 
 func (s *service) CreateSemester(ctx context.Context, req *CreateSemesterRequest) (*SemesterResponse, error) {
+	cls, err := s.classRepo.FindByUUID(ctx, req.ClassUUID)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if cls == nil {
+		return nil, apperr.New("class not found", http.StatusNotFound)
+	}
 	if req.IsCurrent {
-		if err := s.repo.UnsetCurrentSemesterForClass(ctx, req.ClassID); err != nil {
+		if err := s.repo.UnsetCurrentSemesterForClass(ctx, cls.ID); err != nil {
 			return nil, apperr.New("failed to unset current semester", http.StatusInternalServerError).Wrap(err)
 		}
 	}
+	var startsAt, endsAt *time.Time
+	if req.StartsAt != "" {
+		t, _ := time.Parse("2006-01-02", req.StartsAt)
+		startsAt = &t
+	}
+
+	if req.EndsAt != "" {
+		t, _ := time.Parse("2006-01-02", req.EndsAt)
+		endsAt = &t
+	}
 	sem := &domain.Semester{
-		ClassID:   req.ClassID,
+		ClassID:   cls.ID,
 		Session:   req.Session,
 		Kind:      req.Kind,
 		IsCurrent: req.IsCurrent,
-		StartsAt:  req.StartsAt,
-		EndsAt:    req.EndsAt,
+		StartsAt:  startsAt,
+		EndsAt:    endsAt,
 	}
 	if err := s.repo.CreateSemester(ctx, sem); err != nil {
 		return nil, apperr.New("failed to create semester", http.StatusInternalServerError).Wrap(err)
@@ -46,8 +69,15 @@ func (s *service) CreateSemester(ctx context.Context, req *CreateSemesterRequest
 	return toSemesterResponse(sem), nil
 }
 
-func (s *service) ListSemestersByClass(ctx context.Context, classID int64) ([]*SemesterResponse, error) {
-	semesters, err := s.repo.FindSemestersByClassID(ctx, classID)
+func (s *service) ListSemestersByClass(ctx context.Context, classUUID string) ([]*SemesterResponse, error) {
+	cls, err := s.classRepo.FindByUUID(ctx, classUUID)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if cls == nil {
+		return nil, apperr.New("class not found", http.StatusNotFound)
+	}
+	semesters, err := s.repo.FindSemestersByClassID(ctx, cls.ID)
 	if err != nil {
 		return nil, apperr.New("failed to list semesters", http.StatusInternalServerError).Wrap(err)
 	}
@@ -78,14 +108,26 @@ func (s *service) UpdateSemester(ctx context.Context, id int64, req *UpdateSemes
 		return nil, apperr.New("semester not found", http.StatusNotFound)
 	}
 	if req.IsCurrent && !sem.IsCurrent {
-			if err := s.repo.UnsetCurrentSemesterForClass(ctx, sem.ClassID); err != nil {
+		if err := s.repo.UnsetCurrentSemesterForClass(ctx, sem.ClassID); err != nil {
 			return nil, apperr.New("failed to unset current semester", http.StatusInternalServerError).Wrap(err)
 		}
 	}
 	sem.Kind = req.Kind
 	sem.IsCurrent = req.IsCurrent
-	sem.StartsAt = req.StartsAt
-	sem.EndsAt = req.EndsAt
+	if req.StartsAt != "" {
+		t, _ := time.Parse("2006-01-02", req.StartsAt)
+		sem.StartsAt = &t
+	} else {
+		sem.StartsAt = nil
+	}
+
+	if req.EndsAt != "" {
+		t, _ := time.Parse("2006-01-02", req.EndsAt)
+		sem.EndsAt = &t
+	} else {
+		sem.EndsAt = nil
+	}
+	
 	if err := s.repo.UpdateSemester(ctx, sem); err != nil {
 		return nil, apperr.New("failed to update semester", http.StatusInternalServerError).Wrap(err)
 	}

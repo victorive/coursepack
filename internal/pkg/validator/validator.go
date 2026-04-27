@@ -19,6 +19,10 @@ var globalValidator = func() *validator.Validate {
 	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
 		if name == "-" || name == "" {
+			name = strings.SplitN(fld.Tag.Get("form"), ",", 2)[0]
+		}
+		
+		if name == "-" || name == "" {
 			return fld.Name
 		}
 		return name
@@ -91,6 +95,12 @@ func getValidationMessage(e validator.FieldError) string {
 		return "Value must be greater than or equal to " + e.Param()
 	case "lte":
 		return "Value must be less than or equal to " + e.Param()
+	case "ltefield":
+		return "Must be before " + e.Param()
+	case "gtefield":
+		return "Must be after " + e.Param()
+	case "datetime":
+		return "Invalid date format, expected: " + e.Param()
 	case "numeric":
 		return "Value must be numeric"
 	case "alpha":

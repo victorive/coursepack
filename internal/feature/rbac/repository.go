@@ -16,6 +16,7 @@ type Repository interface {
 	AssignClassRole(ctx context.Context, userID, classID int64, role domain.RoleName) error
 	HasGlobalPermission(ctx context.Context, userUUID string, perm domain.PermissionName) (bool, error)
 	HasClassPermission(ctx context.Context, userUUID string, classID int64, perm domain.PermissionName) (bool, error)
+	HasClassPermissionByUUID(ctx context.Context, userUUID, classUUID string, perm domain.PermissionName) (bool, error)
 	GetUserRoles(ctx context.Context, userUUID string) ([]string, error)
 	GetUserPermissions(ctx context.Context, userUUID string) ([]string, error)
 }
@@ -136,6 +137,28 @@ func (r *gormRepository) HasClassPermission(ctx context.Context, userUUID string
 		Count(&count).Error
 	if err != nil {
 		return false, fmt.Errorf("rbac.HasClassPermission: %w", err)
+	}
+
+	return count > 0, nil
+}
+
+func (r *gormRepository) HasClassPermissionByUUID(ctx context.Context, userUUID, classUUID string, perm domain.PermissionName) (bool, error) {
+	var count int64
+
+	err := r.db.WithContext(ctx).
+		Table("user_roles ur").
+		Joins("JOIN users u ON u.id = ur.user_id").
+		Joins("JOIN roles ro ON ro.id = ur.role_id").
+		Joins("JOIN role_permissions rp ON rp.role_id = ro.id").
+		Joins("JOIN permissions p ON p.id = rp.permission_id").
+		Joins("LEFT JOIN classes c ON c.id = ur.scope_id").
+		Where(
+			"u.uuid = ? AND p.name = ? AND (ur.scope_type = 'global' OR (ur.scope_type = 'class' AND c.uuid = ?))",
+			userUUID, string(perm), classUUID,
+		).
+		Count(&count).Error
+	if err != nil {
+		return false, fmt.Errorf("rbac.HasClassPermissionByUUID: %w", err)
 	}
 
 	return count > 0, nil

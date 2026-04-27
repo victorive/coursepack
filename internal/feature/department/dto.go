@@ -6,16 +6,16 @@ import (
 )
 
 type DepartmentResponse struct {
-	ID         int64                          `json:"id"`
+	UUID       string                         `json:"uuid"`
 	University *university.UniversityResponse `json:"university"`
 	Name       string                         `json:"name"`
 	Code       string                         `json:"code"`
 	Faculty    *string                        `json:"faculty"`
 }
 
-func toDepartmentResponse(d *domain.Department) *DepartmentResponse {
+func ToDepartmentResponse(d *domain.Department) *DepartmentResponse {
 	resp := &DepartmentResponse{
-		ID:         d.ID,
+		UUID:       d.UUID,
 		University: university.ToUniversityResponse(d.University),
 		Name:       d.Name,
 		Code:       d.Code,

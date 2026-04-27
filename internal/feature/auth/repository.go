@@ -28,7 +28,7 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *repository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var u domain.User
-	err := r.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
+	err := r.db.WithContext(ctx).Preload("University").Where("email = ?", email).First(&u).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}

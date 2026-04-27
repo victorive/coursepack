@@ -44,16 +44,13 @@ func (h *Handler) CreateSemester(c *fiber.Ctx) error {
 // @Summary      List semesters for a class
 // @Tags         Academic
 // @Produce      json
-// @Param        classId path int true "Class ID"
+// @Param        id path string true "Class UUID"
 // @Success      200 {object} response.Response{data=[]SemesterResponse}
 // @Security     BearerAuth
-// @Router       /classes/{classId}/semesters [get]
+// @Router       /classes/{id}/semesters [get]
 func (h *Handler) ListSemestersByClass(c *fiber.Ctx) error {
-	classID, err := strconv.ParseInt(c.Params("classId"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid class id", nil)
-	}
-	semesters, err := h.svc.ListSemestersByClass(c.UserContext(), classID)
+	classUUID := c.Params("id")
+	semesters, err := h.svc.ListSemestersByClass(c.UserContext(), classUUID)
 	if err != nil {
 		return err
 	}

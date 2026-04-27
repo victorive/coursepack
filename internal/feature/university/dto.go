@@ -3,7 +3,7 @@ package university
 import "github.com/victorive/klaro-backend/internal/domain"
 
 type UniversityResponse struct {
-	ID      int64  `json:"id"`
+	UUID    string `json:"uuid"`
 	Name    string `json:"name"`
 	Acronym string `json:"acronym"`
 }
@@ -13,7 +13,7 @@ func ToUniversityResponse(u *domain.University) *UniversityResponse {
 		return nil
 	}
 	return &UniversityResponse{
-		ID:      u.ID,
+		UUID:    u.UUID,
 		Name:    u.Name,
 		Acronym: u.Acronym,
 	}

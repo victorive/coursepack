@@ -3,7 +3,7 @@ CREATE TABLE semesters (
     id         BIGSERIAL   PRIMARY KEY,
     class_id   BIGINT      NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
     session    TEXT        NOT NULL CHECK (session ~ '^\d{4}/\d{4}$'),
-    kind       TEXT        NOT NULL CHECK (kind IN ('first', 'second', 'summer')),
+    kind       TEXT        NOT NULL CHECK (kind IN ('first', 'second')),
     is_current BOOLEAN     NOT NULL DEFAULT FALSE,
     starts_at  DATE,
     ends_at    DATE,

@@ -1,0 +1,3836 @@
+{
+  "university": "University of Nigeria, Nsukka",
+  "acronym": "UNN",
+  "departments": {
+    "ABE": [
+      {
+        "code": "ABE 306",
+        "title": "Introduction to Farm Machinery",
+        "credit_units": 2
+      }
+    ],
+    "ACC": [
+      {
+        "code": "ACC 101",
+        "title": "Principles of Accounts I",
+        "credit_units": 3
+      },
+      {
+        "code": "ACC 102",
+        "title": "Principles of Accounts II",
+        "credit_units": 2
+      }
+    ],
+    "AEC": [
+      {
+        "code": "AEC 202",
+        "title": "Principles of Agricultural Economics",
+        "credit_units": 4
+      },
+      {
+        "code": "AEC 301",
+        "title": "Basic Farm Management & Production Economics",
+        "credit_units": 3
+      }
+    ],
+    "AEX": [
+      {
+        "code": "AEX 311",
+        "title": "Introduction to Agric. Extension & Rural Sociology",
+        "credit_units": 2
+      },
+      {
+        "code": "AEX 312",
+        "title": "Extension Teaching Methods",
+        "credit_units": 2
+      },
+      {
+        "code": "AEX 583",
+        "title": "Proposal Seminar",
+        "credit_units": 3
+      }
+    ],
+    "AG": [
+      {
+        "code": "AG 204",
+        "title": "Principles Of Agricultural Production",
+        "credit_units": 2
+      },
+      {
+        "code": "AG 301",
+        "title": "Economics of Agriculture I",
+        "credit_units": 2
+      },
+      {
+        "code": "AG 302",
+        "title": "Economics of Agriculture II",
+        "credit_units": 2
+      }
+    ],
+    "AGR": [
+      {
+        "code": "AGR 101",
+        "title": "Biomathematics",
+        "credit_units": 2
+      },
+      {
+        "code": "AGR 102",
+        "title": "Agric. Physics",
+        "credit_units": 4
+      },
+      {
+        "code": "AGR 201",
+        "title": "General Agriculture",
+        "credit_units": 3
+      },
+      {
+        "code": "AGR 302",
+        "title": "Agricultural Statistics and Data Processing",
+        "credit_units": 2
+      },
+      {
+        "code": "AGR 401",
+        "title": "Agricultural Products Storage",
+        "credit_units": 2
+      }
+    ],
+    "ANS": [
+      {
+        "code": "ANS 0641",
+        "title": "General principle of Animal Production",
+        "credit_units": 3
+      },
+      {
+        "code": "ANS 0642",
+        "title": "Beef and Dairy Cattle Management Decisions",
+        "credit_units": 3
+      },
+      {
+        "code": "ANS 0643",
+        "title": "Commercial Pig and Rabbit Production",
+        "credit_units": 3
+      },
+      {
+        "code": "ANS 0644",
+        "title": "Poultry Industry",
+        "credit_units": 3
+      },
+      {
+        "code": "ANS 0645",
+        "title": "Intensive Sheep and Goat Production",
+        "credit_units": 3
+      },
+      {
+        "code": "ANS 0646",
+        "title": "Field work and Technology Applications",
+        "credit_units": 3
+      },
+      {
+        "code": "ANS 0690",
+        "title": "Project Report",
+        "credit_units": 3
+      },
+      {
+        "code": "ANS 222",
+        "title": "Introduction to Agricultural Biochemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "ANS 241",
+        "title": "Nutrition, Anatomy & Physiology of Farm Animals",
+        "credit_units": 2
+      },
+      {
+        "code": "ANS 272",
+        "title": "Introduction to Fisheries and Wildlife Management",
+        "credit_units": 2
+      },
+      {
+        "code": "ANS 274",
+        "title": "Principles of Animal Production",
+        "credit_units": 2
+      },
+      {
+        "code": "ANS 322",
+        "title": "Agricultural Biochemistry and Methods",
+        "credit_units": 2
+      },
+      {
+        "code": "ANS 332",
+        "title": "Animal Genetics and Breeding",
+        "credit_units": 2
+      },
+      {
+        "code": "ANS 371",
+        "title": "Non-ruminant Animal Production",
+        "credit_units": 2
+      },
+      {
+        "code": "ANS 372",
+        "title": "Ruminant Animal Production",
+        "credit_units": 2
+      },
+      {
+        "code": "ANS 471",
+        "title": "Animal Husbandry Techniques",
+        "credit_units": 3
+      },
+      {
+        "code": "ANS 541",
+        "title": "Soil Physic",
+        "credit_units": 2
+      }
+    ],
+    "ARC": [
+      {
+        "code": "ARC 121",
+        "title": "Architectural Graphics I",
+        "credit_units": 2
+      },
+      {
+        "code": "ARC 122",
+        "title": "Architectural Graphics II",
+        "credit_units": 2
+      },
+      {
+        "code": "ARC 261",
+        "title": "Building Components & Methods I",
+        "credit_units": 2
+      },
+      {
+        "code": "ARC 262",
+        "title": "Building Components & Methods",
+        "credit_units": 2
+      },
+      {
+        "code": "ARC 342",
+        "title": "Building Services I",
+        "credit_units": 2
+      },
+      {
+        "code": "ARC 513",
+        "title": "Project Planning & Control",
+        "credit_units": 3
+      },
+      {
+        "code": "ARC 514",
+        "title": "Design Economics & Cost Planning",
+        "credit_units": 2
+      },
+      {
+        "code": "ARC 517",
+        "title": "Building Maintenance & Management",
+        "credit_units": 2
+      }
+    ],
+    "BCH": [
+      {
+        "code": "BCH 201",
+        "title": "General Biochemistry I",
+        "credit_units": 3
+      },
+      {
+        "code": "BCH 202",
+        "title": "General Biochemistry II",
+        "credit_units": 3
+      },
+      {
+        "code": "BCH 301",
+        "title": "Enzymology",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 311",
+        "title": "Membrane Biochemistry",
+        "credit_units": 1
+      },
+      {
+        "code": "BCH 332",
+        "title": "Bioenergetics",
+        "credit_units": 1
+      },
+      {
+        "code": "BCH 341",
+        "title": "Food Biochemistry",
+        "credit_units": 1
+      },
+      {
+        "code": "BCH 342",
+        "title": "Nutritional Biochemistry",
+        "credit_units": 1
+      },
+      {
+        "code": "BCH 351",
+        "title": "Primary Metabolic Pathways I",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 352",
+        "title": "Primary Metabolic Pathways II",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 353",
+        "title": "Primary Metabolic Pathways III",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 354",
+        "title": "Primary Metabolic Pathways IV",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 381",
+        "title": "Methods in Biochemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 382",
+        "title": "General Biochemical Methods",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 390",
+        "title": "Students Industrial Work Experience",
+        "credit_units": 3
+      },
+      {
+        "code": "BCH 401",
+        "title": "Advanced Enzymology",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 411",
+        "title": "Biosynthesis of Macromolecules",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 412",
+        "title": "Genetic Engineering",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 421",
+        "title": "Tissue Biochemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 422",
+        "title": "Tissue Biochemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 431",
+        "title": "Bioinorganic Chemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 452",
+        "title": "Metabolic Regulations",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 462",
+        "title": "Plant Biochemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 471",
+        "title": "Industrial Biochemistry",
+        "credit_units": 3
+      },
+      {
+        "code": "BCH 472",
+        "title": "Pharmacological Biochemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 481",
+        "title": "Biochemical Reasoning",
+        "credit_units": 1
+      },
+      {
+        "code": "BCH 482",
+        "title": "Advanced Biochemical Methods",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 491",
+        "title": "Special Topics/Seminar in Biochemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "BCH 492",
+        "title": "Research Project",
+        "credit_units": 6
+      }
+    ],
+    "BIO": [
+      {
+        "code": "BIO 151",
+        "title": "General Biology I",
+        "credit_units": 3
+      },
+      {
+        "code": "BIO 152",
+        "title": "General Biology II",
+        "credit_units": 3
+      },
+      {
+        "code": "BIO 153",
+        "title": "General Biology (Practical",
+        "credit_units": 2
+      },
+      {
+        "code": "BIO 154",
+        "title": "General Biology Practical",
+        "credit_units": 2
+      },
+      {
+        "code": "BIO 351",
+        "title": "General Genetics",
+        "credit_units": 2
+      },
+      {
+        "code": "BIO 352",
+        "title": "Cytogenetics",
+        "credit_units": 2
+      },
+      {
+        "code": "BIO 361",
+        "title": "Basic Principles of Ecology",
+        "credit_units": 2
+      },
+      {
+        "code": "BIO 362",
+        "title": "Basic Principles of Ecology",
+        "credit_units": 2
+      }
+    ],
+    "BOT": [
+      {
+        "code": "BOT 242",
+        "title": "Mycology I (Introductory Mycology",
+        "credit_units": 2
+      }
+    ],
+    "CE": [
+      {
+        "code": "CE 422",
+        "title": "Environmental Health Engineering",
+        "credit_units": 2
+      }
+    ],
+    "CED": [
+      {
+        "code": "CED 341",
+        "title": "Introduction to Entrepreneurship",
+        "credit_units": 2
+      },
+      {
+        "code": "CED 342",
+        "title": "Business Development and Management 2 Total23",
+        "credit_units": 3
+      }
+    ],
+    "CHM": [
+      {
+        "code": "CHM 101",
+        "title": "Basic Principles of Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 112",
+        "title": "Basic Principles of Chemistry II",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 122",
+        "title": "Basic Principles of Chemistry III",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 171",
+        "title": "Basic Practical Chemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 201",
+        "title": "General Inorganic Chemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 211",
+        "title": "General Physical Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 221",
+        "title": "General Organic Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 222",
+        "title": "General Organic Chemistry II",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 232",
+        "title": "Analytical Chemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 272",
+        "title": "Practical Inorganic Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 273",
+        "title": "Practical Organic Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 274",
+        "title": "Practical Inorganic Chemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 276",
+        "title": "Practical Physical Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 301",
+        "title": "Inorganic Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 302",
+        "title": "Inorganic Chemistry II",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 311",
+        "title": "Physical and Structural Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 312",
+        "title": "Physical and Organic Chemistry II",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 313",
+        "title": "Physical and Structural Chemistry III",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 321",
+        "title": "Organic Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 322",
+        "title": "Organic Chemistry II",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 323",
+        "title": "Organic Chemistry III",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 324",
+        "title": "Organic Chemistry III",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 373",
+        "title": "Practical Organic Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 374",
+        "title": "Applied Spectroscopy",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 375",
+        "title": "Applied Spectroscopy",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 421",
+        "title": "Advanced Organic Chemistry I",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 422",
+        "title": "Advanced Organic Chemistry II",
+        "credit_units": 2
+      },
+      {
+        "code": "CHM 431",
+        "title": "Modern Analytical Techniques",
+        "credit_units": 2
+      }
+    ],
+    "COS": [
+      {
+        "code": "COS 101",
+        "title": "Introduction to Computer Science",
+        "credit_units": 3
+      },
+      {
+        "code": "COS 201",
+        "title": "Computer Programming I",
+        "credit_units": 2
+      },
+      {
+        "code": "COS 304",
+        "title": "Computer Applications",
+        "credit_units": 3
+      }
+    ],
+    "CS": [
+      {
+        "code": "CS 101",
+        "title": "Introduction to Computer Science",
+        "credit_units": 2
+      },
+      {
+        "code": "CS 202",
+        "title": "Applications to Computer",
+        "credit_units": 2
+      },
+      {
+        "code": "CS 304",
+        "title": "Computer Applications",
+        "credit_units": 2
+      }
+    ],
+    "CSC": [
+      {
+        "code": "CSC 211",
+        "title": "Principles of Forestry",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 221",
+        "title": "Crop Anatomy, Taxonomy & Physiology",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 222",
+        "title": "Principles of Crop Production",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 321",
+        "title": "Arable Crop Production",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 322",
+        "title": "Crop Genetics and Breeding",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 331",
+        "title": "Principles of Crop Protection",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 342",
+        "title": "Permanent Crop Production",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 421",
+        "title": "Crop Production Techniques",
+        "credit_units": 4
+      },
+      {
+        "code": "CSC 431",
+        "title": "Crop Protection and Pest Control",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 511",
+        "title": "Field Experimentation and Data Analysis",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 512",
+        "title": "Plant Nutrition",
+        "credit_units": 1
+      },
+      {
+        "code": "CSC 521",
+        "title": "Field Crops",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 522",
+        "title": "Forage and Fodder Crops",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 524",
+        "title": "Plant Breeding and Genetics",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 531",
+        "title": "Plant Protection",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 533",
+        "title": "Economic Entomology",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 534",
+        "title": "Weed Science",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 541",
+        "title": "Vegetable Crops",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 542",
+        "title": "Plantation Crops",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 543",
+        "title": "Plant Propagation",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 544",
+        "title": "Post harvest Physiology and Product Storage",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 551",
+        "title": "General Principles of Biotechnology",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 552",
+        "title": "Special Project",
+        "credit_units": 4
+      },
+      {
+        "code": "CSC 561",
+        "title": "Seminar",
+        "credit_units": 2
+      },
+      {
+        "code": "CSC 572",
+        "title": "Special Project",
+        "credit_units": 4
+      }
+    ],
+    "CSP": [
+      {
+        "code": "CSP 304",
+        "title": "Computer Applications",
+        "credit_units": 2
+      }
+    ],
+    "EDF": [
+      {
+        "code": "EDF 111",
+        "title": "Origin and Development of Early Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 123",
+        "title": "Early Childhood Education Curriculum 1",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 146",
+        "title": "Play and Learning Experiences",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 160",
+        "title": "Environment and the Development of the Preschool Child",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 162",
+        "title": "Observations and Assessment of Young Children",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 166",
+        "title": "Developing Home and School Relationship",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 203",
+        "title": "Principles of Guidance and Counselling",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 223",
+        "title": "Early Childhood Education Curriculum 11",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 233",
+        "title": "Presenting Literature to Children",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 234",
+        "title": "Special Methods in Early Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 242",
+        "title": "Music in Early Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 252",
+        "title": "Fieldwork in Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 331",
+        "title": "Language Skills In Early Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 332",
+        "title": "Montessori Approach to Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 333",
+        "title": "Numeracy Skills in Early Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 363",
+        "title": "Science in the Early Years",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 365",
+        "title": "Administration of Early Childhood Education Centres",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 411",
+        "title": "Fundamentals of Early Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 415",
+        "title": "Contemporary Issues in Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 417",
+        "title": "Theories and Practices in Early Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 452",
+        "title": "Elements of Research in Early Childhood Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 455",
+        "title": "Citizenship Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 460",
+        "title": "Child Policy Issues",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 462",
+        "title": "Children and their Environments",
+        "credit_units": 2
+      },
+      {
+        "code": "EDF 463",
+        "title": "Organization and Administration in Early Childhood Education",
+        "credit_units": 2
+      }
+    ],
+    "EDU": [
+      {
+        "code": "EDU 101",
+        "title": "Introduction to Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 103",
+        "title": "History of Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 201",
+        "title": "Philosophy of Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 206",
+        "title": "Sociology of Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 211",
+        "title": "Educational Psychology I",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 227",
+        "title": "Introduction to Special Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 228",
+        "title": "Introduction to Special Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 312",
+        "title": "Educational Psychology II",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 323",
+        "title": "Pre-School Education",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 325",
+        "title": "Teaching Practice I",
+        "credit_units": 3
+      },
+      {
+        "code": "EDU 411",
+        "title": "Educational Psychology III",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 425",
+        "title": "Teaching Practice II",
+        "credit_units": 3
+      },
+      {
+        "code": "EDU 434",
+        "title": "Classroom Organization and Management",
+        "credit_units": 2
+      },
+      {
+        "code": "EDU 451",
+        "title": "Project",
+        "credit_units": 4
+      }
+    ],
+    "ELS": [
+      {
+        "code": "ELS 101",
+        "title": "Basic Literary Concepts",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 102",
+        "title": "Introduction to Nigerian Literature",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 103",
+        "title": "Introduction to African Literature",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 121",
+        "title": "Basic Grammar and Composition",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 123",
+        "title": "Introduction to Phonetics",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 131",
+        "title": "Introduction to Oral Literature",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 140",
+        "title": "Introduction to Drama",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 150",
+        "title": "Introduction to Poetry",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 160",
+        "title": "Introduction to Fiction",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 211",
+        "title": "American Literature: The Beginnings to the Romantic Movement",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 212",
+        "title": "American Literature: The Modern Period",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 213",
+        "title": "English Literature: The Renaissance Period",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 214",
+        "title": "English Literature: Neo-Classical Period",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 221",
+        "title": "Spoken English/Lab Work",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 232",
+        "title": "African Oral Poetry",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 310",
+        "title": "Contemporary African Authors",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 311",
+        "title": "English Literature: Romantic Movement",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 312",
+        "title": "English Literature: Victorian Period",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 313",
+        "title": "Greek & Roman Literatures",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 314",
+        "title": "English Literature: Modern Period",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 316",
+        "title": "Old and Middle English Literature",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 321",
+        "title": "Advanced Prose Composition",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 322",
+        "title": "History of English",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 324",
+        "title": "Phonology",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 325",
+        "title": "Semantics",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 331",
+        "title": "African Traditional Verbal Genres",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 332",
+        "title": "The Criticism of Oral Literature",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 333",
+        "title": "African Oral Narratives",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 340",
+        "title": "African Drama",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 342",
+        "title": "Victorian Era",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 371",
+        "title": "Theory and Practice of Narrative",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 381",
+        "title": "Research Methods",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 411",
+        "title": "African-American Literature",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 413",
+        "title": "European Continental Literature",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 415",
+        "title": "World Black Literature",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 416",
+        "title": "Contemporary African Authors",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 418",
+        "title": "Caribbean Literature",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 421",
+        "title": "Morphology and Syntax",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 422",
+        "title": "Problems of English in West Africa",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 423",
+        "title": "Comparative Grammar",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 425",
+        "title": "Stylistics",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 431",
+        "title": "Oral Literature & Modern Literature in Africa",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 440",
+        "title": "Shakespeare",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 442",
+        "title": "Studies in Drama",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 444",
+        "title": "European Drama since Ibsen",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 452",
+        "title": "Studies in Poetry",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 461",
+        "title": "Studies in Fiction",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 471",
+        "title": "Modern Literary Theory",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 473",
+        "title": "Modern Discourse Analysis",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 480",
+        "title": "Literary Review Writing",
+        "credit_units": 3
+      },
+      {
+        "code": "ELS 490",
+        "title": "Project",
+        "credit_units": 3
+      }
+    ],
+    "ESM": [
+      {
+        "code": "ESM 101",
+        "title": "Introduction to Estate Management",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 102",
+        "title": "Introduction to Estate Management II",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 111",
+        "title": "Principles of Land Economy",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 211",
+        "title": "Land Economics I",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 212",
+        "title": "Land Economics II",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 261",
+        "title": "Introduction to Valuation I",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 262",
+        "title": "Introduction to Valuation II",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 321",
+        "title": "Principles of Town & Country Planning I",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 322",
+        "title": "Principles of Town & Country Planning II",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 323",
+        "title": "Economics of Planning Development I",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 324",
+        "title": "Economics of Planned Development II",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 331",
+        "title": "National & Rating Taxation I",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 332",
+        "title": "National Rating & Taxation II",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 341",
+        "title": "Arbitration & Awards",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 351",
+        "title": "Administration of Public Property",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 352",
+        "title": "Computer Application in Estate Management",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 361",
+        "title": "Principles of Valuation I",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 362",
+        "title": "Principles of Valuation II",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 363",
+        "title": "Mineral Valuation",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 411",
+        "title": "Comparative Land Politics",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 412",
+        "title": "Urban Land Economics",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 451",
+        "title": "Principles of Property Management",
+        "credit_units": 3
+      },
+      {
+        "code": "ESM 461",
+        "title": "Valuation of Plant & Machinery",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 471",
+        "title": "Estate and Development Finance",
+        "credit_units": 4
+      },
+      {
+        "code": "ESM 511",
+        "title": "Land Use & Resources I",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 512",
+        "title": "Land Use & Resources II",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 521",
+        "title": "Applied Town Planning I",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 522",
+        "title": "Applied Town Planning II",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 551",
+        "title": "Applied Property Management I",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 552",
+        "title": "Applied Property Management II",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 553",
+        "title": "Portfolio Management",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 554",
+        "title": "Project Management",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 561",
+        "title": "Advanced Valuation I",
+        "credit_units": 4
+      },
+      {
+        "code": "ESM 562",
+        "title": "Advanced Valuation II",
+        "credit_units": 3
+      },
+      {
+        "code": "ESM 571",
+        "title": "Professional Practices",
+        "credit_units": 2
+      },
+      {
+        "code": "ESM 581",
+        "title": "Feasibility & Viability Appraisals I",
+        "credit_units": 3
+      },
+      {
+        "code": "ESM 582",
+        "title": "Feasibility & Viability Appraisals II",
+        "credit_units": 3
+      },
+      {
+        "code": "ESM 591",
+        "title": "Project Dissertation I",
+        "credit_units": 3
+      },
+      {
+        "code": "ESM 592",
+        "title": "Project Dissertation II",
+        "credit_units": 3
+      }
+    ],
+    "ESMA": [
+      {
+        "code": "ESMA 491",
+        "title": "Research Methodology",
+        "credit_units": 3
+      }
+    ],
+    "FRE": [
+      {
+        "code": "FRE 341",
+        "title": "Introduction to Translation I",
+        "credit_units": 2
+      }
+    ],
+    "FST": [
+      {
+        "code": "FST 102",
+        "title": "Introduction to Food Science & Technology",
+        "credit_units": 2
+      }
+    ],
+    "GEOL": [
+      {
+        "code": "GEOL 211",
+        "title": "Crystallography",
+        "credit_units": 2
+      }
+    ],
+    "GLG": [
+      {
+        "code": "GLG 623",
+        "title": "Rock Slope Stability (2",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 801",
+        "title": "Research Seminar in Geology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 802",
+        "title": "Research Project in Geology",
+        "credit_units": 6
+      },
+      {
+        "code": "GLG 806",
+        "title": "Quaternary Palynology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 807",
+        "title": "Field Mapping in Geological Exploration",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 809",
+        "title": "Geology for Non-Geologists",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 810",
+        "title": "Subsurface Geology",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 811",
+        "title": "Geology of Economic Mineral Deposits",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 812",
+        "title": "Ore Microscopy",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 813",
+        "title": "Fluid Inclusion and Ore Genesis",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 814",
+        "title": "Geochemistry of Ore Deposits",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 815",
+        "title": "Coal Geology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 816",
+        "title": "Exploration and Mining Geology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 817",
+        "title": "Mineral Deposits in Nigeria",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 818",
+        "title": "Mineral Economics",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 821",
+        "title": "Engineering Geology",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 822",
+        "title": "Advanced Engineering Geology",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 823",
+        "title": "Rock slope Stability",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 824",
+        "title": "Advanced Environmental Geology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 825",
+        "title": "Site Investigation",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 826",
+        "title": "Rock Mechanics",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 827",
+        "title": "Special Topic in Geology (Soil Mechanics",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 828",
+        "title": "Special Topic in Geology (Foundations",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 829",
+        "title": "Advanced Structural Geology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 831",
+        "title": "Gravity and Magnetic Methods",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 832",
+        "title": "Modeling and Geophysical Interpretation",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 833",
+        "title": "Electrical and Electromagnetic Methods",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 834",
+        "title": "Seismic Methods",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 835",
+        "title": "Physics of the Earth Interior",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 836",
+        "title": "Time Series Analysis and Data Processing",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 837",
+        "title": "Borehole Geophysics",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 838",
+        "title": "Electrical and Radiometric Methods",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 839",
+        "title": "Exploration Geophysics",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 841",
+        "title": "Water Resources Evaluation and Management",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 842",
+        "title": "Hydro-geochemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 843",
+        "title": "Contaminant Hydrogeology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 844",
+        "title": "Flow Through Porous Media",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 845",
+        "title": "GIS and Statistics in Hydro-geologic Systems",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 846",
+        "title": "Regional Hydrogeology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 848",
+        "title": "Groundwater and Geotechnical Problems",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 851",
+        "title": "Advanced Study of Rock Forming Minerals",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 852",
+        "title": "Advanced Optical Mineralogy",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 853",
+        "title": "Techniques of Rocks and Mineral Analysis",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 854",
+        "title": "Thermodynamics of Rocks and Minerals",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 855",
+        "title": "Advanced Igneous Petrology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 856",
+        "title": "Advanced Metamorphic Petrology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 857",
+        "title": "Clay Mineralogy",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 861",
+        "title": "Advanced Paleontology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 862",
+        "title": "Advanced Micropalaeontology",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 863",
+        "title": "Vertebrate Palaeontology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 864",
+        "title": "Paleoecology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 865",
+        "title": "Palynology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 866",
+        "title": "Advanced Biostratigraphy",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 867",
+        "title": "Advanced Sequence Stratigraphy",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 868",
+        "title": "Applied Palynology",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 869",
+        "title": "Palynology of Nigerian Sedimentary Basins",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 871",
+        "title": "Geology of Petroleum",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 873",
+        "title": "Petroleum Geochemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 874",
+        "title": "Petroleum Geology of Nigeria’s Sedimentary Basins",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 875",
+        "title": "Reservoir Geology and Petroleum Engineering",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 881",
+        "title": "Advanced Sedimentary Petrology",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 883",
+        "title": "Advanced Stratigraphic Analysis",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 884",
+        "title": "Methods of Sediment Analysis",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 885",
+        "title": "Tectonics and Sedimentation (2",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 886",
+        "title": "Facies Models and Environmental Analysis",
+        "credit_units": 2
+      },
+      {
+        "code": "GLG 887",
+        "title": "Quantitative Stratigraphic Analysis",
+        "credit_units": 3
+      },
+      {
+        "code": "GLG 888",
+        "title": "Chemical Sedimentology",
+        "credit_units": 2
+      }
+    ],
+    "GSP": [
+      {
+        "code": "GSP 101",
+        "title": "Communication in English I",
+        "credit_units": 2
+      },
+      {
+        "code": "GSP 102",
+        "title": "Communication in English II",
+        "credit_units": 2
+      },
+      {
+        "code": "GSP 103",
+        "title": "Social Sciences I",
+        "credit_units": 2
+      },
+      {
+        "code": "GSP 104",
+        "title": "Social Sciences II",
+        "credit_units": 2
+      },
+      {
+        "code": "GSP 105",
+        "title": "Natural Science I",
+        "credit_units": 2
+      },
+      {
+        "code": "GSP 106",
+        "title": "Natural Science II",
+        "credit_units": 2
+      },
+      {
+        "code": "GSP 111",
+        "title": "The Use of Library & Study Skills",
+        "credit_units": 2
+      },
+      {
+        "code": "GSP 201",
+        "title": "Peace and Conflict Resolution",
+        "credit_units": 3
+      },
+      {
+        "code": "GSP 202",
+        "title": "Peace and Conflict Resolution II",
+        "credit_units": 2
+      },
+      {
+        "code": "GSP 207",
+        "title": "Philosophy, Logic and Human Existence",
+        "credit_units": 3
+      },
+      {
+        "code": "GSP 208",
+        "title": "Nigerian Peoples & Culture",
+        "credit_units": 2
+      }
+    ],
+    "GST": [
+      {
+        "code": "GST 101",
+        "title": "use of English I",
+        "credit_units": 2
+      },
+      {
+        "code": "GST 102",
+        "title": "Use of English II",
+        "credit_units": 2
+      },
+      {
+        "code": "GST 105",
+        "title": "Natural Science",
+        "credit_units": 2
+      },
+      {
+        "code": "GST 106",
+        "title": "Natural Sciences II",
+        "credit_units": 2
+      },
+      {
+        "code": "GST 207",
+        "title": "Humanities I",
+        "credit_units": 2
+      },
+      {
+        "code": "GST 208",
+        "title": "Humanities II",
+        "credit_units": 2
+      }
+    ],
+    "HND": [
+      {
+        "code": "HND 102",
+        "title": "Introduction to Home Science, Nutrition & Dietetics",
+        "credit_units": 2
+      }
+    ],
+    "LAW": [
+      {
+        "code": "LAW 243",
+        "title": "Principles of Law of Contract & Tort",
+        "credit_units": 2
+      },
+      {
+        "code": "LAW 244",
+        "title": "Principles of Law of Contract & Tort II",
+        "credit_units": 3
+      },
+      {
+        "code": "LAW 335",
+        "title": "Principles of Land law I",
+        "credit_units": 2
+      },
+      {
+        "code": "LAW 336",
+        "title": "Principles of Nigerian Land law II",
+        "credit_units": 2
+      },
+      {
+        "code": "LAW 570",
+        "title": "Administrative Law",
+        "credit_units": 2
+      }
+    ],
+    "MAC": [
+      {
+        "code": "MAC 101",
+        "title": "Introduction to Mass Communication",
+        "credit_units": 4
+      },
+      {
+        "code": "MAC 102",
+        "title": "African Communication Systems",
+        "credit_units": 4
+      },
+      {
+        "code": "MAC 103",
+        "title": "History of the Nigerian Mass Media",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 104",
+        "title": "African Communication Systems",
+        "credit_units": 4
+      },
+      {
+        "code": "MAC 111",
+        "title": "Elements of Journalistic Style",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 112",
+        "title": "Writing for the Mass Media",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 132",
+        "title": "Typesetting",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 201",
+        "title": "Theories of Mass Communication",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 202",
+        "title": "Media and Society",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 203",
+        "title": "Reporting",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 204",
+        "title": "Information and Communication Technologies",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 205",
+        "title": "Graphics of Mass Communication",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 211",
+        "title": "Critical and Review Writing",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 212",
+        "title": "News Writing",
+        "credit_units": 3
+      },
+      {
+        "code": "MAC 221",
+        "title": "Announcing and Performance",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 222",
+        "title": "Principles of Broadcasting",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 241",
+        "title": "Principles of Public Relations",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 242",
+        "title": "Principles of Advertising",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 243",
+        "title": "Marketing Foundations for Advertising",
+        "credit_units": 3
+      },
+      {
+        "code": "MAC 244",
+        "title": "Fundamentals of Media Relations",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 252",
+        "title": "Media Attachment",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 261",
+        "title": "Introduction to Film",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 301",
+        "title": "Development Journalism",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 302",
+        "title": "Specialised Reporting",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 311",
+        "title": "Feature and Interpretative Writing",
+        "credit_units": 3
+      },
+      {
+        "code": "MAC 312",
+        "title": "Editorial Writing",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 313",
+        "title": "Magazine Article Writing",
+        "credit_units": 3
+      },
+      {
+        "code": "MAC 314",
+        "title": "Broadcast Commentary and Critical Writing",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 321",
+        "title": "Radio/TV Programme Writing and Production",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 322",
+        "title": "Broadcast Programming",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 323",
+        "title": "Public Affairs Broadcasting",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 331",
+        "title": "News Editing",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 332",
+        "title": "Newspaper Production",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 333",
+        "title": "Fundamentals of Book Publishing",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 334",
+        "title": "Magazine Production",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 341",
+        "title": "Financial Relations",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 342",
+        "title": "Community Relations",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 343",
+        "title": "Advertising Creative Strategies and Tactics",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 345",
+        "title": "Consumer Affairs",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 352",
+        "title": "Media Attachment",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 361",
+        "title": "Photojournalism",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 382",
+        "title": "Introduction to Mass Communication Research",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 384",
+        "title": "Advertising and Public Relations Research",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 401",
+        "title": "Mass Communication Law and Ethics",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 402",
+        "title": "Media Management",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 403",
+        "title": "International Communication",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 412",
+        "title": "Film Criticism",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 421",
+        "title": "Advanced Radio/TV Production",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 422",
+        "title": "Broadcast Seminar",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 423",
+        "title": "Station Management and Operations",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 424",
+        "title": "Educational Broadcasting",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 425",
+        "title": "International Broadcasting",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 431",
+        "title": "Advanced Newspaper Production",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 433",
+        "title": "Advanced Magazine Production",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 435",
+        "title": "Print Seminar",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 441",
+        "title": "Advanced Public Relations",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 442",
+        "title": "Advanced Advertising",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 443",
+        "title": "International Public Relations",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 444",
+        "title": "Special Topics in Advertising",
+        "credit_units": 3
+      },
+      {
+        "code": "MAC 445",
+        "title": "Organisation and Management of Advertising",
+        "credit_units": 3
+      },
+      {
+        "code": "MAC 446",
+        "title": "Multinational Advertising",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 462",
+        "title": "Documentary Film Production",
+        "credit_units": 2
+      },
+      {
+        "code": "MAC 490",
+        "title": "Project",
+        "credit_units": 6
+      }
+    ],
+    "MAN": [
+      {
+        "code": "MAN 141",
+        "title": "Elements of Business Economics I",
+        "credit_units": 3
+      },
+      {
+        "code": "MAN 142",
+        "title": "Elements of Business Economics II",
+        "credit_units": 3
+      },
+      {
+        "code": "MAN 231",
+        "title": "Business Statistics I",
+        "credit_units": 2
+      },
+      {
+        "code": "MAN 232",
+        "title": "Business Statistics II",
+        "credit_units": 2
+      },
+      {
+        "code": "MAN 241",
+        "title": "Business Micro Economic Theory",
+        "credit_units": 3
+      },
+      {
+        "code": "MAN 242",
+        "title": "Business Macro Economics Theory",
+        "credit_units": 3
+      }
+    ],
+    "MCB": [
+      {
+        "code": "MCB 102",
+        "title": "Introductory Microbiology",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 201",
+        "title": "General Microbiology",
+        "credit_units": 3
+      },
+      {
+        "code": "MCB 202",
+        "title": "General Microbiology II",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 212",
+        "title": "Environmental Microbiology I",
+        "credit_units": 3
+      },
+      {
+        "code": "MCB 301",
+        "title": "Microbial Physiology",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 302",
+        "title": "Microbial Metabolism",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 304",
+        "title": "Microbial Genetics",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 312",
+        "title": "Microbial Genetics/Molecular Biology",
+        "credit_units": 4
+      },
+      {
+        "code": "MCB 313",
+        "title": "Environmental Microbiology and Climate Change",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 315",
+        "title": "Petroleum Microbiology",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 321",
+        "title": "Environmental Microbiology",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 325",
+        "title": "Food Microbiology I",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 331",
+        "title": "Pathogenic Bacteriology",
+        "credit_units": 4
+      },
+      {
+        "code": "MCB 332",
+        "title": "Pathogenic Mycology",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 333",
+        "title": "Diagnostic Microbiology",
+        "credit_units": 1
+      },
+      {
+        "code": "MCB 334",
+        "title": "Immunology and Immunochemistry",
+        "credit_units": 3
+      },
+      {
+        "code": "MCB 335",
+        "title": "Pathogenic Mycology",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 341",
+        "title": "Immunology and Immunochemistry",
+        "credit_units": 4
+      },
+      {
+        "code": "MCB 352",
+        "title": "Students’ Industrial Work Experience Scheme",
+        "credit_units": 3
+      },
+      {
+        "code": "MCB 354",
+        "title": "SIWES Report",
+        "credit_units": 3
+      },
+      {
+        "code": "MCB 356",
+        "title": "SIWES Seminar",
+        "credit_units": 6
+      },
+      {
+        "code": "MCB 401",
+        "title": "Analytical Microbiology and Quality Control",
+        "credit_units": 3
+      },
+      {
+        "code": "MCB 403",
+        "title": "Molecular Biology and Genetic Engineering",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 411",
+        "title": "Microbial Ecology",
+        "credit_units": 3
+      },
+      {
+        "code": "MCB 412",
+        "title": "Environmental Impact Assessment",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 423",
+        "title": "Industrial Microbiology and Biotechnology I",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 424",
+        "title": "Industrial Microbiology and Biotechnology II",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 425",
+        "title": "Food Microbiology II",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 431",
+        "title": "Virology",
+        "credit_units": 4
+      },
+      {
+        "code": "MCB 432",
+        "title": "Principles of Epidemiology and Public Health",
+        "credit_units": 3
+      },
+      {
+        "code": "MCB 434",
+        "title": "Pharmaceutical Microbiology",
+        "credit_units": 3
+      },
+      {
+        "code": "MCB 451",
+        "title": "Industrial Microbiology and Biotechnology",
+        "credit_units": 4
+      },
+      {
+        "code": "MCB 452",
+        "title": "Analytical Microbiology and Quality Control",
+        "credit_units": 4
+      },
+      {
+        "code": "MCB 481",
+        "title": "Seminar in Microbiology",
+        "credit_units": 2
+      },
+      {
+        "code": "MCB 492",
+        "title": "Project",
+        "credit_units": 6
+      }
+    ],
+    "MTH": [
+      {
+        "code": "MTH 111",
+        "title": "General Mathematics I",
+        "credit_units": 3
+      },
+      {
+        "code": "MTH 112",
+        "title": "Elementary Mathematics II",
+        "credit_units": 3
+      },
+      {
+        "code": "MTH 121",
+        "title": "General Mathematics II",
+        "credit_units": 3
+      },
+      {
+        "code": "MTH 122",
+        "title": "Elementary Mathematics III",
+        "credit_units": 2
+      }
+    ],
+    "PCH": [
+      {
+        "code": "PCH 231",
+        "title": "Physical Pharmaceutical Chemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "PCH 232",
+        "title": "Inorganic Pharmaceutical Chemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "PCH 234",
+        "title": "Practical Pharmaceutical Chemistry",
+        "credit_units": 1
+      },
+      {
+        "code": "PCH 331",
+        "title": "Organic Pharmaceutical Chemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "PCH 332",
+        "title": "Pharmaceutical Analysis I",
+        "credit_units": 2
+      },
+      {
+        "code": "PCH 333",
+        "title": "Practical Organic Pharmaceutical Chemistry",
+        "credit_units": 1
+      },
+      {
+        "code": "PCH 334",
+        "title": "Practical Pharmaceutical Analysis",
+        "credit_units": 1
+      },
+      {
+        "code": "PCH 431",
+        "title": "Instrumental Methods of Pharmaceutical Analysis",
+        "credit_units": 2
+      },
+      {
+        "code": "PCH 432",
+        "title": "Medicinal Chemistry I (Drug Design",
+        "credit_units": 2
+      },
+      {
+        "code": "PCH 433",
+        "title": "Practical Pharmaceutical Analysis",
+        "credit_units": 1
+      },
+      {
+        "code": "PCH 531",
+        "title": "Medicinal Chemistry II",
+        "credit_units": 2
+      },
+      {
+        "code": "PCH 532",
+        "title": "Drug Quality Assurance",
+        "credit_units": 2
+      },
+      {
+        "code": "PCH 533",
+        "title": "Natural Products Chemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "PCH 534",
+        "title": "Practical Drug Quality Assurance",
+        "credit_units": 1
+      },
+      {
+        "code": "PCH 631",
+        "title": "Radiopharmacy",
+        "credit_units": 2
+      }
+    ],
+    "PHY": [
+      {
+        "code": "PHY 101",
+        "title": "General Physics for Life Sciences I",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 102",
+        "title": "General Physics for Life Sciences II",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 111",
+        "title": "General Physics for Life Sciences I",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 112",
+        "title": "General Physics for Life Sciences II",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 114",
+        "title": "General Physics for Life Sciences III",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 115",
+        "title": "General Physics for Physical Sciences I",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 116",
+        "title": "General Physics for Physical Sciences II",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 118",
+        "title": "General Physics for Physical Sciences III",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 122",
+        "title": "Prerequisite",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 191",
+        "title": "Practical Physics",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 195",
+        "title": "Practical Physics",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 221",
+        "title": "Prerequisite",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 241",
+        "title": "Waves",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 251",
+        "title": "Prerequisite",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 262",
+        "title": "Prerequisite",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 292",
+        "title": "Prerequisite",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 321",
+        "title": "Relativity Physics",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 331",
+        "title": "PHY 438 Statistical Physics 2 Units (Prerequisite",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 391",
+        "title": "Prerequisite",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 394",
+        "title": "Workshop Course II (Electronics",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 396",
+        "title": "Measurements and Instrumentation",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 401",
+        "title": "Computational Physics",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 414",
+        "title": "Introduction to Industrial Processes",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 415",
+        "title": "Science of Materials",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 418",
+        "title": "Physical Metallurgy",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 441",
+        "title": "Solar Energy I",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 442",
+        "title": "Solar Energy II",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 443",
+        "title": "Biomas Energy",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 444",
+        "title": "Fossil Energy",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 445",
+        "title": "Nuclear Energy I",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 446",
+        "title": "Nuclear Energy II",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 456",
+        "title": "Industrial Electronics",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 471",
+        "title": "Meteorology",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 472",
+        "title": "Aeronomy",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 475",
+        "title": "Industrial Geophysics",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 476",
+        "title": "Physics of the Earth’s Interior",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 486",
+        "title": "Stellar Structure and Evolution",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 488",
+        "title": "Modern Cosmology",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 491",
+        "title": "Prerequisite",
+        "credit_units": 3
+      },
+      {
+        "code": "PHY 802",
+        "title": "Applied Electronic and Workshop practice",
+        "credit_units": 2
+      },
+      {
+        "code": "PHY 803",
+        "title": "Electromagnetic Theory",
+        "credit_units": 2
+      }
+    ],
+    "POL": [
+      {
+        "code": "POL 114",
+        "title": "Nigerian Legal System I",
+        "credit_units": 2
+      },
+      {
+        "code": "POL 115",
+        "title": "Nigerian Legal System II",
+        "credit_units": 2
+      }
+    ],
+    "PSB": [
+      {
+        "code": "PSB 101",
+        "title": "General Plant Science",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 102",
+        "title": "General Plant Biotechnology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 162",
+        "title": "Climate Change and Plant Life I",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 211",
+        "title": "Phycology and Bryology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 213",
+        "title": "Morphology & Phytosystematics of Lower Plants",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 221",
+        "title": "General Plant Anatomy",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 241",
+        "title": "General Mycology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 246",
+        "title": "General Plant Pathology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 261",
+        "title": "Climate and Plant Life II",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 272",
+        "title": "Mushroom Technology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 274",
+        "title": "Plant Macropropagation & Floriculture",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 282",
+        "title": "Mushroom Technology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 284",
+        "title": "Plant Macropropagation and Floriculture",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 301",
+        "title": "Phytotechniques",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 303",
+        "title": "Ethnomedicinal Plants",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 313",
+        "title": "Morphology & Phytosystematics of Higher Plants",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 315",
+        "title": "Paleobotany",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 331",
+        "title": "General Plant Physiology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 355",
+        "title": "General Plant Molecular Biology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 363",
+        "title": "Forest Resources Conservation",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 365",
+        "title": "Vulnerability and Adaptation of Plants to Climate Change",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 367",
+        "title": "Climate Change and Global Mitigation Policies & Strategies",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 371",
+        "title": "Principles of Plant Biotechnology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 381",
+        "title": "Principles of Plant Biotechnology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 391",
+        "title": "Research Methods and Plant Breeding",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 392",
+        "title": "Students Industrial Work Experience (SIWES) Field Work",
+        "credit_units": 6
+      },
+      {
+        "code": "PSB 394",
+        "title": "SIWES Report",
+        "credit_units": 6
+      },
+      {
+        "code": "PSB 396",
+        "title": "SIWES Seminar",
+        "credit_units": 3
+      },
+      {
+        "code": "PSB 411",
+        "title": "Dendrology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 413",
+        "title": "Herbarium and Phytosystematics",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 415",
+        "title": "Introductory Palynology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 417",
+        "title": "Freshwater Phycology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 422",
+        "title": "Pulp and Paper Technology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 424",
+        "title": "Timber Products Technology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 431",
+        "title": "Advances in Plant Physiology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 433",
+        "title": "Plant Embryology & Morphogenesis",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 441",
+        "title": "Advances in Plant Pathology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 443",
+        "title": "Fungus Physiology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 445",
+        "title": "Plant Virology and Diagnostics",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 451",
+        "title": "Cytology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 453",
+        "title": "Genetics and Plant Breeding",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 455",
+        "title": "Advances in Plant Molecular Biology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 457",
+        "title": "Phytobioinformatics",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 461",
+        "title": "Aquatic and Pollution Biology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 462",
+        "title": "Plant Ecology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 463",
+        "title": "Economic and Industrial Botany",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 464",
+        "title": "Phytoremediation and Erosion Management",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 465",
+        "title": "Phyto – Environmental Impact Assessment",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 466",
+        "title": "Phytoindustrial Relations",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 467",
+        "title": "Phytogeography",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 468",
+        "title": "Phytoremediation & Erosion Management",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 469",
+        "title": "Plants Productivity and Apiculture",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 471",
+        "title": "Plant Tissue Culture and Micropropagation",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 473",
+        "title": "Phyto-biofuels",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 474",
+        "title": "Phytobiotechnology Ethics",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 475",
+        "title": "Plant Biophysics",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 477",
+        "title": "Applications of Plant Biotechnology",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 481",
+        "title": "Seminar",
+        "credit_units": 2
+      },
+      {
+        "code": "PSB 491",
+        "title": "Principles of Scientific Writing",
+        "credit_units": 1
+      },
+      {
+        "code": "PSB 492",
+        "title": "Project",
+        "credit_units": 6
+      }
+    ],
+    "SCI": [
+      {
+        "code": "SCI 801",
+        "title": "Management and Entrepreneurship",
+        "credit_units": 2
+      },
+      {
+        "code": "SCI 802",
+        "title": "ICT and Research Methodology",
+        "credit_units": 2
+      }
+    ],
+    "SOC": [
+      {
+        "code": "SOC 101",
+        "title": "Introduction to Sociology I 2 Total 22",
+        "credit_units": 3
+      },
+      {
+        "code": "SOC 102",
+        "title": "Introduction to Sociology II",
+        "credit_units": 2
+      },
+      {
+        "code": "SOC 251",
+        "title": "Social Changes and Social Problems",
+        "credit_units": 3
+      }
+    ],
+    "SSC": [
+      {
+        "code": "SSC 211",
+        "title": "Introductory Soil Science",
+        "credit_units": 2
+      },
+      {
+        "code": "SSC 242",
+        "title": "Climatology and Biogeography",
+        "credit_units": 3
+      },
+      {
+        "code": "SSC 321",
+        "title": "Paedology",
+        "credit_units": 2
+      },
+      {
+        "code": "SSC 431",
+        "title": "Farm Design, Survey, & Land Use Planning",
+        "credit_units": 2
+      },
+      {
+        "code": "SSC 441",
+        "title": "Agric. Meteorology, Irrigation and Drainage",
+        "credit_units": 2
+      },
+      {
+        "code": "SSC 531",
+        "title": "Soil Survey and land Use Planning",
+        "credit_units": 2
+      },
+      {
+        "code": "SSC 541",
+        "title": "Soil Physics",
+        "credit_units": 2
+      },
+      {
+        "code": "SSC 542",
+        "title": "Principles of Irrigation and Drainage",
+        "credit_units": 2
+      },
+      {
+        "code": "SSC 561",
+        "title": "Soil Chemistry",
+        "credit_units": 2
+      },
+      {
+        "code": "SSC 562",
+        "title": "Soil and Plant Analysis",
+        "credit_units": 2
+      },
+      {
+        "code": "SSC 563",
+        "title": "Soil fertility",
+        "credit_units": 1
+      }
+    ],
+    "STA": [
+      {
+        "code": "STA 202",
+        "title": "Statistics for Agricultural and Biology Science I",
+        "credit_units": 2
+      },
+      {
+        "code": "STA 203",
+        "title": "Statistics for Agric and Biol. Sciences I",
+        "credit_units": 2
+      },
+      {
+        "code": "STA 204",
+        "title": "Statistics for Agric. & Biol. Sciences II",
+        "credit_units": 2
+      },
+      {
+        "code": "STA 205",
+        "title": "Statistics for Agricultural and Biological Sciences II",
+        "credit_units": 2
+      }
+    ],
+    "STAT": [
+      {
+        "code": "STAT 204",
+        "title": "Statistics for Agric. & Bio. Sciences II",
+        "credit_units": 2
+      }
+    ],
+    "SVY": [
+      {
+        "code": "SVY 201",
+        "title": "Basic Land Survey I",
+        "credit_units": 2
+      },
+      {
+        "code": "SVY 202",
+        "title": "Basic Land Survey II",
+        "credit_units": 2
+      }
+    ],
+    "TFS": [
+      {
+        "code": "TFS 101",
+        "title": "TRADITIONAL AFRICAN FESTIVAL THEATRE",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 103",
+        "title": "INTRODUCTION TO DRAMA THEATRE",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 104",
+        "title": "HISTORY OF DRAMA AND THEATRE FROM THE",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 121",
+        "title": "BEGINNING THEATRE DESIGN AND TECHNOLOGY",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 132",
+        "title": "BASIC COMMUNICATION THEORY",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 134",
+        "title": "BASIC ACTING SKILLS",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 171",
+        "title": "INTRODUCTIONS TO FILM, RADIO AND TELEVISION DRAMA",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 201",
+        "title": "AFRICAN DRAMA AND THEATRE: THE COLONIAL ERA",
+        "credit_units": 2
+      },
+      {
+        "code": "TFS 202",
+        "title": "HISTORY OF DRAMA AND THEATRE:RENAISSANCE TO 19TH CENTURY",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 211",
+        "title": "INTRODUCTION TO DRAMATIC LITERATURE THEORY AND CRITICISM",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 221",
+        "title": "BASIC LIGHTING ANS SOUND DESIGN",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 223",
+        "title": "BASIC COSTUME AND MAKE-UP STUDIES",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 231",
+        "title": "INTERMEDIATE ACTING",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 232",
+        "title": "BASIC NON-VERBAL COMMUNICATION",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 234",
+        "title": "BASIC CHOREOGRAPHY AND KINAESTHETICS",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 235",
+        "title": "VOICE AND SPEECH PRODUCTION",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 252",
+        "title": "FUNDAMENTALS OF PLAYWRITING",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 260",
+        "title": "CHILDREN’S THEATRE",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 262",
+        "title": "INTRODUCTION TO THEATRE FOR DEVELOPMENT (TfD",
+        "credit_units": 2
+      },
+      {
+        "code": "TFS 270",
+        "title": "ACTING FOR FILM, RADIO AND TELVISION",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 271",
+        "title": "HISTORY OF FILM",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 303",
+        "title": "HISTORY OF DRAMA AND THEATRE; THE MODERN PERIOD",
+        "credit_units": 2
+      },
+      {
+        "code": "TFS 322",
+        "title": "ADVANCED SCENE DESIGN",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 324",
+        "title": "COSTUME DESIGN AND PRODUCTION",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 330",
+        "title": "DANCE THEORY AND PRACTICE",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 332",
+        "title": "ADVANCED ACTING",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 341",
+        "title": "INTRODUCTION TO DIRECTING",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 343",
+        "title": "THEATRE ADMINISTRATION",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 344",
+        "title": "STAGE MANAGEMENT",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 360",
+        "title": "THEATRE WORKSHOP",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 363",
+        "title": "COMMUNITY THEATRE PROJECT",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 370",
+        "title": "FILM THEORIES",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 371",
+        "title": "SCRIPTING FOR MEDIA THEATRE",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 373",
+        "title": "FILM EDITING",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 381",
+        "title": "RESEARCH METHODS",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 402",
+        "title": "TOPICS IN THEATRE STUDIES",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 404",
+        "title": "ORIENTAL THEATRE STUDIES",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 412",
+        "title": "STUDIES IN DRAMATIC LITERATURE",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 413",
+        "title": "THEORIES OF DRAMATIC CRITICISM",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 415",
+        "title": "SHAKESPEARE",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 424",
+        "title": "ADVANCED LIGHTING AND SOUND DESIGN",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 440",
+        "title": "ADVANCED PLAY PRODUCTION",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 451",
+        "title": "MAJOR NIGERIAN PLAYWRIGHTS",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 455",
+        "title": "ADVANCED PLAYWRITING",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 475",
+        "title": "FILM CRITICISM",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 476",
+        "title": "FILM, RADIO AND TELEVISION DRAMA PRODUCTION",
+        "credit_units": 3
+      },
+      {
+        "code": "TFS 480",
+        "title": "PROJECT",
+        "credit_units": 4
+      }
+    ],
+    "THA": [
+      {
+        "code": "THA 132",
+        "title": "Basic Communication Theory",
+        "credit_units": 3
+      }
+    ],
+    "URP": [
+      {
+        "code": "URP 110",
+        "title": "Basic Elements of Planning",
+        "credit_units": 2
+      },
+      {
+        "code": "URP 111",
+        "title": "Nature of Environmental Sciences",
+        "credit_units": 2
+      },
+      {
+        "code": "URP 371",
+        "title": "Natural Resources & Environmental Planning",
+        "credit_units": 2
+      },
+      {
+        "code": "URP 531",
+        "title": "Environmental Impact Assessment",
+        "credit_units": 2
+      }
+    ],
+    "ZEB": [
+      {
+        "code": "ZEB 101",
+        "title": "Introductory Zoology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 102",
+        "title": "Introductory Zoology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 122",
+        "title": "Parasitology for Medical Students",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 172",
+        "title": "Introductory Environmental Biology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 201",
+        "title": "General Invertebrate Zoology I",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 202",
+        "title": "General Invertebrate Zoology II",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 204",
+        "title": "Advanced & Comparative Invertebrate Zoology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 272",
+        "title": "Environmental Health Biology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 276",
+        "title": "Ecotoxicology and Environmental Safety",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 301",
+        "title": "Chordate Zoology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 303",
+        "title": "Laboratory Technique",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 311",
+        "title": "Basic Animal Physiology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 313",
+        "title": "Animal Histology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 321",
+        "title": "Basic Parasitology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 331",
+        "title": "Introductory Entomology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 341",
+        "title": "Basic Fisheries",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 351",
+        "title": "Climatic Change and Animal Biodiversity",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 361",
+        "title": "Basic Animal Molecular Biology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 363",
+        "title": "Basic Animal Biotechnology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 371",
+        "title": "Ecosystem Monitoring, Biotechnology & Management",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 392",
+        "title": "Students’ Industrial Work Experience Scheme (Field Work",
+        "credit_units": 6
+      },
+      {
+        "code": "ZEB 394",
+        "title": "SIWES Report",
+        "credit_units": 6
+      },
+      {
+        "code": "ZEB 396",
+        "title": "SIWES Seminar",
+        "credit_units": 3
+      },
+      {
+        "code": "ZEB 401",
+        "title": "Chordate Zoology II",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 402",
+        "title": "Ethology",
+        "credit_units": 3
+      },
+      {
+        "code": "ZEB 403",
+        "title": "Systematic Zoology and Evolution",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 404",
+        "title": "Small Animal Production",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 405",
+        "title": "Mammalogy",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 411",
+        "title": "Animal Developmental Biology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 412",
+        "title": "Animal Physiology II or",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 413",
+        "title": "Animal Physiology I or",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 421",
+        "title": "Animal Parasitology I or",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 422",
+        "title": "Animal Parasitology II or",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 431",
+        "title": "Entomology I or",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 432",
+        "title": "Entomology II or",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 441",
+        "title": "Fisheries Biology I or",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 442",
+        "title": "Fisheries Biology II or",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 443",
+        "title": "Hydrobiology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 452",
+        "title": "Animal Ecology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 453",
+        "title": "Conservation and Wildlife Management",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 454",
+        "title": "Animal Biodiversity Management and Prospecting",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 455",
+        "title": "Wastes and Waste Management",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 461",
+        "title": "Animal Genetics and Molecular Biology or",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 462",
+        "title": "Animal Molecular Biology and Bioinformatics or",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 463",
+        "title": "Advanced Animal Biotechnology I",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 464",
+        "title": "Advanced Animal Biotechnology II",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 468",
+        "title": "Population Genetics",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 471",
+        "title": "Environmental Biology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 472",
+        "title": "Environmental Impact Assessment",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 481",
+        "title": "Seminar",
+        "credit_units": 2
+      },
+      {
+        "code": "ZEB 490",
+        "title": "Research Project",
+        "credit_units": 6
+      }
+    ],
+    "ZOO": [
+      {
+        "code": "ZOO 102",
+        "title": "Introductory Zoology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZOO 122",
+        "title": "Basic Parasitology for Medical Students (Services Course",
+        "credit_units": 2
+      },
+      {
+        "code": "ZOO 201",
+        "title": "General Invertebrate Zoology I",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 202",
+        "title": "General Invertebrate Zoology II",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 204",
+        "title": "Advanced and Comparative Invertebrate Zoology",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 301",
+        "title": "General Vertebrate Zoology I",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 302",
+        "title": "General Vertebrate Zoology II",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 304",
+        "title": "Advanced and Comparative Vertebrate Zoology II",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 305",
+        "title": "Laboratory Techniques and Procedures I",
+        "credit_units": 2
+      },
+      {
+        "code": "ZOO 311",
+        "title": "Basic Physiology",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 312",
+        "title": "Basic Physiology Practical",
+        "credit_units": 2
+      },
+      {
+        "code": "ZOO 313",
+        "title": "Histology",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 331",
+        "title": "Applied Entomology I",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 342",
+        "title": "Introductory Fishery Biology",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 401",
+        "title": "Seminar:",
+        "credit_units": 2
+      },
+      {
+        "code": "ZOO 402",
+        "title": "Animal Behaviour II",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 403",
+        "title": "Taxonomy and Evolution",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 411",
+        "title": "Developmental Biology",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 412",
+        "title": "Environmental Physiology II",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 413",
+        "title": "Comparative Animal Physiology I",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 421",
+        "title": "Animal Parasitology 1 General Parasitology",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 422",
+        "title": "Animal Parasitology II",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 431",
+        "title": "Entomology I:",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 432",
+        "title": "Entomology II – Insect Anatomy and Physiology",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 441",
+        "title": "Fisheries Biology I",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 442",
+        "title": "Fisheries Biology II",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 443",
+        "title": "Pure and Applied Hydrobiology",
+        "credit_units": 2
+      },
+      {
+        "code": "ZOO 452",
+        "title": "Animal Ecology II",
+        "credit_units": 4
+      },
+      {
+        "code": "ZOO 453",
+        "title": "Conservation and Wildlife Management",
+        "credit_units": 3
+      },
+      {
+        "code": "ZOO 460",
+        "title": "Research Project",
+        "credit_units": 6
+      }
+    ]
+  }
+}

@@ -18,11 +18,11 @@ func courseRoutes(r fiber.Router, c *app.Container) {
 	courses.Get("/:id", h.GetCourse)
 
 	classGroup := r.Group("/classes", auth...)
-	classGroup.Post("/:id/class-courses", h.AddClassCourse)
-	classGroup.Get("/:id/class-courses", h.ListClassCourses)
-	classGroup.Delete("/:id/class-courses/:classCourseId", h.RemoveClassCourse)
+	classGroup.Post("/:id/courses", h.AddClassCourse)
+	classGroup.Get("/:id/courses", h.ListClassCourses)
+	classGroup.Delete("/:id/courses/:classCourseId", h.RemoveClassCourse)
 
-	classCourseGroup := r.Group("/class-courses", auth...)
+	classCourseGroup := r.Group("/courses", auth...)
 	classCourseGroup.Get("/:id", h.GetClassCourse)
 	classCourseGroup.Post("/:id/lectures", h.CreateLecture)
 	classCourseGroup.Get("/:id/lectures", h.ListLectures)

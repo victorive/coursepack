@@ -4,37 +4,37 @@ import (
 	"time"
 
 	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/klaro-backend/internal/pkg/pagination"
 )
 
 type CourseRegistryResponse struct {
-	ID           int64     `json:"id"`
-	UniversityID int64     `json:"university_id"`
-	DepartmentID int64     `json:"department_id"`
-	Code         string    `json:"code"`
-	Title        string    `json:"title"`
-	CreditUnits  int16     `json:"credit_units"`
-	CreatedAt    time.Time `json:"created_at"`
+	UUID        string `json:"uuid"`
+	Code        string `json:"code"`
+	Title       string `json:"title"`
+	CreditUnits int16  `json:"credit_units"`
+}
+
+type CourseRegistryPaginatedResponse struct {
+	Items []CourseRegistryResponse `json:"items"`
+	Meta  pagination.CursorMeta    `json:"meta"`
 }
 
 func toCourseRegistryResponse(c *domain.Course) *CourseRegistryResponse {
 	return &CourseRegistryResponse{
-		ID:           c.ID,
-		UniversityID: c.UniversityID,
-		DepartmentID: c.DepartmentID,
-		Code:         c.Code,
-		Title:        c.Title,
-		CreditUnits:  c.CreditUnits,
-		CreatedAt:    c.CreatedAt,
+		UUID:        c.UUID,
+		Code:        c.Code,
+		Title:       c.Title,
+		CreditUnits: c.CreditUnits,
 	}
 }
 
 type AddClassCourseRequest struct {
-	SemesterID int64 `json:"semester_id" validate:"required,min=1"`
-	CourseID   int64 `json:"course_id"   validate:"required,min=1"`
+	SemesterID int64  `json:"semester_id" validate:"required,min=1"`
+	CourseUUID string `json:"course_uuid"  validate:"required"`
 }
 
 type ClassCourseResponse struct {
-	ID         int64                   `json:"id"`
+	UUID       string                  `json:"uuid"`
 	ClassID    int64                   `json:"class_id"`
 	SemesterID int64                   `json:"semester_id"`
 	CourseID   int64                   `json:"course_id"`
@@ -44,7 +44,7 @@ type ClassCourseResponse struct {
 
 func toClassCourseResponse(cc *domain.ClassCourse) *ClassCourseResponse {
 	resp := &ClassCourseResponse{
-		ID:         cc.ID,
+		UUID:       cc.UUID,
 		ClassID:    cc.ClassID,
 		SemesterID: cc.SemesterID,
 		CourseID:   cc.CourseID,
@@ -73,7 +73,7 @@ type UpdateLectureRequest struct {
 }
 
 type LectureResponse struct {
-	ID            int64     `json:"id"`
+	UUID          string    `json:"uuid"`
 	ClassCourseID int64     `json:"class_course_id"`
 	Topic         string    `json:"topic"`
 	Description   *string   `json:"description"`
@@ -86,7 +86,7 @@ type LectureResponse struct {
 
 func toLectureResponse(l *domain.Lecture) *LectureResponse {
 	return &LectureResponse{
-		ID:            l.ID,
+		UUID:          l.UUID,
 		ClassCourseID: l.ClassCourseID,
 		Topic:         l.Topic,
 		Description:   l.Description,

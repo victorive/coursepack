@@ -20,6 +20,7 @@ ALTER TABLE courses ADD CONSTRAINT courses_university_department_code_key
     UNIQUE (university_id, department_id, code);
 
 -- +goose Down
+TRUNCATE TABLE courses CASCADE;
 ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_university_department_code_key;
 ALTER TABLE courses ALTER COLUMN university_id DROP NOT NULL;
 ALTER TABLE courses ALTER COLUMN department_id DROP NOT NULL;

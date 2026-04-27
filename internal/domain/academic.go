@@ -4,6 +4,7 @@ import "time"
 
 type University struct {
 	ID        int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	UUID      string    `gorm:"column:uuid;uniqueIndex;not null"`
 	Name      string    `gorm:"column:name;not null;uniqueIndex"`
 	Acronym   string    `gorm:"column:acronym;not null;uniqueIndex"`
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
@@ -12,6 +13,7 @@ type University struct {
 
 type Department struct {
 	ID           int64       `gorm:"column:id;primaryKey;autoIncrement"`
+	UUID         string      `gorm:"column:uuid;uniqueIndex;not null"`
 	UniversityID int64       `gorm:"column:university_id;not null"`
 	University   *University `gorm:"foreignKey:UniversityID;references:ID"`
 	Name         string      `gorm:"column:name;not null"`
@@ -40,15 +42,17 @@ type Level struct {
 }
 
 type Class struct {
-	ID               int64     `gorm:"column:id;primaryKey;autoIncrement"`
-	DepartmentID     int64     `gorm:"column:department_id;not null"`
-	AdmissionSession string    `gorm:"column:admission_session;not null"`
-	CurrentLevelID   int64     `gorm:"column:current_level_id;not null"`
-	Name             string    `gorm:"column:name;not null"`
-	InviteCode       string    `gorm:"column:invite_code;uniqueIndex;not null"`
-	CreatedBy        *int64    `gorm:"column:created_by"`
-	CreatedAt        time.Time `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt        time.Time `gorm:"column:updated_at;autoUpdateTime"`
+	ID               int64       `gorm:"column:id;primaryKey;autoIncrement"`
+	UUID             string      `gorm:"column:uuid;uniqueIndex;not null"`
+	DepartmentID     int64       `gorm:"column:department_id;not null"`
+	Department       *Department `gorm:"foreignKey:DepartmentID;references:ID"`
+	AdmissionSession string      `gorm:"column:admission_session;not null"`
+	CurrentLevelID   int64       `gorm:"column:current_level_id;not null"`
+	Name             string      `gorm:"column:name;not null"`
+	InviteCode       string      `gorm:"column:invite_code;uniqueIndex;not null"`
+	CreatedBy        *int64      `gorm:"column:created_by"`
+	CreatedAt        time.Time   `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt        time.Time   `gorm:"column:updated_at;autoUpdateTime"`
 }
 
 type JoinRequest struct {
@@ -71,6 +75,7 @@ type ClassMember struct {
 
 type Course struct {
 	ID           int64       `gorm:"column:id;primaryKey;autoIncrement"`
+	UUID         string      `gorm:"column:uuid;uniqueIndex;not null"`
 	UniversityID int64       `gorm:"column:university_id;not null"`
 	University   *University `gorm:"foreignKey:UniversityID;references:ID"`
 	DepartmentID int64       `gorm:"column:department_id;not null"`
@@ -84,6 +89,7 @@ type Course struct {
 
 type ClassCourse struct {
 	ID         int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	UUID       string    `gorm:"column:uuid;uniqueIndex;not null"`
 	ClassID    int64     `gorm:"column:class_id;not null"`
 	SemesterID int64     `gorm:"column:semester_id;not null"`
 	CourseID   int64     `gorm:"column:course_id;not null"`
@@ -96,6 +102,7 @@ func (ClassCourse) TableName() string { return "class_courses" }
 
 type Lecture struct {
 	ID            int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	UUID          string    `gorm:"column:uuid;uniqueIndex;not null"`
 	ClassCourseID int64     `gorm:"column:class_course_id;not null"`
 	Topic         string    `gorm:"column:topic;not null"`
 	Description   *string   `gorm:"column:description"`

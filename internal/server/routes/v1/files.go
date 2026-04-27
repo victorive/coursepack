@@ -17,7 +17,7 @@ func fileRoutes(r fiber.Router, c *app.Container) {
 	files.Post("", middleware.RequireGlobalPermission(c.RBAC, domain.PermFilesUpload), h.Upload)
 	files.Get("/:id", h.GetFile)
 	files.Get("/:id/download", h.GetDownloadURL)
-	files.Patch("/:id/review", middleware.RequireGlobalPermission(c.RBAC, domain.PermFilesApprove), h.Review)
-	files.Patch("/:id/archive", middleware.RequireGlobalPermission(c.RBAC, domain.PermFilesApprove), h.Archive)
+	files.Patch("/:id/review", h.Review)
+	files.Patch("/:id/archive", h.Archive)
 }
 

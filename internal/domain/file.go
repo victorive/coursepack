@@ -4,6 +4,7 @@ import "time"
 
 type File struct {
 	ID            int64      `gorm:"column:id;primaryKey;autoIncrement"`
+	UUID          string     `gorm:"column:uuid;uniqueIndex;not null"`
 	UploadedBy    int64      `gorm:"column:uploaded_by;not null"`
 	ClassCourseID int64      `gorm:"column:class_course_id;not null"`
 	LectureID     *int64     `gorm:"column:lecture_id"`

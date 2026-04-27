@@ -59,7 +59,6 @@ type SemesterKind string
 const (
 	SemesterFirst  SemesterKind = "first"
 	SemesterSecond SemesterKind = "second"
-	SemesterSummer SemesterKind = "summer"
 )
 
 type LectureKind string

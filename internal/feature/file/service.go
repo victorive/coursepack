@@ -18,12 +18,12 @@ import (
 
 type Service interface {
 	Upload(ctx context.Context, uploaderUUID string, req UploadFileRequest, reader io.Reader, size int64, mimeType string, originalName string) (*FileResponse, error)
-	ListByClassCourse(ctx context.Context, classCourseID int64) ([]*FileResponse, error)
-	ListByLecture(ctx context.Context, lectureID int64) ([]*FileResponse, error)
-	Get(ctx context.Context, id int64) (*FileResponse, error)
-	GetDownloadURL(ctx context.Context, id int64) (string, error)
-	Review(ctx context.Context, id int64, reviewerUUID string, req ReviewFileRequest) (*FileResponse, error)
-	Archive(ctx context.Context, id int64, actorUUID string) error
+	ListByClassCourse(ctx context.Context, classCourseUUID string) ([]*FileResponse, error)
+	ListByLecture(ctx context.Context, lectureUUID string) ([]*FileResponse, error)
+	Get(ctx context.Context, fileUUID string) (*FileResponse, error)
+	GetDownloadURL(ctx context.Context, fileUUID string) (string, error)
+	Review(ctx context.Context, fileUUID string, reviewerUUID string, req ReviewFileRequest) (*FileResponse, error)
+	Archive(ctx context.Context, fileUUID string, actorUUID string) error
 }
 
 type UserRepository interface {
@@ -32,6 +32,11 @@ type UserRepository interface {
 
 type ClassCourseRepository interface {
 	FindClassCourseByID(ctx context.Context, id int64) (*domain.ClassCourse, error)
+	FindClassCourseByUUID(ctx context.Context, uuid string) (*domain.ClassCourse, error)
+}
+
+type LectureRepository interface {
+	FindLectureByUUID(ctx context.Context, uuid string) (*domain.Lecture, error)
 }
 
 type PointRepository interface {
@@ -43,6 +48,7 @@ type service struct {
 	repo            Repository
 	userRepo        UserRepository
 	classCourseRepo ClassCourseRepository
+	lectureRepo     LectureRepository
 	pointRepo       PointRepository
 	rbacSvc         rbac.Service
 	storage         storage.Storage
@@ -50,8 +56,8 @@ type service struct {
 	logger          *slog.Logger
 }
 
-func NewService(repo Repository, userRepo UserRepository, classCourseRepo ClassCourseRepository, rbacSvc rbac.Service, stor storage.Storage, maxFileSize int64, pointRepo PointRepository, logger *slog.Logger) Service {
-	return &service{repo: repo, userRepo: userRepo, classCourseRepo: classCourseRepo, pointRepo: pointRepo, rbacSvc: rbacSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
+func NewService(repo Repository, userRepo UserRepository, classCourseRepo ClassCourseRepository, lectureRepo LectureRepository, rbacSvc rbac.Service, stor storage.Storage, maxFileSize int64, pointRepo PointRepository, logger *slog.Logger) Service {
+	return &service{repo: repo, userRepo: userRepo, classCourseRepo: classCourseRepo, lectureRepo: lectureRepo, pointRepo: pointRepo, rbacSvc: rbacSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
 }
 
 func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error) {
@@ -70,13 +76,28 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 	if err != nil {
 		return nil, err
 	}
-	classCourse, err := s.classCourseRepo.FindClassCourseByID(ctx, req.ClassCourseID)
+	classCourse, err := s.classCourseRepo.FindClassCourseByUUID(ctx, req.ClassCourseUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
 	if classCourse == nil {
 		return nil, apperr.New("class course not found", http.StatusNotFound)
 	}
+
+	var lectureID *int64
+	if req.LectureUUID != nil {
+		l, err := s.lectureRepo.FindLectureByUUID(ctx, *req.LectureUUID)
+		if err != nil {
+			return nil, apperr.New("failed to fetch lecture", http.StatusInternalServerError).Wrap(err)
+		}
+
+		if l == nil {
+			return nil, apperr.New("lecture not found", http.StatusNotFound)
+		}
+
+		lectureID = &l.ID
+	}
+
 	ok, err := s.rbacSvc.HasClassPermission(ctx, uploaderUUID, classCourse.ClassID, domain.PermFilesUpload)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
@@ -94,9 +115,10 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 	}
 
 	f := &domain.File{
+		UUID:          uuid.NewString(),
 		UploadedBy:    uploaderID,
-		ClassCourseID: req.ClassCourseID,
-		LectureID:     req.LectureID,
+		ClassCourseID: classCourse.ID,
+		LectureID:     lectureID,
 		Category:      req.Category,
 		Title:         req.Title,
 		StorageKey:    key,
@@ -112,32 +134,54 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 	return toFileResponse(f), nil
 }
 
-func (s *service) ListByClassCourse(ctx context.Context, classCourseID int64) ([]*FileResponse, error) {
-	files, err := s.repo.FindByClassCourse(ctx, classCourseID)
+func (s *service) ListByClassCourse(ctx context.Context, classCourseUUID string) ([]*FileResponse, error) {
+	cc, err := s.classCourseRepo.FindClassCourseByUUID(ctx, classCourseUUID)
+	if err != nil {
+		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
+	}
+
+	if cc == nil {
+		return nil, apperr.New("class course not found", http.StatusNotFound)
+	}
+
+	files, err := s.repo.FindByClassCourse(ctx, cc.ID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch files", http.StatusInternalServerError).Wrap(err)
 	}
+
 	resp := make([]*FileResponse, len(files))
 	for i, f := range files {
 		resp[i] = toFileResponse(f)
 	}
+
 	return resp, nil
 }
 
-func (s *service) ListByLecture(ctx context.Context, lectureID int64) ([]*FileResponse, error) {
-	files, err := s.repo.FindByLecture(ctx, lectureID)
+func (s *service) ListByLecture(ctx context.Context, lectureUUID string) ([]*FileResponse, error) {
+	l, err := s.lectureRepo.FindLectureByUUID(ctx, lectureUUID)
+	if err != nil {
+		return nil, apperr.New("failed to fetch lecture", http.StatusInternalServerError).Wrap(err)
+	}
+
+	if l == nil {
+		return nil, apperr.New("lecture not found", http.StatusNotFound)
+	}
+
+	files, err := s.repo.FindByLecture(ctx, l.ID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch files", http.StatusInternalServerError).Wrap(err)
 	}
+
 	resp := make([]*FileResponse, len(files))
 	for i, f := range files {
 		resp[i] = toFileResponse(f)
 	}
+
 	return resp, nil
 }
 
-func (s *service) Get(ctx context.Context, id int64) (*FileResponse, error) {
-	f, err := s.repo.FindByID(ctx, id)
+func (s *service) Get(ctx context.Context, fileUUID string) (*FileResponse, error) {
+	f, err := s.repo.FindByUUID(ctx, fileUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
 	}
@@ -147,8 +191,8 @@ func (s *service) Get(ctx context.Context, id int64) (*FileResponse, error) {
 	return toFileResponse(f), nil
 }
 
-func (s *service) GetDownloadURL(ctx context.Context, id int64) (string, error) {
-	f, err := s.repo.FindByID(ctx, id)
+func (s *service) GetDownloadURL(ctx context.Context, fileUUID string) (string, error) {
+	f, err := s.repo.FindByUUID(ctx, fileUUID)
 	if err != nil {
 		return "", apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
 	}
@@ -162,12 +206,12 @@ func (s *service) GetDownloadURL(ctx context.Context, id int64) (string, error) 
 	return url, nil
 }
 
-func (s *service) Review(ctx context.Context, id int64, reviewerUUID string, req ReviewFileRequest) (*FileResponse, error) {
+func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID string, req ReviewFileRequest) (*FileResponse, error) {
 	reviewerID, err := s.resolveUserID(ctx, reviewerUUID)
 	if err != nil {
 		return nil, err
 	}
-	f, err := s.repo.FindByID(ctx, id)
+	f, err := s.repo.FindByUUID(ctx, fileUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
 	}
@@ -199,7 +243,7 @@ func (s *service) Review(ctx context.Context, id int64, reviewerUUID string, req
 		if err := s.repo.Update(ctx, f); err != nil {
 			return nil, apperr.New("failed to update file", http.StatusInternalServerError).Wrap(err)
 		}
-		
+
 		alreadyAwarded, _ := s.pointRepo.HasTransactionForSource(ctx, f.UploadedBy, domain.PointSourceFileApproval, f.ID)
 		if !alreadyAwarded {
 			if err := s.pointRepo.AwardPoints(ctx, f.UploadedBy, 10, domain.PointSourceFileApproval, f.ID, reviewerID); err != nil {
@@ -216,8 +260,8 @@ func (s *service) Review(ctx context.Context, id int64, reviewerUUID string, req
 	return toFileResponse(f), nil
 }
 
-func (s *service) Archive(ctx context.Context, id int64, actorUUID string) error {
-	f, err := s.repo.FindByID(ctx, id)
+func (s *service) Archive(ctx context.Context, fileUUID string, actorUUID string) error {
+	f, err := s.repo.FindByUUID(ctx, fileUUID)
 	if err != nil {
 		return apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
 	}

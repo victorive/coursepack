@@ -33,6 +33,6 @@ func classRoutes(r fiber.Router, c *app.Container) {
 	classes.Patch("/:id/join-requests/:requestId", scoped(domain.PermMembersManage, "id"), h.ReviewJoinRequest)
 
 	classes.Get("/:id/members", scoped(domain.PermMembersList, "id"), h.ListMembers)
-	classes.Delete("/:id/members/:userId", scoped(domain.PermMembersManage, "id"), h.RemoveMember)
+	classes.Delete("/:id/members/:userUUID", scoped(domain.PermMembersManage, "id"), h.RemoveMember)
 	classes.Post("/:id/invite-code/regenerate", scoped(domain.PermMembersManage, "id"), h.RegenerateInviteCode)
 }

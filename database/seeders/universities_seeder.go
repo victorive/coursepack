@@ -3,6 +3,7 @@ package seeders
 import (
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/victorive/klaro-backend/internal/domain"
 	"gorm.io/gorm"
 )
@@ -21,7 +22,14 @@ func (s universitiesSeeder) Run(db *gorm.DB) error {
 	}
 
 	for i := range universities {
-		if err := db.FirstOrCreate(&universities[i], domain.University{Acronym: universities[i].Acronym}).Error; err != nil {
+		var existing domain.University
+		err := db.Where(domain.University{Acronym: universities[i].Acronym}).First(&existing).Error
+		if err == nil {
+			continue
+		}
+		
+		universities[i].UUID = uuid.NewString()
+		if err := db.Create(&universities[i]).Error; err != nil {
 			logger.Error("failed to seed university", "error", err, "acronym", universities[i].Acronym)
 			return err
 		}

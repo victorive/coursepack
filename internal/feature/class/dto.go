@@ -18,20 +18,39 @@ type UpdateClassRequest struct {
 	CurrentLevelID int64  `json:"current_level_id" validate:"omitempty,min=1"`
 }
 
+type DepartmentInfo struct {
+	UUID    string  `json:"uuid"`
+	Name    string  `json:"name"`
+	Code    string  `json:"code"`
+	Faculty *string `json:"faculty"`
+}
+
 type ClassResponse struct {
-	ID               int64     `json:"id"`
-	DepartmentID     int64     `json:"department_id"`
-	AdmissionSession string    `json:"admission_session"`
-	CurrentLevelID   int64     `json:"current_level_id"`
-	Name             string    `json:"name"`
-	InviteCode       string    `json:"invite_code"`
-	CreatedAt        time.Time `json:"created_at"`
+	UUID             string          `json:"uuid"`
+	Department       *DepartmentInfo `json:"department"`
+	AdmissionSession string          `json:"admission_session"`
+	CurrentLevelID   int64           `json:"current_level_id"`
+	Name             string          `json:"name"`
+	InviteCode       string          `json:"invite_code"`
+	CreatedAt        time.Time       `json:"created_at"`
+}
+
+func toDepartmentInfo(d *domain.Department) *DepartmentInfo {
+	if d == nil {
+		return nil
+	}
+	return &DepartmentInfo{
+		UUID:    d.UUID,
+		Name:    d.Name,
+		Code:    d.Code,
+		Faculty: d.Faculty,
+	}
 }
 
 func toClassResponse(c *domain.Class) *ClassResponse {
 	return &ClassResponse{
-		ID:               c.ID,
-		DepartmentID:     c.DepartmentID,
+		UUID:             c.UUID,
+		Department:       toDepartmentInfo(c.Department),
 		AdmissionSession: c.AdmissionSession,
 		CurrentLevelID:   c.CurrentLevelID,
 		Name:             c.Name,

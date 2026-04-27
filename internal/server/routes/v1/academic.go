@@ -18,5 +18,5 @@ func academicRoutes(r fiber.Router, c *app.Container) {
 	semesters.Patch("/:id", middleware.RequireGlobalPermission(c.RBAC, domain.PermManageSemesters), h.UpdateSemester)
 	semesters.Delete("/:id", middleware.RequireGlobalPermission(c.RBAC, domain.PermManageSemesters), h.DeleteSemester)
 
-	r.Group("/classes", auth...).Get("/:classId/semesters", h.ListSemestersByClass)
+	r.Group("/classes", auth...).Get("/:id/semesters", h.ListSemestersByClass)
 }

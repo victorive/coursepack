@@ -12,6 +12,7 @@ import (
 type Service interface {
 	ListByUniversity(ctx context.Context, universityID int64, q pagination.Query) ([]*DepartmentResponse, int64, error)
 	GetByIDAndUniversity(ctx context.Context, id int64, universityID int64) (*DepartmentResponse, error)
+	GetByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*DepartmentResponse, error)
 }
 
 type service struct {
@@ -30,7 +31,7 @@ func (s *service) ListByUniversity(ctx context.Context, universityID int64, q pa
 	}
 
 	if total == 0 {
-		return nil, 0, apperr.New("no departments found", http.StatusNotFound)
+		return []*DepartmentResponse{}, 0, nil
 	}
 
 	departments, err := s.repo.FindPaginatedByUniversity(ctx, universityID, q.Offset(), q.Limit())
@@ -40,7 +41,7 @@ func (s *service) ListByUniversity(ctx context.Context, universityID int64, q pa
 
 	result := make([]*DepartmentResponse, 0, len(departments))
 	for _, d := range departments {
-		result = append(result, toDepartmentResponse(d))
+		result = append(result, ToDepartmentResponse(d))
 	}
 
 	return result, total, nil
@@ -56,5 +57,18 @@ func (s *service) GetByIDAndUniversity(ctx context.Context, id int64, university
 		return nil, apperr.New("department not found", http.StatusNotFound)
 	}
 
-	return toDepartmentResponse(d), nil
+	return ToDepartmentResponse(d), nil
+}
+
+func (s *service) GetByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*DepartmentResponse, error) {
+	d, err := s.repo.FindByUUIDAndUniversity(ctx, uuid, universityID)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+
+	if d == nil {
+		return nil, apperr.New("department not found", http.StatusNotFound)
+	}
+
+	return ToDepartmentResponse(d), nil
 }

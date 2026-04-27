@@ -155,13 +155,14 @@ func (c *Container) initServices() {
 	)
 
 	courseRepo := course.NewRepository(c.GORM)
+	deptRepo := department.NewRepository(c.GORM)
 	c.UniversityService = university.NewService(university.NewRepository(c.GORM))
-	c.DepartmentService = department.NewService(department.NewRepository(c.GORM), c.Logger)
-	c.ClassService = class.NewService(class.NewRepository(c.GORM), authRepo, department.NewRepository(c.GORM), c.RBAC, c.Logger)
-	c.AcademicService = academic.NewService(academic.NewRepository(c.GORM), c.Logger)
-	c.CourseService = course.NewService(courseRepo, c.RBAC, c.Logger)
+	c.DepartmentService = department.NewService(deptRepo, c.Logger)
+	c.ClassService = class.NewService(class.NewRepository(c.GORM), authRepo, deptRepo, c.RBAC, c.Logger)
+	c.AcademicService = academic.NewService(academic.NewRepository(c.GORM), class.NewRepository(c.GORM), c.Logger)
+	c.CourseService = course.NewService(courseRepo, class.NewRepository(c.GORM), academic.NewRepository(c.GORM), c.RBAC, c.Logger)
 	pointRepo := file.NewPointRepository(c.GORM)
-	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, courseRepo, c.RBAC, c.Storage, cfg.Storage.MaxFileSize, pointRepo, c.Logger)
+	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, courseRepo, courseRepo, c.RBAC, c.Storage, cfg.Storage.MaxFileSize, pointRepo, c.Logger)
 }
 
 func (c *Container) Close() error {

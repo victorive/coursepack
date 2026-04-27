@@ -7,11 +7,11 @@ import (
 )
 
 type UploadFileRequest struct {
-	ClassCourseID int64   `form:"class_course_id" validate:"required"`
-	LectureID     *int64  `form:"lecture_id"`
-	Category      string  `form:"category" validate:"required"`
-	Title         string  `form:"title" validate:"required"`
-	YearLabel     *string `form:"year_label"`
+	ClassCourseUUID string  `form:"class_course_uuid" validate:"required"`
+	LectureUUID     *string `form:"lecture_uuid"`
+	Category        string  `form:"category" validate:"required,oneof=lecture_note past_question material assignment"`
+	Title           string  `form:"title" validate:"required"`
+	YearLabel       *string `form:"year_label"`
 }
 
 type ReviewFileRequest struct {
@@ -20,13 +20,12 @@ type ReviewFileRequest struct {
 }
 
 type FileResponse struct {
-	ID            int64      `json:"id"`
+	UUID          string     `json:"uuid"`
 	UploadedBy    int64      `json:"uploaded_by"`
 	ClassCourseID int64      `json:"class_course_id"`
 	LectureID     *int64     `json:"lecture_id,omitempty"`
 	Category      string     `json:"category"`
 	Title         string     `json:"title"`
-	StorageKey    string     `json:"storage_key"`
 	SizeBytes     int64      `json:"size_bytes"`
 	MimeType      string     `json:"mime_type"`
 	YearLabel     *string    `json:"year_label,omitempty"`
@@ -39,13 +38,12 @@ type FileResponse struct {
 
 func toFileResponse(f *domain.File) *FileResponse {
 	return &FileResponse{
-		ID:            f.ID,
+		UUID:          f.UUID,
 		UploadedBy:    f.UploadedBy,
 		ClassCourseID: f.ClassCourseID,
 		LectureID:     f.LectureID,
 		Category:      f.Category,
 		Title:         f.Title,
-		StorageKey:    f.StorageKey,
 		SizeBytes:     f.SizeBytes,
 		MimeType:      f.MimeType,
 		YearLabel:     f.YearLabel,

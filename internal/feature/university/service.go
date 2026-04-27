@@ -11,6 +11,7 @@ import (
 type Service interface {
 	ListUniversities(ctx context.Context) ([]*domain.University, error)
 	GetByID(ctx context.Context, id int64) (*domain.University, error)
+	GetByUUID(ctx context.Context, uuid string) (*domain.University, error)
 	GetByAcronym(ctx context.Context, acronym string) (*domain.University, error)
 }
 
@@ -38,6 +39,18 @@ func (s *service) GetByID(ctx context.Context, id int64) (*domain.University, er
 	if u == nil {
 		return nil, apperr.New("university not found", http.StatusNotFound)
 	}
+	return u, nil
+}
+
+func (s *service) GetByUUID(ctx context.Context, uuid string) (*domain.University, error) {
+	u, err := s.repo.FindByUUID(ctx, uuid)
+	if err != nil {
+		return nil, apperr.New("failed to fetch university", http.StatusInternalServerError).Wrap(err)
+	}
+	if u == nil {
+		return nil, apperr.New("university not found", http.StatusNotFound)
+	}
+
 	return u, nil
 }
 

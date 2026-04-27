@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/victorive/klaro-backend/internal/domain"
 	"github.com/victorive/klaro-backend/internal/feature/rbac"
 	"github.com/victorive/klaro-backend/internal/pkg/apperr"
@@ -15,17 +16,17 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, creatorUUID string, req *CreateClassRequest) (*ClassResponse, error)
-	Update(ctx context.Context, updaterUUID string, classID int64, req *UpdateClassRequest) (*ClassResponse, error)
+	Update(ctx context.Context, updaterUUID string, classUUID string, req *UpdateClassRequest) (*ClassResponse, error)
 	List(ctx context.Context, userUUID string, q pagination.Query) ([]*ClassResponse, int64, error)
-	Get(ctx context.Context, id int64) (*ClassResponse, error)
-	Delete(ctx context.Context, id int64) error
+	Get(ctx context.Context, uuid string) (*ClassResponse, error)
+	Delete(ctx context.Context, uuid string) error
 	RequestJoin(ctx context.Context, userUUID string, req *JoinRequest) (*JoinRequestResponse, error)
-	ListPendingJoinRequests(ctx context.Context, classID int64) ([]*JoinRequestResponse, error)
-	ReviewJoinRequest(ctx context.Context, reviewerUUID string, classID, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error)
-	ListMembers(ctx context.Context, classID int64) ([]*MemberResponse, error)
-	RemoveMember(ctx context.Context, classID, userID int64) error
+	ListPendingJoinRequests(ctx context.Context, classUUID string) ([]*JoinRequestResponse, error)
+	ReviewJoinRequest(ctx context.Context, reviewerUUID string, classUUID string, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error)
+	ListMembers(ctx context.Context, classUUID string) ([]*MemberResponse, error)
+	RemoveMember(ctx context.Context, classUUID string, userUUID string) error
 	ListLevels(ctx context.Context) ([]*LevelResponse, error)
-	RegenerateInviteCode(ctx context.Context, userUUID string, classID int64) (*ClassResponse, error)
+	RegenerateInviteCode(ctx context.Context, userUUID string, classUUID string) (*ClassResponse, error)
 }
 
 type UserRepository interface {
@@ -90,6 +91,7 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 	}
 
 	c := &domain.Class{
+		UUID:             uuid.NewString(),
 		DepartmentID:     req.DepartmentID,
 		AdmissionSession: req.AdmissionSession,
 		CurrentLevelID:   req.CurrentLevelID,
@@ -115,6 +117,7 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 		s.logger.Warn("failed to assign student role to creator", "error", err)
 	}
 
+	c.Department = dept
 	return toClassResponse(c), nil
 }
 
@@ -142,42 +145,46 @@ func (s *service) List(ctx context.Context, userUUID string, q pagination.Query)
 	return result, total, nil
 }
 
-func (s *service) Get(ctx context.Context, id int64) (*ClassResponse, error) {
-	c, err := s.repo.FindByID(ctx, id)
+func (s *service) resolveClass(ctx context.Context, classUUID string) (*domain.Class, error) {
+	c, err := s.repo.FindByUUID(ctx, classUUID)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if c == nil {
 		return nil, apperr.New("class not found", http.StatusNotFound)
 	}
+	
+	return c, nil
+}
+
+func (s *service) Get(ctx context.Context, classUUID string) (*ClassResponse, error) {
+	c, err := s.resolveClass(ctx, classUUID)
+	if err != nil {
+		return nil, err
+	}
+
 	return toClassResponse(c), nil
 }
 
-func (s *service) Delete(ctx context.Context, id int64) error {
-	c, err := s.repo.FindByID(ctx, id)
+func (s *service) Delete(ctx context.Context, classUUID string) error {
+	c, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return err
 	}
-	if c == nil {
-		return apperr.New("class not found", http.StatusNotFound)
-	}
-	if err := s.repo.Delete(ctx, id); err != nil {
+	if err := s.repo.Delete(ctx, c.ID); err != nil {
 		return apperr.New("failed to delete class", http.StatusInternalServerError).Wrap(err)
 	}
 	return nil
 }
 
-func (s *service) Update(ctx context.Context, updaterUUID string, classID int64, req *UpdateClassRequest) (*ClassResponse, error) {
+func (s *service) Update(ctx context.Context, updaterUUID string, classUUID string, req *UpdateClassRequest) (*ClassResponse, error) {
 	_, err := s.resolveUserID(ctx, updaterUUID)
 	if err != nil {
 		return nil, err
 	}
-	c, err := s.repo.FindByID(ctx, classID)
+	c, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
-	}
-	if c == nil {
-		return nil, apperr.New("class not found", http.StatusNotFound)
+		return nil, err
 	}
 	if req.Name != "" {
 		c.Name = req.Name
@@ -251,8 +258,13 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 	return toJoinRequestResponse(jr), nil
 }
 
-func (s *service) ListPendingJoinRequests(ctx context.Context, classID int64) ([]*JoinRequestResponse, error) {
-	requests, err := s.repo.FindPendingJoinRequests(ctx, classID)
+func (s *service) ListPendingJoinRequests(ctx context.Context, classUUID string) ([]*JoinRequestResponse, error) {
+	c, err := s.resolveClass(ctx, classUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	requests, err := s.repo.FindPendingJoinRequests(ctx, c.ID)
 	if err != nil {
 		return nil, apperr.New("failed to list join requests", http.StatusInternalServerError).Wrap(err)
 	}
@@ -263,8 +275,12 @@ func (s *service) ListPendingJoinRequests(ctx context.Context, classID int64) ([
 	return result, nil
 }
 
-func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, classID, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error) {
+func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, classUUID string, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error) {
 	reviewerID, err := s.resolveUserID(ctx, reviewerUUID)
+	if err != nil {
+		return nil, err
+	}
+	cls, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +291,7 @@ func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, cl
 	if jr == nil {
 		return nil, apperr.New("join request not found", http.StatusNotFound)
 	}
-	if jr.ClassID != classID {
+	if jr.ClassID != cls.ID {
 		return nil, apperr.New("join request not found", http.StatusNotFound)
 	}
 	if jr.Status != domain.JoinStatusPending {
@@ -308,8 +324,12 @@ func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, cl
 	return toJoinRequestResponse(jr), nil
 }
 
-func (s *service) ListMembers(ctx context.Context, classID int64) ([]*MemberResponse, error) {
-	members, err := s.repo.FindMembers(ctx, classID)
+func (s *service) ListMembers(ctx context.Context, classUUID string) ([]*MemberResponse, error) {
+	c, err := s.resolveClass(ctx, classUUID)
+	if err != nil {
+		return nil, err
+	}
+	members, err := s.repo.FindMembers(ctx, c.ID)
 	if err != nil {
 		return nil, apperr.New("failed to list members", http.StatusInternalServerError).Wrap(err)
 	}
@@ -320,15 +340,29 @@ func (s *service) ListMembers(ctx context.Context, classID int64) ([]*MemberResp
 	return result, nil
 }
 
-func (s *service) RemoveMember(ctx context.Context, classID, userID int64) error {
-	isMember, err := s.repo.IsMember(ctx, classID, userID)
+func (s *service) RemoveMember(ctx context.Context, classUUID string, targetUserUUID string) error {
+	cls, err := s.resolveClass(ctx, classUUID)
+	if err != nil {
+		return err
+	}
+
+	targetUser, err := s.userRepo.FindByUUID(ctx, targetUserUUID)
+	if err != nil {
+		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+
+	if targetUser == nil {
+		return apperr.New("user not found", http.StatusNotFound)
+	}
+
+	isMember, err := s.repo.IsMember(ctx, cls.ID, targetUser.ID)
 	if err != nil {
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !isMember {
 		return apperr.New("member not found", http.StatusNotFound)
 	}
-	if err := s.repo.RemoveMember(ctx, classID, userID); err != nil {
+	if err := s.repo.RemoveMember(ctx, cls.ID, targetUser.ID); err != nil {
 		return apperr.New("failed to remove member", http.StatusInternalServerError).Wrap(err)
 	}
 	return nil
@@ -348,18 +382,15 @@ func (s *service) ListLevels(ctx context.Context) ([]*LevelResponse, error) {
 	return resp, nil
 }
 
-func (s *service) RegenerateInviteCode(ctx context.Context, userUUID string, classID int64) (*ClassResponse, error) {
+func (s *service) RegenerateInviteCode(ctx context.Context, userUUID string, classUUID string) (*ClassResponse, error) {
 	_, err := s.resolveUserID(ctx, userUUID)
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := s.repo.FindByID(ctx, classID)
+	c, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
-	}
-	if c == nil {
-		return nil, apperr.New("class not found", http.StatusNotFound)
+		return nil, err
 	}
 
 	code, err := hash.GenerateInviteCode()
@@ -367,7 +398,7 @@ func (s *service) RegenerateInviteCode(ctx context.Context, userUUID string, cla
 		return nil, apperr.New("failed to generate invite code", http.StatusInternalServerError).Wrap(err)
 	}
 
-	if err := s.repo.UpdateInviteCode(ctx, classID, code); err != nil {
+	if err := s.repo.UpdateInviteCode(ctx, c.ID, code); err != nil {
 		return nil, apperr.New("failed to update invite code", http.StatusInternalServerError).Wrap(err)
 	}
 
