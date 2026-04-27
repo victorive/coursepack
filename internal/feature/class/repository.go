@@ -10,8 +10,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, c *domain.Class) error
 	Update(ctx context.Context, c *domain.Class) error
-	Count(ctx context.Context) (int64, error)
-	FindPaginated(ctx context.Context, offset, limit int) ([]*domain.Class, error)
+	UpdateInviteCode(ctx context.Context, classID int64, code string) error
 	FindByID(ctx context.Context, id int64) (*domain.Class, error)
 	FindByInviteCode(ctx context.Context, code string) (*domain.Class, error)
 	Delete(ctx context.Context, id int64) error
@@ -19,6 +18,7 @@ type Repository interface {
 	RemoveMember(ctx context.Context, classID, userID int64) error
 	FindMembers(ctx context.Context, classID int64) ([]*domain.ClassMember, error)
 	IsMember(ctx context.Context, classID, userID int64) (bool, error)
+	IsActiveMemberAnywhere(ctx context.Context, userID, universityID int64) (bool, error)
 	CreateJoinRequest(ctx context.Context, jr *domain.JoinRequest) error
 	FindJoinRequestByID(ctx context.Context, id int64) (*domain.JoinRequest, error)
 	FindJoinRequestByClassAndUser(ctx context.Context, classID, userID int64) (*domain.JoinRequest, error)
@@ -43,22 +43,6 @@ func (r *repository) Create(ctx context.Context, c *domain.Class) error {
 
 func (r *repository) Update(ctx context.Context, c *domain.Class) error {
 	return r.db.WithContext(ctx).Save(c).Error
-}
-
-func (r *repository) Count(ctx context.Context) (int64, error) {
-	var count int64
-	if err := r.db.WithContext(ctx).Model(&domain.Class{}).Count(&count).Error; err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-func (r *repository) FindPaginated(ctx context.Context, offset, limit int) ([]*domain.Class, error) {
-	var classes []*domain.Class
-	if err := r.db.WithContext(ctx).Order("id ASC").Offset(offset).Limit(limit).Find(&classes).Error; err != nil {
-		return nil, err
-	}
-	return classes, nil
 }
 
 func (r *repository) FindByID(ctx context.Context, id int64) (*domain.Class, error) {
@@ -184,4 +168,22 @@ func (r *repository) FindPaginatedByUniversity(ctx context.Context, universityID
 		Find(&classes).Error
 		
 	return classes, err
+}
+
+func (r *repository) UpdateInviteCode(ctx context.Context, classID int64, code string) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Class{}).
+		Where("id = ?", classID).
+		Update("invite_code", code).Error
+}
+
+func (r *repository) IsActiveMemberAnywhere(ctx context.Context, userID, universityID int64) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.ClassMember{}).
+		Joins("JOIN classes ON classes.id = class_members.class_id").
+		Joins("JOIN departments ON departments.id = classes.department_id").
+		Where("class_members.user_id = ? AND departments.university_id = ?", userID, universityID).
+		Count(&count).Error
+	return count > 0, err
 }

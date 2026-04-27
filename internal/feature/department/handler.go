@@ -10,7 +10,6 @@ import (
 	"github.com/victorive/klaro-backend/internal/middleware"
 	"github.com/victorive/klaro-backend/internal/pkg/pagination"
 	"github.com/victorive/klaro-backend/internal/pkg/response"
-	"github.com/victorive/klaro-backend/internal/pkg/validator"
 )
 
 type UserRepository interface {
@@ -38,30 +37,6 @@ func (h *Handler) resolveUniversityID(c *fiber.Ctx) (int64, bool) {
 	}
 
 	return *u.UniversityID, true
-}
-
-// Create godoc
-// @Summary      Create department
-// @Description  Creates a new department. Super-admin only.
-// @Tags         Departments
-// @Accept       json
-// @Produce      json
-// @Param        body body CreateDepartmentRequest true "Create department payload"
-// @Success      201 {object} response.Response{data=DepartmentResponse}
-// @Failure      401 {object} response.Response
-// @Failure      422 {object} response.ValidationErrorResponse
-// @Security     BearerAuth
-// @Router       /departments [post]
-func (h *Handler) Create(c *fiber.Ctx) error {
-	var req CreateDepartmentRequest
-	if err := validator.ParseAndValidate(c, &req); err != nil {
-		return err
-	}
-	dept, err := h.svc.Create(c.UserContext(), &req)
-	if err != nil {
-		return err
-	}
-	return response.JSON(c, http.StatusCreated, true, "department created", dept)
 }
 
 // List godoc
@@ -105,7 +80,7 @@ func (h *Handler) Get(c *fiber.Ctx) error {
 	if err != nil {
 		return response.JSON(c, http.StatusBadRequest, false, "invalid id", nil)
 	}
-	
+
 	universityID, hasUniversity := h.resolveUniversityID(c)
 	if !hasUniversity {
 		return response.JSON(c, http.StatusNotFound, false, "department not found", nil)
@@ -123,46 +98,3 @@ func (h *Handler) Get(c *fiber.Ctx) error {
 // @Description  Updates an existing department. Super-admin only.
 // @Tags         Departments
 // @Accept       json
-// @Produce      json
-// @Param        id   path int                    true "Department ID"
-// @Param        body body UpdateDepartmentRequest true "Update department payload"
-// @Success      200 {object} response.Response{data=DepartmentResponse}
-// @Failure      404 {object} response.Response
-// @Security     BearerAuth
-// @Router       /departments/{id} [patch]
-func (h *Handler) Update(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid id", nil)
-	}
-	var req UpdateDepartmentRequest
-	if err := validator.ParseAndValidate(c, &req); err != nil {
-		return err
-	}
-	dept, err := h.svc.Update(c.UserContext(), id, &req)
-	if err != nil {
-		return err
-	}
-	return response.JSON(c, http.StatusOK, true, "department updated", dept)
-}
-
-// Delete godoc
-// @Summary      Delete department
-// @Description  Deletes a department. Super-admin only.
-// @Tags         Departments
-// @Produce      json
-// @Param        id path int true "Department ID"
-// @Success      204
-// @Failure      404 {object} response.Response
-// @Security     BearerAuth
-// @Router       /departments/{id} [delete]
-func (h *Handler) Delete(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid id", nil)
-	}
-	if err := h.svc.Delete(c.UserContext(), id); err != nil {
-		return err
-	}
-	return c.SendStatus(http.StatusNoContent)
-}

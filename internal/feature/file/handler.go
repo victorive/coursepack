@@ -68,22 +68,22 @@ func (h *Handler) Upload(c *fiber.Ctx) error {
 	return response.JSON(c, http.StatusCreated, true, "file uploaded", resp)
 }
 
-// ListByCourse godoc
-// @Summary      List files by course
-// @Description  Returns all non-archived files belonging to a course.
+// ListByClassCourse godoc
+// @Summary      List files by class course
+// @Description  Returns all non-archived files belonging to a class course.
 // @Tags         Files
 // @Produce      json
-// @Param        courseId path int true "Course ID"
+// @Param        id path int true "Class Course ID"
 // @Success      200 {object} response.Response{data=[]FileResponse}
 // @Failure      400,401 {object} response.Response
 // @Security     BearerAuth
-// @Router       /courses/{courseId}/files [get]
-func (h *Handler) ListByCourse(c *fiber.Ctx) error {
-	courseID, err := strconv.ParseInt(c.Params("courseId"), 10, 64)
+// @Router       /class-courses/{id}/files [get]
+func (h *Handler) ListByClassCourse(c *fiber.Ctx) error {
+	classCourseID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
-	resp, err := h.svc.ListByCourse(c.UserContext(), courseID)
+	resp, err := h.svc.ListByClassCourse(c.UserContext(), classCourseID)
 	if err != nil {
 		return err
 	}
@@ -212,6 +212,6 @@ func (h *Handler) Archive(c *fiber.Ctx) error {
 	if err := h.svc.Archive(c.UserContext(), id, actorUUID); err != nil {
 		return err
 	}
-	
+
 	return response.JSON(c, http.StatusOK, true, "file archived", nil)
 }

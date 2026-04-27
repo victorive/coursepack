@@ -84,6 +84,7 @@ func (r *repository) FindPaginated(ctx context.Context, offset, limit int) ([]*d
 func (r *repository) FindPaginatedByUniversity(ctx context.Context, universityID int64, offset, limit int) ([]*domain.Department, error) {
 	var departments []*domain.Department
 	if err := r.db.WithContext(ctx).
+		Preload("University").
 		Where("university_id = ?", universityID).
 		Order("name ASC").
 		Offset(offset).
@@ -109,6 +110,7 @@ func (r *repository) FindByID(ctx context.Context, id int64) (*domain.Department
 func (r *repository) FindByIDAndUniversity(ctx context.Context, id int64, universityID int64) (*domain.Department, error) {
 	var d domain.Department
 	if err := r.db.WithContext(ctx).
+		Preload("University").
 		Where("id = ? AND university_id = ?", id, universityID).
 		First(&d).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -116,7 +118,7 @@ func (r *repository) FindByIDAndUniversity(ctx context.Context, id int64, univer
 		}
 		return nil, err
 	}
-	
+
 	return &d, nil
 }
 

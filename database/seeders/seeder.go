@@ -10,6 +10,7 @@ type Seeder interface {
 var orderedRegistry = []Seeder{
 	universitiesSeeder{},
 	departmentsSeeder{},
+	coursesSeeder{},
 	permissionsSeeder{},
 	levelsSeeder{},
 	rolesSeeder{},

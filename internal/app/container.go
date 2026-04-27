@@ -40,9 +40,9 @@ type Container struct {
 	RBAC              rbac.Service
 	AuthService       auth.Service
 	AuthRepository    auth.Repository
-	UserService        user.Service
-	UniversityService  university.Service
-	DepartmentService  department.Service
+	UserService       user.Service
+	UniversityService university.Service
+	DepartmentService department.Service
 	ClassService      class.Service
 	AcademicService   academic.Service
 	CourseService     course.Service
@@ -160,7 +160,8 @@ func (c *Container) initServices() {
 	c.ClassService = class.NewService(class.NewRepository(c.GORM), authRepo, department.NewRepository(c.GORM), c.RBAC, c.Logger)
 	c.AcademicService = academic.NewService(academic.NewRepository(c.GORM), c.Logger)
 	c.CourseService = course.NewService(courseRepo, c.RBAC, c.Logger)
-	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, courseRepo, c.RBAC, c.Storage, cfg.Storage.MaxFileSize, c.Logger)
+	pointRepo := file.NewPointRepository(c.GORM)
+	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, courseRepo, c.RBAC, c.Storage, cfg.Storage.MaxFileSize, pointRepo, c.Logger)
 }
 
 func (c *Container) Close() error {

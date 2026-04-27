@@ -9,21 +9,24 @@ import (
 )
 
 func courseRoutes(r fiber.Router, c *app.Container) {
-	h := course.NewHandler(c.CourseService)
+	h := course.NewHandler(c.CourseService, c.AuthRepository)
 	fh := file.NewHandler(c.FileService)
 	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
 
 	courses := r.Group("/courses", auth...)
-	courses.Post("", h.CreateCourse)
+	courses.Get("", h.ListCourses)
 	courses.Get("/:id", h.GetCourse)
-	courses.Patch("/:id", h.UpdateCourse)
-	courses.Delete("/:id", h.DeleteCourse)
-	courses.Get("/:courseId/lectures", h.ListLectures)
-	courses.Post("/:courseId/lectures", h.CreateLecture)
-	courses.Get("/:courseId/files", fh.ListByCourse)
 
-	r.Group("/classes", auth...).Get("/:classId/courses", h.ListCoursesByClass)
-	r.Group("/semesters", auth...).Get("/:semesterId/courses", h.ListCoursesBySemester)
+	classGroup := r.Group("/classes", auth...)
+	classGroup.Post("/:id/class-courses", h.AddClassCourse)
+	classGroup.Get("/:id/class-courses", h.ListClassCourses)
+	classGroup.Delete("/:id/class-courses/:classCourseId", h.RemoveClassCourse)
+
+	classCourseGroup := r.Group("/class-courses", auth...)
+	classCourseGroup.Get("/:id", h.GetClassCourse)
+	classCourseGroup.Post("/:id/lectures", h.CreateLecture)
+	classCourseGroup.Get("/:id/lectures", h.ListLectures)
+	classCourseGroup.Get("/:id/files", fh.ListByClassCourse)
 
 	lectures := r.Group("/lectures", auth...)
 	lectures.Get("/:id", h.GetLecture)

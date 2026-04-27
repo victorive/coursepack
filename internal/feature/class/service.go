@@ -25,6 +25,7 @@ type Service interface {
 	ListMembers(ctx context.Context, classID int64) ([]*MemberResponse, error)
 	RemoveMember(ctx context.Context, classID, userID int64) error
 	ListLevels(ctx context.Context) ([]*LevelResponse, error)
+	RegenerateInviteCode(ctx context.Context, userUUID string, classID int64) (*ClassResponse, error)
 }
 
 type UserRepository interface {
@@ -80,7 +81,7 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 		return nil, apperr.New("department not found", http.StatusNotFound)
 	}
 	if creator.UniversityID == nil || dept.UniversityID != *creator.UniversityID {
-		return nil, apperr.New("department does not belong to your university", http.StatusForbidden)
+		return nil, apperr.New("invalid department", http.StatusUnprocessableEntity)
 	}
 
 	code, err := hash.GenerateInviteCode()
@@ -103,6 +104,15 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 
 	if err := s.rbacSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleClassRep); err != nil {
 		s.logger.Warn("failed to assign class_rep role", "error", err)
+	}
+
+	member := &domain.ClassMember{ClassID: c.ID, UserID: creator.ID}
+	if err := s.repo.AddMember(ctx, member); err != nil {
+		s.logger.Warn("failed to add creator as member", "error", err)
+	}
+
+	if err := s.rbacSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleStudent); err != nil {
+		s.logger.Warn("failed to assign student role to creator", "error", err)
 	}
 
 	return toClassResponse(c), nil
@@ -212,6 +222,16 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 		return nil, apperr.New("already a member of this class", http.StatusConflict)
 	}
 
+	if user.UniversityID != nil {
+		isActive, err := s.repo.IsActiveMemberAnywhere(ctx, userID, *user.UniversityID)
+		if err != nil {
+			return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		}
+		if isActive {
+			return nil, apperr.New("you must leave your current class before joining another", http.StatusConflict)
+		}
+	}
+
 	existing, err := s.repo.FindJoinRequestByClassAndUser(ctx, cls.ID, userID)
 	if err != nil {
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
@@ -306,7 +326,7 @@ func (s *service) RemoveMember(ctx context.Context, classID, userID int64) error
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !isMember {
-		return apperr.New("user is not a member of this class", http.StatusNotFound)
+		return apperr.New("member not found", http.StatusNotFound)
 	}
 	if err := s.repo.RemoveMember(ctx, classID, userID); err != nil {
 		return apperr.New("failed to remove member", http.StatusInternalServerError).Wrap(err)
@@ -326,4 +346,31 @@ func (s *service) ListLevels(ctx context.Context) ([]*LevelResponse, error) {
 	}
 
 	return resp, nil
+}
+
+func (s *service) RegenerateInviteCode(ctx context.Context, userUUID string, classID int64) (*ClassResponse, error) {
+	_, err := s.resolveUserID(ctx, userUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := s.repo.FindByID(ctx, classID)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if c == nil {
+		return nil, apperr.New("class not found", http.StatusNotFound)
+	}
+
+	code, err := hash.GenerateInviteCode()
+	if err != nil {
+		return nil, apperr.New("failed to generate invite code", http.StatusInternalServerError).Wrap(err)
+	}
+
+	if err := s.repo.UpdateInviteCode(ctx, classID, code); err != nil {
+		return nil, apperr.New("failed to update invite code", http.StatusInternalServerError).Wrap(err)
+	}
+
+	c.InviteCode = code
+	return toClassResponse(c), nil
 }

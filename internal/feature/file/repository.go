@@ -10,7 +10,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, f *domain.File) error
 	FindByID(ctx context.Context, id int64) (*domain.File, error)
-	FindByCourse(ctx context.Context, courseID int64) ([]*domain.File, error)
+	FindByClassCourse(ctx context.Context, classCourseID int64) ([]*domain.File, error)
 	FindByLecture(ctx context.Context, lectureID int64) ([]*domain.File, error)
 	Update(ctx context.Context, f *domain.File) error
 	Delete(ctx context.Context, id int64) error
@@ -39,10 +39,10 @@ func (r *repository) FindByID(ctx context.Context, id int64) (*domain.File, erro
 	return &f, nil
 }
 
-func (r *repository) FindByCourse(ctx context.Context, courseID int64) ([]*domain.File, error) {
+func (r *repository) FindByClassCourse(ctx context.Context, classCourseID int64) ([]*domain.File, error) {
 	var files []*domain.File
 	if err := r.db.WithContext(ctx).
-		Where("course_id = ? AND status != 'archived'", courseID).
+		Where("class_course_id = ? AND status != 'archived'", classCourseID).
 		Order("created_at DESC").
 		Find(&files).Error; err != nil {
 		return nil, err

@@ -278,3 +278,32 @@ func (h *Handler) ListLevels(c *fiber.Ctx) error {
 	}
 	return response.JSON(c, http.StatusOK, true, "levels retrieved", levels)
 }
+
+// RegenerateInviteCode godoc
+// @Summary      Regenerate invite code
+// @Description  Generates a new invite code for the class, invalidating the old one. Requires members:manage permission.
+// @Tags         Classes
+// @Produce      json
+// @Param        id   path      int  true  "Class ID"
+// @Success      200  {object}  response.Response{data=ClassResponse}
+// @Failure      400,401,403,404  {object}  response.Response
+// @Security     BearerAuth
+// @Router       /classes/{id}/invite-code/regenerate [post]
+func (h *Handler) RegenerateInviteCode(c *fiber.Ctx) error {
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	userUUID, ok := middleware.UserUUID(c)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
+
+	cls, err := h.svc.RegenerateInviteCode(c.UserContext(), userUUID, id)
+	if err != nil {
+		return err
+	}
+
+	return response.JSON(c, http.StatusOK, true, "invite code regenerated", cls)
+}

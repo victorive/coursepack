@@ -8,14 +8,15 @@ import (
 )
 
 type Repository interface {
-	CreateCourse(ctx context.Context, c *domain.Course) error
-	FindCoursesByClass(ctx context.Context, classID int64) ([]*domain.Course, error)
-	FindCoursesBySemester(ctx context.Context, semesterID int64) ([]*domain.Course, error)
+	FindCoursesByUniversity(ctx context.Context, universityID int64, departmentID *int64) ([]*domain.Course, error)
 	FindCourseByID(ctx context.Context, id int64) (*domain.Course, error)
-	UpdateCourse(ctx context.Context, c *domain.Course) error
-	DeleteCourse(ctx context.Context, id int64) error
+	CreateClassCourse(ctx context.Context, cc *domain.ClassCourse) error
+	FindClassCoursesByClass(ctx context.Context, classID int64, semesterID *int64) ([]*domain.ClassCourse, error)
+	FindClassCourseByID(ctx context.Context, id int64) (*domain.ClassCourse, error)
+	FindClassCourseByConstraint(ctx context.Context, classID, semesterID, courseID int64) (*domain.ClassCourse, error)
+	DeleteClassCourse(ctx context.Context, id int64) error
 	CreateLecture(ctx context.Context, l *domain.Lecture) error
-	FindLecturesByCourse(ctx context.Context, courseID int64) ([]*domain.Lecture, error)
+	FindLecturesByClassCourse(ctx context.Context, classCourseID int64) ([]*domain.Lecture, error)
 	FindLectureByID(ctx context.Context, id int64) (*domain.Lecture, error)
 	UpdateLecture(ctx context.Context, l *domain.Lecture) error
 }
@@ -28,21 +29,13 @@ func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) CreateCourse(ctx context.Context, c *domain.Course) error {
-	return r.db.WithContext(ctx).Create(c).Error
-}
-
-func (r *repository) FindCoursesByClass(ctx context.Context, classID int64) ([]*domain.Course, error) {
+func (r *repository) FindCoursesByUniversity(ctx context.Context, universityID int64, departmentID *int64) ([]*domain.Course, error) {
 	var courses []*domain.Course
-	if err := r.db.WithContext(ctx).Where("class_id = ?", classID).Order("code ASC").Find(&courses).Error; err != nil {
-		return nil, err
+	q := r.db.WithContext(ctx).Where("university_id = ?", universityID)
+	if departmentID != nil {
+		q = q.Where("department_id = ?", *departmentID)
 	}
-	return courses, nil
-}
-
-func (r *repository) FindCoursesBySemester(ctx context.Context, semesterID int64) ([]*domain.Course, error) {
-	var courses []*domain.Course
-	if err := r.db.WithContext(ctx).Where("semester_id = ?", semesterID).Order("code ASC").Find(&courses).Error; err != nil {
+	if err := q.Order("code ASC").Find(&courses).Error; err != nil {
 		return nil, err
 	}
 	return courses, nil
@@ -59,22 +52,62 @@ func (r *repository) FindCourseByID(ctx context.Context, id int64) (*domain.Cour
 	return &c, nil
 }
 
-func (r *repository) UpdateCourse(ctx context.Context, c *domain.Course) error {
-	return r.db.WithContext(ctx).Save(c).Error
+func (r *repository) CreateClassCourse(ctx context.Context, cc *domain.ClassCourse) error {
+	return r.db.WithContext(ctx).Create(cc).Error
 }
 
-func (r *repository) DeleteCourse(ctx context.Context, id int64) error {
-	return r.db.WithContext(ctx).Delete(&domain.Course{}, id).Error
+func (r *repository) FindClassCoursesByClass(ctx context.Context, classID int64, semesterID *int64) ([]*domain.ClassCourse, error) {
+	var classCourses []*domain.ClassCourse
+	q := r.db.WithContext(ctx).Preload("Course").Where("class_id = ?", classID)
+	if semesterID != nil {
+		q = q.Where("semester_id = ?", *semesterID)
+	}
+
+	if err := q.Order("created_at ASC").Find(&classCourses).Error; err != nil {
+		return nil, err
+	}
+
+	return classCourses, nil
+}
+
+func (r *repository) FindClassCourseByID(ctx context.Context, id int64) (*domain.ClassCourse, error) {
+	var cc domain.ClassCourse
+	if err := r.db.WithContext(ctx).Preload("Course").First(&cc, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &cc, nil
+}
+
+func (r *repository) FindClassCourseByConstraint(ctx context.Context, classID, semesterID, courseID int64) (*domain.ClassCourse, error) {
+	var cc domain.ClassCourse
+	err := r.db.WithContext(ctx).
+		Where("class_id = ? AND semester_id = ? AND course_id = ?", classID, semesterID, courseID).
+		First(&cc).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &cc, nil
+}
+
+func (r *repository) DeleteClassCourse(ctx context.Context, id int64) error {
+	return r.db.WithContext(ctx).Delete(&domain.ClassCourse{}, id).Error
 }
 
 func (r *repository) CreateLecture(ctx context.Context, l *domain.Lecture) error {
 	return r.db.WithContext(ctx).Create(l).Error
 }
 
-func (r *repository) FindLecturesByCourse(ctx context.Context, courseID int64) ([]*domain.Lecture, error) {
+func (r *repository) FindLecturesByClassCourse(ctx context.Context, classCourseID int64) ([]*domain.Lecture, error) {
 	var lectures []*domain.Lecture
 	if err := r.db.WithContext(ctx).
-		Where("course_id = ? AND status = 'published'", courseID).
+		Where("class_course_id = ? AND status = 'published'", classCourseID).
 		Order("week_number ASC, created_at ASC").
 		Find(&lectures).Error; err != nil {
 		return nil, err

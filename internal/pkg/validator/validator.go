@@ -1,7 +1,9 @@
 package validator
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -39,6 +41,13 @@ func Validate(s interface{}) error {
 
 func ParseAndValidate(c *fiber.Ctx, dst interface{}) error {
 	if err := c.BodyParser(dst); err != nil {
+		var typeErr *json.UnmarshalTypeError
+		if errors.As(err, &typeErr) {
+			fields := response.FieldErrors{
+				typeErr.Field: fmt.Sprintf("expected %s, got %s", typeErr.Type.String(), typeErr.Value),
+			}
+			return apperr.New("invalid input", http.StatusUnprocessableEntity).WithData(fields)
+		}
 		return apperr.New("invalid request body", http.StatusBadRequest)
 	}
 

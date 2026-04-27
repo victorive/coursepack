@@ -34,4 +34,5 @@ func classRoutes(r fiber.Router, c *app.Container) {
 
 	classes.Get("/:id/members", scoped(domain.PermMembersList, "id"), h.ListMembers)
 	classes.Delete("/:id/members/:userId", scoped(domain.PermMembersManage, "id"), h.RemoveMember)
+	classes.Post("/:id/invite-code/regenerate", scoped(domain.PermMembersManage, "id"), h.RegenerateInviteCode)
 }

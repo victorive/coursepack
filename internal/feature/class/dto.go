@@ -41,7 +41,7 @@ func toClassResponse(c *domain.Class) *ClassResponse {
 }
 
 type JoinRequest struct {
-	InviteCode string `json:"invite_code" validate:"required,len=8"`
+	InviteCode string `json:"invite_code" validate:"required,len=6"`
 }
 
 type ReviewJoinRequest struct {
