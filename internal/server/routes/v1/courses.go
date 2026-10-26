@@ -9,7 +9,7 @@ import (
 )
 
 func courseRoutes(r fiber.Router, c *app.Container) {
-	h := course.NewHandler(c.CourseService, c.AuthRepository)
+	h := course.NewHandler(c.CourseService)
 	fh := file.NewHandler(c.FileService)
 	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
 
