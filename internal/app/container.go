@@ -164,7 +164,7 @@ func (c *Container) initServices() {
 	c.AcademicService = semester.NewService(semester.NewRepository(c.GORM), class.NewRepository(c.GORM), c.Logger)
 	c.CourseService = course.NewService(courseRepo, class.NewRepository(c.GORM), semester.NewRepository(c.GORM), c.PermissionsService, c.Logger)
 	pointRepo := file.NewPointRepository(c.GORM)
-	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, courseRepo, courseRepo, class.NewRepository(c.GORM), c.PermissionsService, c.Storage, cfg.Storage.MaxFileSize, pointRepo, c.Logger)
+	c.FileService = file.NewService(file.NewRepository(c.GORM), courseRepo, courseRepo, class.NewRepository(c.GORM), c.PermissionsService, c.Storage, cfg.Storage.MaxFileSize, pointRepo, c.Logger)
 }
 
 func (c *Container) Close() error {

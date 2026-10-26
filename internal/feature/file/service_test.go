@@ -21,15 +21,6 @@ func (f *fakeFileRepository) FindByUUID(ctx context.Context, uuid string) (*doma
 	return f.file, nil
 }
 
-type fakeUserRepository struct {
-	UserRepository
-	user *domain.User
-}
-
-func (f *fakeUserRepository) FindByUUID(ctx context.Context, uuid string) (*domain.User, error) {
-	return f.user, nil
-}
-
 type fakeClassCourseRepository struct {
 	ClassCourseRepository
 	classCourse *domain.ClassCourse
@@ -61,10 +52,13 @@ func discardLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
 }
 
+func actorFrom(user *domain.User) permissions.Actor {
+	return permissions.Actor{UserID: user.ID, UUID: user.UUID}
+}
+
 func newServiceUnderTest(file *domain.File, user *domain.User, member, canApprove bool) Service {
 	return NewService(
 		&fakeFileRepository{file: file},
-		&fakeUserRepository{user: user},
 		&fakeClassCourseRepository{classCourse: &domain.ClassCourse{ID: 5, ClassID: 42}},
 		nil,
 		&fakeClassRepository{member: member},
@@ -108,14 +102,14 @@ func assertNotFound(t *testing.T, err error) {
 func TestGetHidesApprovedFileFromNonMember(t *testing.T) {
 	user := &domain.User{ID: 1, UUID: "outsider-uuid"}
 
-	_, err := newServiceUnderTest(approvedFile(), user, false, false).Get(context.Background(), user.UUID, "file-11")
+	_, err := newServiceUnderTest(approvedFile(), user, false, false).Get(context.Background(), actorFrom(user), "file-11")
 	assertNotFound(t, err)
 }
 
 func TestGetReturnsApprovedFileToMember(t *testing.T) {
 	user := &domain.User{ID: 1, UUID: "member-uuid"}
 
-	got, err := newServiceUnderTest(approvedFile(), user, true, false).Get(context.Background(), user.UUID, "file-11")
+	got, err := newServiceUnderTest(approvedFile(), user, true, false).Get(context.Background(), actorFrom(user), "file-11")
 	if err != nil {
 		t.Fatalf("Get returned an error: %v", err)
 	}
@@ -129,7 +123,7 @@ func TestGetHidesPendingFileFromMember(t *testing.T) {
 	pending := approvedFile()
 	pending.Status = string(domain.FileStatusPending)
 
-	_, err := newServiceUnderTest(pending, user, true, false).Get(context.Background(), user.UUID, pending.UUID)
+	_, err := newServiceUnderTest(pending, user, true, false).Get(context.Background(), actorFrom(user), pending.UUID)
 	assertNotFound(t, err)
 }
 
@@ -138,7 +132,7 @@ func TestGetReturnsPendingFileToUploader(t *testing.T) {
 	pending := approvedFile()
 	pending.Status = string(domain.FileStatusPending)
 
-	got, err := newServiceUnderTest(pending, user, false, false).Get(context.Background(), user.UUID, pending.UUID)
+	got, err := newServiceUnderTest(pending, user, false, false).Get(context.Background(), actorFrom(user), pending.UUID)
 	if err != nil {
 		t.Fatalf("Get returned an error: %v", err)
 	}
@@ -152,7 +146,7 @@ func TestGetReturnsPendingFileToApprover(t *testing.T) {
 	pending := approvedFile()
 	pending.Status = string(domain.FileStatusPending)
 
-	got, err := newServiceUnderTest(pending, user, false, true).Get(context.Background(), user.UUID, pending.UUID)
+	got, err := newServiceUnderTest(pending, user, false, true).Get(context.Background(), actorFrom(user), pending.UUID)
 	if err != nil {
 		t.Fatalf("Get returned an error: %v", err)
 	}

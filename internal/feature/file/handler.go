@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/coursepack/internal/middleware"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/pkg/response"
 	"github.com/victorive/coursepack/internal/pkg/validator"
@@ -34,7 +34,7 @@ func NewHandler(svc Service) *Handler {
 // @Security     BearerAuth
 // @Router       /files [post]
 func (h *Handler) Upload(c *fiber.Ctx) error {
-	uuid, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (h *Handler) Upload(c *fiber.Ctx) error {
 	}
 
 	reader := io.MultiReader(bytes.NewReader(head), f)
-	resp, err := h.svc.Upload(c.UserContext(), uuid, req, reader, fh.Size, mimeType, fh.Filename)
+	resp, err := h.svc.Upload(c.UserContext(), actor, req, reader, fh.Size, mimeType, fh.Filename)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,11 @@ func isUnsafeUploadType(mimeType string) bool {
 // @Router       /courses/{id}/files [get]
 func (h *Handler) ListByClassCourse(c *fiber.Ctx) error {
 	classCourseUUID := c.Params("id")
-	resp, err := h.svc.ListByClassCourse(c.UserContext(), classCourseUUID)
+	actor, err := permissions.ActorFrom(c.UserContext())
+	if err != nil {
+		return err
+	}
+	resp, err := h.svc.ListByClassCourse(c.UserContext(), actor, classCourseUUID)
 	if err != nil {
 		return err
 	}
@@ -122,7 +126,11 @@ func (h *Handler) ListByClassCourse(c *fiber.Ctx) error {
 // @Router       /lectures/{lectureId}/files [get]
 func (h *Handler) ListByLecture(c *fiber.Ctx) error {
 	lectureUUID := c.Params("lectureId")
-	resp, err := h.svc.ListByLecture(c.UserContext(), lectureUUID)
+	actor, err := permissions.ActorFrom(c.UserContext())
+	if err != nil {
+		return err
+	}
+	resp, err := h.svc.ListByLecture(c.UserContext(), actor, lectureUUID)
 	if err != nil {
 		return err
 	}
@@ -141,11 +149,11 @@ func (h *Handler) ListByLecture(c *fiber.Ctx) error {
 // @Router       /files/{id} [get]
 func (h *Handler) GetFile(c *fiber.Ctx) error {
 	fileUUID := c.Params("id")
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	resp, err := h.svc.Get(c.UserContext(), actorUUID, fileUUID)
+	resp, err := h.svc.Get(c.UserContext(), actor, fileUUID)
 	if err != nil {
 		return err
 	}
@@ -164,11 +172,11 @@ func (h *Handler) GetFile(c *fiber.Ctx) error {
 // @Router       /files/{id}/download [get]
 func (h *Handler) GetDownloadURL(c *fiber.Ctx) error {
 	fileUUID := c.Params("id")
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	url, err := h.svc.GetDownloadURL(c.UserContext(), actorUUID, fileUUID)
+	url, err := h.svc.GetDownloadURL(c.UserContext(), actor, fileUUID)
 	if err != nil {
 		return err
 	}
@@ -188,7 +196,7 @@ func (h *Handler) GetDownloadURL(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /files/{id}/review [patch]
 func (h *Handler) Review(c *fiber.Ctx) error {
-	reviewerUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
@@ -197,7 +205,7 @@ func (h *Handler) Review(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	resp, err := h.svc.Review(c.UserContext(), fileUUID, reviewerUUID, req)
+	resp, err := h.svc.Review(c.UserContext(), actor, fileUUID, req)
 	if err != nil {
 		return err
 	}
@@ -215,14 +223,14 @@ func (h *Handler) Review(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /files/{id}/archive [patch]
 func (h *Handler) Archive(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
 
 	fileUUID := c.Params("id")
 
-	if err := h.svc.Archive(c.UserContext(), fileUUID, actorUUID); err != nil {
+	if err := h.svc.Archive(c.UserContext(), actor, fileUUID); err != nil {
 		return err
 	}
 

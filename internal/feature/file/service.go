@@ -17,17 +17,13 @@ import (
 )
 
 type Service interface {
-	Upload(ctx context.Context, uploaderUUID string, req UploadFileRequest, reader io.Reader, size int64, mimeType string, originalName string) (*FileResponse, error)
-	ListByClassCourse(ctx context.Context, classCourseUUID string) ([]*FileResponse, error)
-	ListByLecture(ctx context.Context, lectureUUID string) ([]*FileResponse, error)
-	Get(ctx context.Context, actorUUID string, fileUUID string) (*FileResponse, error)
-	GetDownloadURL(ctx context.Context, actorUUID string, fileUUID string) (string, error)
-	Review(ctx context.Context, fileUUID string, reviewerUUID string, req ReviewFileRequest) (*FileResponse, error)
-	Archive(ctx context.Context, fileUUID string, actorUUID string) error
-}
-
-type UserRepository interface {
-	FindByUUID(ctx context.Context, uuid string) (*domain.User, error)
+	Upload(ctx context.Context, actor permissions.Actor, req UploadFileRequest, reader io.Reader, size int64, mimeType string, originalName string) (*FileResponse, error)
+	ListByClassCourse(ctx context.Context, actor permissions.Actor, classCourseUUID string) ([]*FileResponse, error)
+	ListByLecture(ctx context.Context, actor permissions.Actor, lectureUUID string) ([]*FileResponse, error)
+	Get(ctx context.Context, actor permissions.Actor, fileUUID string) (*FileResponse, error)
+	GetDownloadURL(ctx context.Context, actor permissions.Actor, fileUUID string) (string, error)
+	Review(ctx context.Context, actor permissions.Actor, fileUUID string, req ReviewFileRequest) (*FileResponse, error)
+	Archive(ctx context.Context, actor permissions.Actor, fileUUID string) error
 }
 
 type ClassCourseRepository interface {
@@ -49,7 +45,6 @@ type PointRepository interface {
 
 type service struct {
 	repo            Repository
-	userRepo        UserRepository
 	classCourseRepo ClassCourseRepository
 	lectureRepo     LectureRepository
 	classRepo       ClassRepository
@@ -60,33 +55,15 @@ type service struct {
 	logger          *slog.Logger
 }
 
-func NewService(repo Repository, userRepo UserRepository, classCourseRepo ClassCourseRepository, lectureRepo LectureRepository, classRepo ClassRepository, permSvc permissions.Service, stor storage.Storage, maxFileSize int64, pointRepo PointRepository, logger *slog.Logger) Service {
-	return &service{repo: repo, userRepo: userRepo, classCourseRepo: classCourseRepo, lectureRepo: lectureRepo, classRepo: classRepo, pointRepo: pointRepo, permSvc: permSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
-}
-
-func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error) {
-	u, err := s.userRepo.FindByUUID(ctx, uuid)
-	if err != nil {
-		return 0, apperr.Internal(err)
-	}
-	if u == nil {
-		return 0, apperr.NotFound("user")
-	}
-	return u.ID, nil
+func NewService(repo Repository, classCourseRepo ClassCourseRepository, lectureRepo LectureRepository, classRepo ClassRepository, permSvc permissions.Service, stor storage.Storage, maxFileSize int64, pointRepo PointRepository, logger *slog.Logger) Service {
+	return &service{repo: repo, classCourseRepo: classCourseRepo, lectureRepo: lectureRepo, classRepo: classRepo, pointRepo: pointRepo, permSvc: permSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
 }
 
 // authorizeRead allows the uploader, an approver of the file's class, or a
 // member of that class when the file is approved. Everything else is reported
 // as not found so file UUIDs cannot be probed.
-func (s *service) authorizeRead(ctx context.Context, actorUUID string, f *domain.File) error {
-	user, err := s.userRepo.FindByUUID(ctx, actorUUID)
-	if err != nil {
-		return apperr.Internal(err)
-	}
-	if user == nil {
-		return apperr.NotFound("user")
-	}
-	if f.UploadedBy == user.ID {
+func (s *service) authorizeRead(ctx context.Context, actor permissions.Actor, f *domain.File) error {
+	if f.UploadedBy == actor.UserID {
 		return nil
 	}
 
@@ -99,7 +76,7 @@ func (s *service) authorizeRead(ctx context.Context, actorUUID string, f *domain
 	}
 
 	if f.Status != string(domain.FileStatusApproved) {
-		canReview, err := s.permSvc.HasClassPermission(ctx, actorUUID, classCourse.ClassID, domain.PermFilesApprove)
+		canReview, err := s.permSvc.HasClassPermission(ctx, actor.UUID, classCourse.ClassID, domain.PermFilesApprove)
 		if err != nil {
 			return apperr.Internal(err)
 		}
@@ -109,7 +86,7 @@ func (s *service) authorizeRead(ctx context.Context, actorUUID string, f *domain
 		return nil
 	}
 
-	isMember, err := s.classRepo.IsMember(ctx, classCourse.ClassID, user.ID)
+	isMember, err := s.classRepo.IsMember(ctx, classCourse.ClassID, actor.UserID)
 	if err != nil {
 		return apperr.Internal(err)
 	}
@@ -119,7 +96,7 @@ func (s *service) authorizeRead(ctx context.Context, actorUUID string, f *domain
 	return nil
 }
 
-func (s *service) findReadableFile(ctx context.Context, actorUUID string, fileUUID string) (*domain.File, error) {
+func (s *service) findReadableFile(ctx context.Context, actor permissions.Actor, fileUUID string) (*domain.File, error) {
 	f, err := s.repo.FindByUUID(ctx, fileUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
@@ -127,17 +104,13 @@ func (s *service) findReadableFile(ctx context.Context, actorUUID string, fileUU
 	if f == nil {
 		return nil, apperr.NotFound("file")
 	}
-	if err := s.authorizeRead(ctx, actorUUID, f); err != nil {
+	if err := s.authorizeRead(ctx, actor, f); err != nil {
 		return nil, err
 	}
 	return f, nil
 }
 
-func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFileRequest, reader io.Reader, size int64, mimeType string, originalName string) (*FileResponse, error) {
-	uploaderID, err := s.resolveUserID(ctx, uploaderUUID)
-	if err != nil {
-		return nil, err
-	}
+func (s *service) Upload(ctx context.Context, actor permissions.Actor, req UploadFileRequest, reader io.Reader, size int64, mimeType string, originalName string) (*FileResponse, error) {
 	classCourse, err := s.classCourseRepo.FindClassCourseByUUID(ctx, req.ClassCourseUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
@@ -160,7 +133,7 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 		lectureID = &l.ID
 	}
 
-	ok, err := s.permSvc.HasClassPermission(ctx, uploaderUUID, classCourse.ClassID, domain.PermFilesUpload)
+	ok, err := s.permSvc.HasClassPermission(ctx, actor.UUID, classCourse.ClassID, domain.PermFilesUpload)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -178,7 +151,7 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 
 	f := &domain.File{
 		UUID:          uuid.NewString(),
-		UploadedBy:    uploaderID,
+		UploadedBy:    actor.UserID,
 		ClassCourseID: classCourse.ID,
 		LectureID:     lectureID,
 		Category:      string(req.Category),
@@ -196,7 +169,7 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 	return toFileResponse(f), nil
 }
 
-func (s *service) ListByClassCourse(ctx context.Context, classCourseUUID string) ([]*FileResponse, error) {
+func (s *service) ListByClassCourse(ctx context.Context, actor permissions.Actor, classCourseUUID string) ([]*FileResponse, error) {
 	cc, err := s.classCourseRepo.FindClassCourseByUUID(ctx, classCourseUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
@@ -219,7 +192,7 @@ func (s *service) ListByClassCourse(ctx context.Context, classCourseUUID string)
 	return resp, nil
 }
 
-func (s *service) ListByLecture(ctx context.Context, lectureUUID string) ([]*FileResponse, error) {
+func (s *service) ListByLecture(ctx context.Context, actor permissions.Actor, lectureUUID string) ([]*FileResponse, error) {
 	l, err := s.lectureRepo.FindLectureByUUID(ctx, lectureUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch lecture", http.StatusInternalServerError).Wrap(err)
@@ -242,16 +215,16 @@ func (s *service) ListByLecture(ctx context.Context, lectureUUID string) ([]*Fil
 	return resp, nil
 }
 
-func (s *service) Get(ctx context.Context, actorUUID string, fileUUID string) (*FileResponse, error) {
-	f, err := s.findReadableFile(ctx, actorUUID, fileUUID)
+func (s *service) Get(ctx context.Context, actor permissions.Actor, fileUUID string) (*FileResponse, error) {
+	f, err := s.findReadableFile(ctx, actor, fileUUID)
 	if err != nil {
 		return nil, err
 	}
 	return toFileResponse(f), nil
 }
 
-func (s *service) GetDownloadURL(ctx context.Context, actorUUID string, fileUUID string) (string, error) {
-	f, err := s.findReadableFile(ctx, actorUUID, fileUUID)
+func (s *service) GetDownloadURL(ctx context.Context, actor permissions.Actor, fileUUID string) (string, error) {
+	f, err := s.findReadableFile(ctx, actor, fileUUID)
 	if err != nil {
 		return "", err
 	}
@@ -262,11 +235,7 @@ func (s *service) GetDownloadURL(ctx context.Context, actorUUID string, fileUUID
 	return url, nil
 }
 
-func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID string, req ReviewFileRequest) (*FileResponse, error) {
-	reviewerID, err := s.resolveUserID(ctx, reviewerUUID)
-	if err != nil {
-		return nil, err
-	}
+func (s *service) Review(ctx context.Context, actor permissions.Actor, fileUUID string, req ReviewFileRequest) (*FileResponse, error) {
 	f, err := s.repo.FindByUUID(ctx, fileUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
@@ -281,7 +250,7 @@ func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID stri
 	if classCourse == nil {
 		return nil, apperr.NotFound("class course")
 	}
-	ok, err := s.permSvc.HasClassPermission(ctx, reviewerUUID, classCourse.ClassID, domain.PermFilesApprove)
+	ok, err := s.permSvc.HasClassPermission(ctx, actor.UUID, classCourse.ClassID, domain.PermFilesApprove)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -290,7 +259,7 @@ func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID stri
 	}
 
 	now := time.Now()
-	f.ReviewedBy = &reviewerID
+	f.ReviewedBy = &actor.UserID
 	f.ReviewedAt = &now
 	f.ReviewNote = req.ReviewNote
 
@@ -300,7 +269,7 @@ func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID stri
 			return nil, apperr.New("failed to update file", http.StatusInternalServerError).Wrap(err)
 		}
 
-		if err := s.pointRepo.AwardPoints(ctx, f.UploadedBy, domain.PointsFileApproval, domain.PointSourceFileApproval, f.ID, reviewerID); err != nil {
+		if err := s.pointRepo.AwardPoints(ctx, f.UploadedBy, domain.PointsFileApproval, domain.PointSourceFileApproval, f.ID, actor.UserID); err != nil {
 			s.logger.Warn("failed to award points for file approval", "file_id", f.ID, "error", err)
 		}
 	} else {
@@ -313,7 +282,7 @@ func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID stri
 	return toFileResponse(f), nil
 }
 
-func (s *service) Archive(ctx context.Context, fileUUID string, actorUUID string) error {
+func (s *service) Archive(ctx context.Context, actor permissions.Actor, fileUUID string) error {
 	f, err := s.repo.FindByUUID(ctx, fileUUID)
 	if err != nil {
 		return apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
@@ -330,7 +299,7 @@ func (s *service) Archive(ctx context.Context, fileUUID string, actorUUID string
 		return apperr.NotFound("class course")
 	}
 
-	ok, err := s.permSvc.HasClassPermission(ctx, actorUUID, classCourse.ClassID, domain.PermFilesApprove)
+	ok, err := s.permSvc.HasClassPermission(ctx, actor.UUID, classCourse.ClassID, domain.PermFilesApprove)
 	if err != nil {
 		return apperr.Internal(err)
 	}
