@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/coursepack/internal/domain"
 )
 
 type Service interface {

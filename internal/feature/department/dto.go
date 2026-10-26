@@ -1,8 +1,8 @@
 package department
 
 import (
-	"github.com/victorive/klaro-backend/internal/domain"
-	"github.com/victorive/klaro-backend/internal/feature/university"
+	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/feature/university"
 )
 
 type DepartmentResponse struct {

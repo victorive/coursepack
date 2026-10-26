@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/klaro-backend/internal/pkg/response"
+	"github.com/victorive/coursepack/internal/pkg/response"
 )
 
 type OTPVerifiedChecker interface {

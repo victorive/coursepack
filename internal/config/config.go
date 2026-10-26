@@ -22,7 +22,7 @@ type Config struct {
 
 type AppConfig struct {
 	Env         string `env:"APP_ENV" env-default:"development"`
-	Name        string `env:"APP_NAME" env-default:"klaro-api"`
+	Name        string `env:"APP_NAME" env-default:"coursepack"`
 	Port        string `env:"APP_PORT" env-default:"8000"`
 	Host        string `env:"APP_HOST" env-default:"localhost"`
 	AppURL      string `env:"APP_URL" env-default:"http://localhost:8000"`
@@ -35,7 +35,7 @@ type DBConfig struct {
 	Port     int    `env:"DB_PORT" env-default:"5432"`
 	User     string `env:"DB_USER" env-default:"postgres"`
 	Password string `env:"DB_PASSWORD" env-default:""`
-	Name     string `env:"DB_NAME" env-default:"klaro"`
+	Name     string `env:"DB_NAME" env-default:"coursepack"`
 	SSLMode  string `env:"DB_SSL_MODE" env-default:"disable"`
 }
 
@@ -63,8 +63,8 @@ type SMTPConfig struct {
 	Port      int    `env:"SMTP_PORT" env-default:"1025"`
 	User      string `env:"SMTP_USER" env-default:""`
 	Password  string `env:"SMTP_PASSWORD" env-default:""`
-	FromEmail string `env:"SMTP_FROM_EMAIL" env-default:"noreply@klaro.app"`
-	FromName  string `env:"SMTP_FROM_NAME" env-default:"Klaro Support"`
+	FromEmail string `env:"SMTP_FROM_EMAIL" env-default:"noreply@example.com"`
+	FromName  string `env:"SMTP_FROM_NAME" env-default:"Coursepack Support"`
 }
 
 type StorageConfig struct {

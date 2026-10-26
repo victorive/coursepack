@@ -1,6 +1,6 @@
-// @title Klaro API
+// @title Coursepack API
 // @version 1.0
-// @description Klaro REST API
+// @description Curated lecture notes and past questions for university classes.
 // @BasePath /api/v1
 // @schemes http https
 // @securityDefinitions.apikey BearerAuth
@@ -17,10 +17,10 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	_ "github.com/victorive/klaro-backend/docs"
-	"github.com/victorive/klaro-backend/internal/app"
-	"github.com/victorive/klaro-backend/internal/config"
-	"github.com/victorive/klaro-backend/internal/server"
+	_ "github.com/victorive/coursepack/docs"
+	"github.com/victorive/coursepack/internal/app"
+	"github.com/victorive/coursepack/internal/config"
+	"github.com/victorive/coursepack/internal/server"
 )
 
 func main() {

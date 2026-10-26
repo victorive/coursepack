@@ -1,4 +1,4 @@
-module github.com/victorive/klaro-backend
+module github.com/victorive/coursepack
 
 go 1.25.0
 

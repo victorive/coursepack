@@ -1,7 +1,7 @@
 package academic
 
 import (
-	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/coursepack/internal/domain"
 )
 
 type CreateSemesterRequest struct {

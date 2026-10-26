@@ -3,7 +3,7 @@ package academic
 import (
 	"context"
 
-	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/coursepack/internal/domain"
 	"gorm.io/gorm"
 )
 

@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
-	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/coursepack/internal/domain"
 	"gorm.io/gorm"
 )
 

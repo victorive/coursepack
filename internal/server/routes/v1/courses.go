@@ -2,10 +2,10 @@ package v1
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/klaro-backend/internal/app"
-	"github.com/victorive/klaro-backend/internal/feature/course"
-	"github.com/victorive/klaro-backend/internal/feature/file"
-	"github.com/victorive/klaro-backend/internal/middleware"
+	"github.com/victorive/coursepack/internal/app"
+	"github.com/victorive/coursepack/internal/feature/course"
+	"github.com/victorive/coursepack/internal/feature/file"
+	"github.com/victorive/coursepack/internal/middleware"
 )
 
 func courseRoutes(r fiber.Router, c *app.Container) {

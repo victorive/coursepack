@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/victorive/klaro-backend/internal/pkg/apperr"
+	"github.com/victorive/coursepack/internal/pkg/apperr"
 )
 
 type Service interface {

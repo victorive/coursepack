@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/victorive/klaro-backend/database/seeders/json/courses"
-	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/coursepack/database/seeders/json/courses"
+	"github.com/victorive/coursepack/internal/domain"
 	"gorm.io/gorm"
 )
 
