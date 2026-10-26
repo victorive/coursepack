@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/coursepack/internal/middleware"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/pagination"
 	"github.com/victorive/coursepack/internal/pkg/response"
 	"github.com/victorive/coursepack/internal/pkg/validator"
@@ -35,11 +35,11 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	uuid, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	cls, err := h.svc.Create(c.UserContext(), uuid, &req)
+	cls, err := h.svc.Create(c.UserContext(), actor, &req)
 	if err != nil {
 		return err
 	}
@@ -58,11 +58,11 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 // @Router       /classes [get]
 func (h *Handler) List(c *fiber.Ctx) error {
 	q := pagination.Parse(c)
-	uuid, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	items, total, err := h.svc.List(c.UserContext(), uuid, *q)
+	items, total, err := h.svc.List(c.UserContext(), actor, *q)
 	if err != nil {
 		return err
 	}
@@ -81,11 +81,11 @@ func (h *Handler) List(c *fiber.Ctx) error {
 // @Router       /classes/{id} [get]
 func (h *Handler) Get(c *fiber.Ctx) error {
 	classUUID := c.Params("id")
-	userUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	cls, err := h.svc.Get(c.UserContext(), userUUID, classUUID)
+	cls, err := h.svc.Get(c.UserContext(), actor, classUUID)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,11 @@ func (h *Handler) Get(c *fiber.Ctx) error {
 // @Router       /classes/{id} [delete]
 func (h *Handler) Delete(c *fiber.Ctx) error {
 	classUUID := c.Params("id")
-	if err := h.svc.Delete(c.UserContext(), classUUID); err != nil {
+	actor, err := permissions.ActorFrom(c.UserContext())
+	if err != nil {
+		return err
+	}
+	if err := h.svc.Delete(c.UserContext(), actor, classUUID); err != nil {
 		return err
 	}
 	return c.SendStatus(http.StatusNoContent)
@@ -128,11 +132,11 @@ func (h *Handler) Update(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	userUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	cls, err := h.svc.Update(c.UserContext(), userUUID, classUUID, &req)
+	cls, err := h.svc.Update(c.UserContext(), actor, classUUID, &req)
 	if err != nil {
 		return err
 	}
@@ -155,11 +159,11 @@ func (h *Handler) RequestJoin(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	uuid, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	jr, err := h.svc.RequestJoin(c.UserContext(), uuid, &req)
+	jr, err := h.svc.RequestJoin(c.UserContext(), actor, &req)
 	if err != nil {
 		return err
 	}
@@ -178,7 +182,11 @@ func (h *Handler) RequestJoin(c *fiber.Ctx) error {
 // @Router       /classes/{id}/join-requests [get]
 func (h *Handler) ListPendingJoinRequests(c *fiber.Ctx) error {
 	classUUID := c.Params("id")
-	requests, err := h.svc.ListPendingJoinRequests(c.UserContext(), classUUID)
+	actor, err := permissions.ActorFrom(c.UserContext())
+	if err != nil {
+		return err
+	}
+	requests, err := h.svc.ListPendingJoinRequests(c.UserContext(), actor, classUUID)
 	if err != nil {
 		return err
 	}
@@ -208,11 +216,11 @@ func (h *Handler) ReviewJoinRequest(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	reviewerUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	jr, err := h.svc.ReviewJoinRequest(c.UserContext(), reviewerUUID, classUUID, requestID, &req)
+	jr, err := h.svc.ReviewJoinRequest(c.UserContext(), actor, classUUID, requestID, &req)
 	if err != nil {
 		return err
 	}
@@ -231,7 +239,11 @@ func (h *Handler) ReviewJoinRequest(c *fiber.Ctx) error {
 // @Router       /classes/{id}/members [get]
 func (h *Handler) ListMembers(c *fiber.Ctx) error {
 	classUUID := c.Params("id")
-	members, err := h.svc.ListMembers(c.UserContext(), classUUID)
+	actor, err := permissions.ActorFrom(c.UserContext())
+	if err != nil {
+		return err
+	}
+	members, err := h.svc.ListMembers(c.UserContext(), actor, classUUID)
 	if err != nil {
 		return err
 	}
@@ -252,7 +264,11 @@ func (h *Handler) ListMembers(c *fiber.Ctx) error {
 func (h *Handler) RemoveMember(c *fiber.Ctx) error {
 	classUUID := c.Params("id")
 	targetUserUUID := c.Params("userUUID")
-	if err := h.svc.RemoveMember(c.UserContext(), classUUID, targetUserUUID); err != nil {
+	actor, err := permissions.ActorFrom(c.UserContext())
+	if err != nil {
+		return err
+	}
+	if err := h.svc.RemoveMember(c.UserContext(), actor, classUUID, targetUserUUID); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "member removed", nil)
@@ -267,7 +283,11 @@ func (h *Handler) RemoveMember(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /levels [get]
 func (h *Handler) ListLevels(c *fiber.Ctx) error {
-	levels, err := h.svc.ListLevels(c.UserContext())
+	actor, err := permissions.ActorFrom(c.UserContext())
+	if err != nil {
+		return err
+	}
+	levels, err := h.svc.ListLevels(c.UserContext(), actor)
 	if err != nil {
 		return err
 	}
@@ -287,12 +307,12 @@ func (h *Handler) ListLevels(c *fiber.Ctx) error {
 func (h *Handler) RegenerateInviteCode(c *fiber.Ctx) error {
 	classUUID := c.Params("id")
 
-	userUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
 
-	cls, err := h.svc.RegenerateInviteCode(c.UserContext(), userUUID, classUUID)
+	cls, err := h.svc.RegenerateInviteCode(c.UserContext(), actor, classUUID)
 	if err != nil {
 		return err
 	}

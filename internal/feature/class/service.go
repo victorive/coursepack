@@ -15,18 +15,18 @@ import (
 )
 
 type Service interface {
-	Create(ctx context.Context, creatorUUID string, req *CreateClassRequest) (*ClassResponse, error)
-	Update(ctx context.Context, updaterUUID string, classUUID string, req *UpdateClassRequest) (*ClassResponse, error)
-	List(ctx context.Context, userUUID string, q pagination.Query) ([]*ClassResponse, int64, error)
-	Get(ctx context.Context, userUUID string, classUUID string) (*ClassResponse, error)
-	Delete(ctx context.Context, uuid string) error
-	RequestJoin(ctx context.Context, userUUID string, req *JoinRequest) (*JoinRequestResponse, error)
-	ListPendingJoinRequests(ctx context.Context, classUUID string) ([]*JoinRequestResponse, error)
-	ReviewJoinRequest(ctx context.Context, reviewerUUID string, classUUID string, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error)
-	ListMembers(ctx context.Context, classUUID string) ([]*MemberResponse, error)
-	RemoveMember(ctx context.Context, classUUID string, userUUID string) error
-	ListLevels(ctx context.Context) ([]*LevelResponse, error)
-	RegenerateInviteCode(ctx context.Context, userUUID string, classUUID string) (*ClassResponse, error)
+	Create(ctx context.Context, actor permissions.Actor, req *CreateClassRequest) (*ClassResponse, error)
+	Update(ctx context.Context, actor permissions.Actor, classUUID string, req *UpdateClassRequest) (*ClassResponse, error)
+	List(ctx context.Context, actor permissions.Actor, q pagination.Query) ([]*ClassResponse, int64, error)
+	Get(ctx context.Context, actor permissions.Actor, classUUID string) (*ClassResponse, error)
+	Delete(ctx context.Context, actor permissions.Actor, classUUID string) error
+	RequestJoin(ctx context.Context, actor permissions.Actor, req *JoinRequest) (*JoinRequestResponse, error)
+	ListPendingJoinRequests(ctx context.Context, actor permissions.Actor, classUUID string) ([]*JoinRequestResponse, error)
+	ReviewJoinRequest(ctx context.Context, actor permissions.Actor, classUUID string, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error)
+	ListMembers(ctx context.Context, actor permissions.Actor, classUUID string) ([]*MemberResponse, error)
+	RemoveMember(ctx context.Context, actor permissions.Actor, classUUID string, targetUserUUID string) error
+	ListLevels(ctx context.Context, actor permissions.Actor) ([]*LevelResponse, error)
+	RegenerateInviteCode(ctx context.Context, actor permissions.Actor, classUUID string) (*ClassResponse, error)
 }
 
 type UserRepository interface {
@@ -68,12 +68,7 @@ func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error)
 	return u.ID, nil
 }
 
-func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateClassRequest) (*ClassResponse, error) {
-	creator, err := s.resolveUser(ctx, creatorUUID)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *service) Create(ctx context.Context, actor permissions.Actor, req *CreateClassRequest) (*ClassResponse, error) {
 	dept, err := s.deptRepo.FindByID(ctx, req.DepartmentID)
 	if err != nil {
 		return nil, apperr.Internal(err)
@@ -81,7 +76,7 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 	if dept == nil {
 		return nil, apperr.NotFound("department")
 	}
-	if creator.UniversityID == nil || dept.UniversityID != *creator.UniversityID {
+	if actor.UniversityID == nil || dept.UniversityID != *actor.UniversityID {
 		return nil, apperr.New("invalid department", http.StatusUnprocessableEntity)
 	}
 
@@ -97,7 +92,7 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 		CurrentLevelID:   req.CurrentLevelID,
 		Name:             req.Name,
 		InviteCode:       code,
-		CreatedBy:        &creator.ID,
+		CreatedBy:        &actor.UserID,
 	}
 
 	err = s.repo.Transact(ctx, func(ctx context.Context) error {
@@ -105,16 +100,16 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 			return apperr.New("failed to create class", http.StatusInternalServerError).Wrap(err)
 		}
 
-		if err := s.permSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleClassRep); err != nil {
+		if err := s.permSvc.AssignClassRole(ctx, actor.UserID, c.ID, domain.RoleClassRep); err != nil {
 			return apperr.New("failed to assign class rep role", http.StatusInternalServerError).Wrap(err)
 		}
 
-		member := &domain.ClassMember{ClassID: c.ID, UserID: creator.ID}
+		member := &domain.ClassMember{ClassID: c.ID, UserID: actor.UserID}
 		if err := s.repo.AddMember(ctx, member); err != nil {
 			return apperr.New("failed to add creator as member", http.StatusInternalServerError).Wrap(err)
 		}
 
-		if err := s.permSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleStudent); err != nil {
+		if err := s.permSvc.AssignClassRole(ctx, actor.UserID, c.ID, domain.RoleStudent); err != nil {
 			return apperr.New("failed to assign student role", http.StatusInternalServerError).Wrap(err)
 		}
 		return nil
@@ -127,15 +122,11 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 	return toClassResponse(c), nil
 }
 
-func (s *service) List(ctx context.Context, userUUID string, q pagination.Query) ([]*ClassResponse, int64, error) {
-	user, err := s.resolveUser(ctx, userUUID)
-	if err != nil {
-		return nil, 0, err
-	}
-	if user.UniversityID == nil {
+func (s *service) List(ctx context.Context, actor permissions.Actor, q pagination.Query) ([]*ClassResponse, int64, error) {
+	if actor.UniversityID == nil {
 		return []*ClassResponse{}, 0, nil
 	}
-	universityID := *user.UniversityID
+	universityID := *actor.UniversityID
 	total, err := s.repo.CountByUniversity(ctx, universityID)
 	if err != nil {
 		return nil, 0, apperr.New("failed to list classes", http.StatusInternalServerError).Wrap(err)
@@ -163,16 +154,12 @@ func (s *service) resolveClass(ctx context.Context, classUUID string) (*domain.C
 	return c, nil
 }
 
-func (s *service) Get(ctx context.Context, userUUID string, classUUID string) (*ClassResponse, error) {
-	user, err := s.resolveUser(ctx, userUUID)
-	if err != nil {
-		return nil, err
-	}
-	if user.UniversityID == nil {
+func (s *service) Get(ctx context.Context, actor permissions.Actor, classUUID string) (*ClassResponse, error) {
+	if actor.UniversityID == nil {
 		return nil, apperr.NotFound("class")
 	}
 
-	c, err := s.repo.FindByUUIDAndUniversity(ctx, classUUID, *user.UniversityID)
+	c, err := s.repo.FindByUUIDAndUniversity(ctx, classUUID, *actor.UniversityID)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -183,7 +170,7 @@ func (s *service) Get(ctx context.Context, userUUID string, classUUID string) (*
 	return toClassResponse(c), nil
 }
 
-func (s *service) Delete(ctx context.Context, classUUID string) error {
+func (s *service) Delete(ctx context.Context, actor permissions.Actor, classUUID string) error {
 	c, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
 		return err
@@ -194,11 +181,7 @@ func (s *service) Delete(ctx context.Context, classUUID string) error {
 	return nil
 }
 
-func (s *service) Update(ctx context.Context, updaterUUID string, classUUID string, req *UpdateClassRequest) (*ClassResponse, error) {
-	_, err := s.resolveUserID(ctx, updaterUUID)
-	if err != nil {
-		return nil, err
-	}
+func (s *service) Update(ctx context.Context, actor permissions.Actor, classUUID string, req *UpdateClassRequest) (*ClassResponse, error) {
 	c, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
 		return nil, err
@@ -215,12 +198,8 @@ func (s *service) Update(ctx context.Context, updaterUUID string, classUUID stri
 	return toClassResponse(c), nil
 }
 
-func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinRequest) (*JoinRequestResponse, error) {
-	user, err := s.resolveUser(ctx, userUUID)
-	if err != nil {
-		return nil, err
-	}
-	userID := user.ID
+func (s *service) RequestJoin(ctx context.Context, actor permissions.Actor, req *JoinRequest) (*JoinRequestResponse, error) {
+	userID := actor.UserID
 
 	cls, err := s.repo.FindByInviteCode(ctx, req.InviteCode)
 	if err != nil {
@@ -234,7 +213,7 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
-	if dept == nil || user.UniversityID == nil || dept.UniversityID != *user.UniversityID {
+	if dept == nil || actor.UniversityID == nil || dept.UniversityID != *actor.UniversityID {
 		return nil, apperr.New("invalid invite code", http.StatusNotFound)
 	}
 
@@ -246,8 +225,8 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 		return nil, apperr.New("already a member of this class", http.StatusConflict)
 	}
 
-	if user.UniversityID != nil {
-		isActive, err := s.repo.IsActiveMemberAnywhere(ctx, userID, *user.UniversityID)
+	if actor.UniversityID != nil {
+		isActive, err := s.repo.IsActiveMemberAnywhere(ctx, userID, *actor.UniversityID)
 		if err != nil {
 			return nil, apperr.Internal(err)
 		}
@@ -275,7 +254,7 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 	return toJoinRequestResponse(jr), nil
 }
 
-func (s *service) ListPendingJoinRequests(ctx context.Context, classUUID string) ([]*JoinRequestResponse, error) {
+func (s *service) ListPendingJoinRequests(ctx context.Context, actor permissions.Actor, classUUID string) ([]*JoinRequestResponse, error) {
 	c, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
 		return nil, err
@@ -292,11 +271,7 @@ func (s *service) ListPendingJoinRequests(ctx context.Context, classUUID string)
 	return result, nil
 }
 
-func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, classUUID string, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error) {
-	reviewerID, err := s.resolveUserID(ctx, reviewerUUID)
-	if err != nil {
-		return nil, err
-	}
+func (s *service) ReviewJoinRequest(ctx context.Context, actor permissions.Actor, classUUID string, requestID int64, req *ReviewJoinRequest) (*JoinRequestResponse, error) {
 	cls, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
 		return nil, err
@@ -316,7 +291,7 @@ func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, cl
 	}
 
 	now := time.Now()
-	jr.ReviewedBy = &reviewerID
+	jr.ReviewedBy = &actor.UserID
 	jr.ResolvedAt = &now
 
 	if req.Action == "approve" {
@@ -341,7 +316,7 @@ func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, cl
 	return toJoinRequestResponse(jr), nil
 }
 
-func (s *service) ListMembers(ctx context.Context, classUUID string) ([]*MemberResponse, error) {
+func (s *service) ListMembers(ctx context.Context, actor permissions.Actor, classUUID string) ([]*MemberResponse, error) {
 	c, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
 		return nil, err
@@ -357,7 +332,7 @@ func (s *service) ListMembers(ctx context.Context, classUUID string) ([]*MemberR
 	return result, nil
 }
 
-func (s *service) RemoveMember(ctx context.Context, classUUID string, targetUserUUID string) error {
+func (s *service) RemoveMember(ctx context.Context, actor permissions.Actor, classUUID string, targetUserUUID string) error {
 	cls, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
 		return err
@@ -385,7 +360,7 @@ func (s *service) RemoveMember(ctx context.Context, classUUID string, targetUser
 	return nil
 }
 
-func (s *service) ListLevels(ctx context.Context) ([]*LevelResponse, error) {
+func (s *service) ListLevels(ctx context.Context, actor permissions.Actor) ([]*LevelResponse, error) {
 	levels, err := s.repo.FindAllLevels(ctx)
 	if err != nil {
 		return nil, apperr.New("failed to fetch levels", http.StatusInternalServerError).Wrap(err)
@@ -399,12 +374,7 @@ func (s *service) ListLevels(ctx context.Context) ([]*LevelResponse, error) {
 	return resp, nil
 }
 
-func (s *service) RegenerateInviteCode(ctx context.Context, userUUID string, classUUID string) (*ClassResponse, error) {
-	_, err := s.resolveUserID(ctx, userUUID)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *service) RegenerateInviteCode(ctx context.Context, actor permissions.Actor, classUUID string) (*ClassResponse, error) {
 	c, err := s.resolveClass(ctx, classUUID)
 	if err != nil {
 		return nil, err

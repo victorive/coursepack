@@ -78,6 +78,14 @@ func discardLogger() *slog.Logger {
 
 func ptrTo[T any](v T) *T { return &v }
 
+func actorFrom(u *domain.User) permissions.Actor {
+	return permissions.Actor{
+		UserID:       u.ID,
+		UUID:         u.UUID,
+		UniversityID: u.UniversityID,
+	}
+}
+
 func newServiceUnderTest(caller *domain.User, class *domain.Class) Service {
 	return NewService(
 		&fakeClassRepository{class: class},
@@ -100,7 +108,7 @@ func TestGetHidesClassFromAnotherUniversity(t *testing.T) {
 		Name:             "CSC 401",
 	}
 
-	_, err := newServiceUnderTest(caller, foreignClass).Get(context.Background(), caller.UUID, foreignClass.UUID)
+	_, err := newServiceUnderTest(caller, foreignClass).Get(context.Background(), actorFrom(caller), foreignClass.UUID)
 	if err == nil {
 		t.Fatal("expected a not-found error for a class in another university")
 	}
@@ -126,7 +134,7 @@ func TestGetReturnsClassFromCallerUniversity(t *testing.T) {
 		Name:             "CSC 301",
 	}
 
-	got, err := newServiceUnderTest(caller, ownClass).Get(context.Background(), caller.UUID, ownClass.UUID)
+	got, err := newServiceUnderTest(caller, ownClass).Get(context.Background(), actorFrom(caller), ownClass.UUID)
 	if err != nil {
 		t.Fatalf("Get returned an error: %v", err)
 	}
@@ -147,7 +155,7 @@ func TestCreateReturnsErrorWhenRoleAssignmentFails(t *testing.T) {
 		discardLogger(),
 	)
 
-	_, err := svc.Create(context.Background(), caller.UUID, &CreateClassRequest{
+	_, err := svc.Create(context.Background(), actorFrom(caller), &CreateClassRequest{
 		DepartmentID:     3,
 		AdmissionSession: "2021/2022",
 		CurrentLevelID:   1,
