@@ -45,6 +45,13 @@ const (
 	FileCategoryAssignment   FileCategory = "assignment"
 )
 
+type ReviewAction string
+
+const (
+	ReviewActionApprove ReviewAction = "approve"
+	ReviewActionReject  ReviewAction = "reject"
+)
+
 type FileStatus string
 
 const (

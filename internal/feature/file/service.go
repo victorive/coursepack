@@ -181,7 +181,7 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 		UploadedBy:    uploaderID,
 		ClassCourseID: classCourse.ID,
 		LectureID:     lectureID,
-		Category:      req.Category,
+		Category:      string(req.Category),
 		Title:         req.Title,
 		StorageKey:    key,
 		SizeBytes:     size,
@@ -294,7 +294,7 @@ func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID stri
 	f.ReviewedAt = &now
 	f.ReviewNote = req.ReviewNote
 
-	if req.Action == "approve" {
+	if req.Action == domain.ReviewActionApprove {
 		f.Status = string(domain.FileStatusApproved)
 		if err := s.repo.Update(ctx, f); err != nil {
 			return nil, apperr.New("failed to update file", http.StatusInternalServerError).Wrap(err)
