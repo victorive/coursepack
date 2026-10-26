@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/dbtx"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -32,7 +33,7 @@ func NewRepository(db *gorm.DB) Repository {
 func (r *gormRepository) HasGlobalRole(ctx context.Context, userID int64, role domain.RoleName) (bool, error) {
 	var count int64
 
-	err := r.db.WithContext(ctx).
+	err := dbtx.Conn(ctx, r.db).
 		Table("user_roles ur").
 		Joins("JOIN roles r ON r.id = ur.role_id").
 		Where("ur.user_id = ? AND ur.scope_type = 'global' AND r.name = ?", userID, string(role)).
@@ -47,7 +48,7 @@ func (r *gormRepository) HasGlobalRole(ctx context.Context, userID int64, role d
 func (r *gormRepository) HasClassRole(ctx context.Context, userID, classID int64, role domain.RoleName) (bool, error) {
 	var count int64
 
-	err := r.db.WithContext(ctx).
+	err := dbtx.Conn(ctx, r.db).
 		Table("user_roles ur").
 		Joins("JOIN roles r ON r.id = ur.role_id").
 		Where("ur.user_id = ? AND ur.scope_type = 'class' AND ur.scope_id = ? AND r.name = ?", userID, classID, string(role)).
@@ -72,7 +73,7 @@ func (r *gormRepository) AssignGlobalRole(ctx context.Context, userID int64, rol
 		ScopeID:   nil,
 	}
 
-	if err := r.db.WithContext(ctx).
+	if err := dbtx.Conn(ctx, r.db).
 		Clauses(clause.OnConflict{DoNothing: true}).
 		Create(&ur).Error; err != nil {
 		return fmt.Errorf("rbac.AssignGlobalRole: %w", err)
@@ -94,7 +95,7 @@ func (r *gormRepository) AssignClassRole(ctx context.Context, userID, classID in
 		ScopeID:   &classID,
 	}
 
-	if err := r.db.WithContext(ctx).
+	if err := dbtx.Conn(ctx, r.db).
 		Clauses(clause.OnConflict{DoNothing: true}).
 		Create(&ur).Error; err != nil {
 		return fmt.Errorf("rbac.AssignClassRole: %w", err)
@@ -106,7 +107,7 @@ func (r *gormRepository) AssignClassRole(ctx context.Context, userID, classID in
 func (r *gormRepository) HasGlobalPermission(ctx context.Context, userUUID string, perm domain.PermissionName) (bool, error) {
 	var count int64
 
-	err := r.db.WithContext(ctx).
+	err := dbtx.Conn(ctx, r.db).
 		Table("user_roles ur").
 		Joins("JOIN users u ON u.id = ur.user_id").
 		Joins("JOIN roles ro ON ro.id = ur.role_id").
@@ -124,7 +125,7 @@ func (r *gormRepository) HasGlobalPermission(ctx context.Context, userUUID strin
 func (r *gormRepository) HasClassPermission(ctx context.Context, userUUID string, classID int64, perm domain.PermissionName) (bool, error) {
 	var count int64
 
-	err := r.db.WithContext(ctx).
+	err := dbtx.Conn(ctx, r.db).
 		Table("user_roles ur").
 		Joins("JOIN users u ON u.id = ur.user_id").
 		Joins("JOIN roles ro ON ro.id = ur.role_id").
@@ -145,7 +146,7 @@ func (r *gormRepository) HasClassPermission(ctx context.Context, userUUID string
 func (r *gormRepository) HasClassPermissionByUUID(ctx context.Context, userUUID, classUUID string, perm domain.PermissionName) (bool, error) {
 	var count int64
 
-	err := r.db.WithContext(ctx).
+	err := dbtx.Conn(ctx, r.db).
 		Table("user_roles ur").
 		Joins("JOIN users u ON u.id = ur.user_id").
 		Joins("JOIN roles ro ON ro.id = ur.role_id").
@@ -167,7 +168,7 @@ func (r *gormRepository) HasClassPermissionByUUID(ctx context.Context, userUUID,
 func (r *gormRepository) GetUserRoles(ctx context.Context, userUUID string) ([]string, error) {
 	var roles []string
 
-	err := r.db.WithContext(ctx).
+	err := dbtx.Conn(ctx, r.db).
 		Table("user_roles ur").
 		Joins("JOIN users u ON u.id = ur.user_id").
 		Joins("JOIN roles ro ON ro.id = ur.role_id").
@@ -184,7 +185,7 @@ func (r *gormRepository) GetUserRoles(ctx context.Context, userUUID string) ([]s
 func (r *gormRepository) GetUserPermissions(ctx context.Context, userUUID string) ([]string, error) {
 	var permissions []string
 
-	err := r.db.WithContext(ctx).
+	err := dbtx.Conn(ctx, r.db).
 		Table("user_roles ur").
 		Joins("JOIN users u ON u.id = ur.user_id").
 		Joins("JOIN roles ro ON ro.id = ur.role_id").
@@ -203,7 +204,7 @@ func (r *gormRepository) GetUserPermissions(ctx context.Context, userUUID string
 func (r *gormRepository) roleIDByName(ctx context.Context, name domain.RoleName) (int64, error) {
 	var role domain.Role
 
-	if err := r.db.WithContext(ctx).Where("name = ?", string(name)).First(&role).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Where("name = ?", string(name)).First(&role).Error; err != nil {
 		return 0, fmt.Errorf("rbac.roleIDByName(%s): %w", name, err)
 	}
 

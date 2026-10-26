@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/dbtx"
 	"gorm.io/gorm"
 )
 
@@ -26,12 +27,12 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) Create(ctx context.Context, f *domain.File) error {
-	return r.db.WithContext(ctx).Create(f).Error
+	return dbtx.Conn(ctx, r.db).Create(f).Error
 }
 
 func (r *repository) FindByID(ctx context.Context, id int64) (*domain.File, error) {
 	var f domain.File
-	if err := r.db.WithContext(ctx).First(&f, id).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).First(&f, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -42,19 +43,19 @@ func (r *repository) FindByID(ctx context.Context, id int64) (*domain.File, erro
 
 func (r *repository) FindByUUID(ctx context.Context, uuid string) (*domain.File, error) {
 	var f domain.File
-	if err := r.db.WithContext(ctx).Where("uuid = ?", uuid).First(&f).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Where("uuid = ?", uuid).First(&f).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
 		return nil, err
 	}
-	
+
 	return &f, nil
 }
 
 func (r *repository) FindByClassCourse(ctx context.Context, classCourseID int64) ([]*domain.File, error) {
 	var files []*domain.File
-	if err := r.db.WithContext(ctx).
+	if err := dbtx.Conn(ctx, r.db).
 		Where("class_course_id = ? AND status != 'archived'", classCourseID).
 		Order("created_at DESC").
 		Find(&files).Error; err != nil {
@@ -65,7 +66,7 @@ func (r *repository) FindByClassCourse(ctx context.Context, classCourseID int64)
 
 func (r *repository) FindByLecture(ctx context.Context, lectureID int64) ([]*domain.File, error) {
 	var files []*domain.File
-	if err := r.db.WithContext(ctx).
+	if err := dbtx.Conn(ctx, r.db).
 		Where("lecture_id = ? AND status != 'archived'", lectureID).
 		Order("created_at DESC").
 		Find(&files).Error; err != nil {
@@ -75,9 +76,9 @@ func (r *repository) FindByLecture(ctx context.Context, lectureID int64) ([]*dom
 }
 
 func (r *repository) Update(ctx context.Context, f *domain.File) error {
-	return r.db.WithContext(ctx).Save(f).Error
+	return dbtx.Conn(ctx, r.db).Save(f).Error
 }
 
 func (r *repository) Delete(ctx context.Context, id int64) error {
-	return r.db.WithContext(ctx).Delete(&domain.File{}, id).Error
+	return dbtx.Conn(ctx, r.db).Delete(&domain.File{}, id).Error
 }

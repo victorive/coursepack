@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/dbtx"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -18,14 +19,14 @@ func NewPointRepository(db *gorm.DB) PointRepository {
 
 func (r *pointRepository) HasTransactionForSource(ctx context.Context, userID int64, sourceType domain.PointSource, sourceID int64) (bool, error) {
 	var count int64
-	err := r.db.WithContext(ctx).Model(&domain.PointTransaction{}).
+	err := dbtx.Conn(ctx, r.db).Model(&domain.PointTransaction{}).
 		Where("user_id = ? AND source_type = ? AND source_id = ?", userID, sourceType, sourceID).
 		Count(&count).Error
 	return count > 0, err
 }
 
 func (r *pointRepository) AwardPoints(ctx context.Context, userID int64, delta int, sourceType domain.PointSource, sourceID int64, awardedBy int64) error {
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return dbtx.Conn(ctx, r.db).Transaction(func(tx *gorm.DB) error {
 		up := domain.UserPoint{UserID: userID}
 		if err := tx.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "user_id"}},
