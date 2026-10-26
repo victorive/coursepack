@@ -18,7 +18,7 @@ type Service interface {
 	Create(ctx context.Context, creatorUUID string, req *CreateClassRequest) (*ClassResponse, error)
 	Update(ctx context.Context, updaterUUID string, classUUID string, req *UpdateClassRequest) (*ClassResponse, error)
 	List(ctx context.Context, userUUID string, q pagination.Query) ([]*ClassResponse, int64, error)
-	Get(ctx context.Context, uuid string) (*ClassResponse, error)
+	Get(ctx context.Context, userUUID string, classUUID string) (*ClassResponse, error)
 	Delete(ctx context.Context, uuid string) error
 	RequestJoin(ctx context.Context, userUUID string, req *JoinRequest) (*JoinRequestResponse, error)
 	ListPendingJoinRequests(ctx context.Context, classUUID string) ([]*JoinRequestResponse, error)
@@ -153,14 +153,25 @@ func (s *service) resolveClass(ctx context.Context, classUUID string) (*domain.C
 	if c == nil {
 		return nil, apperr.New("class not found", http.StatusNotFound)
 	}
-	
+
 	return c, nil
 }
 
-func (s *service) Get(ctx context.Context, classUUID string) (*ClassResponse, error) {
-	c, err := s.resolveClass(ctx, classUUID)
+func (s *service) Get(ctx context.Context, userUUID string, classUUID string) (*ClassResponse, error) {
+	user, err := s.resolveUser(ctx, userUUID)
 	if err != nil {
 		return nil, err
+	}
+	if user.UniversityID == nil {
+		return nil, apperr.New("class not found", http.StatusNotFound)
+	}
+
+	c, err := s.repo.FindByUUIDAndUniversity(ctx, classUUID, *user.UniversityID)
+	if err != nil {
+		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if c == nil {
+		return nil, apperr.New("class not found", http.StatusNotFound)
 	}
 
 	return toClassResponse(c), nil

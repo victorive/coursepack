@@ -4,9 +4,11 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"net/http"
 	"testing"
 
 	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/apperr"
 )
 
 type fakeUserRepository struct {
@@ -27,16 +29,33 @@ func (f *fakeClassRepository) FindByUUID(ctx context.Context, uuid string) (*dom
 	return f.class, nil
 }
 
+func (f *fakeClassRepository) FindByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*domain.Class, error) {
+	if f.class == nil || f.class.Department == nil {
+		return nil, nil
+	}
+	if f.class.Department.UniversityID != universityID {
+		return nil, nil
+	}
+	return f.class, nil
+}
+
 func discardLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
 }
 
 func ptrTo[T any](v T) *T { return &v }
 
-// Get currently takes no caller identity, so a class belonging to another
-// university is returned as-is. Flip this test to expect a not-found error once
-// the caller's university is checked.
-func TestGetReturnsClassFromAnotherUniversity(t *testing.T) {
+func newServiceUnderTest(caller *domain.User, class *domain.Class) Service {
+	return NewService(
+		&fakeClassRepository{class: class},
+		&fakeUserRepository{user: caller},
+		nil,
+		nil,
+		discardLogger(),
+	)
+}
+
+func TestGetHidesClassFromAnotherUniversity(t *testing.T) {
 	caller := &domain.User{ID: 1, UUID: "caller-uuid", UniversityID: ptrTo(int64(1))}
 	foreignClass := &domain.Class{
 		ID:               7,
@@ -48,19 +67,37 @@ func TestGetReturnsClassFromAnotherUniversity(t *testing.T) {
 		Name:             "CSC 401",
 	}
 
-	svc := NewService(
-		&fakeClassRepository{class: foreignClass},
-		&fakeUserRepository{user: caller},
-		nil,
-		nil,
-		discardLogger(),
-	)
+	_, err := newServiceUnderTest(caller, foreignClass).Get(context.Background(), caller.UUID, foreignClass.UUID)
+	if err == nil {
+		t.Fatal("expected a not-found error for a class in another university")
+	}
 
-	got, err := svc.Get(context.Background(), "class-7")
+	appErr, ok := err.(*apperr.AppError)
+	if !ok {
+		t.Fatalf("got %T, want *apperr.AppError", err)
+	}
+	if appErr.HTTPStatus != http.StatusNotFound {
+		t.Fatalf("got status %d, want %d", appErr.HTTPStatus, http.StatusNotFound)
+	}
+}
+
+func TestGetReturnsClassFromCallerUniversity(t *testing.T) {
+	caller := &domain.User{ID: 1, UUID: "caller-uuid", UniversityID: ptrTo(int64(1))}
+	ownClass := &domain.Class{
+		ID:               8,
+		UUID:             "class-8",
+		DepartmentID:     4,
+		Department:       &domain.Department{ID: 4, UniversityID: 1, Name: "Own", Code: "OWN"},
+		AdmissionSession: "2021/2022",
+		CurrentLevelID:   3,
+		Name:             "CSC 301",
+	}
+
+	got, err := newServiceUnderTest(caller, ownClass).Get(context.Background(), caller.UUID, ownClass.UUID)
 	if err != nil {
 		t.Fatalf("Get returned an error: %v", err)
 	}
-	if got.UUID != foreignClass.UUID {
-		t.Fatalf("got class %q, want %q", got.UUID, foreignClass.UUID)
+	if got.UUID != ownClass.UUID {
+		t.Fatalf("got class %q, want %q", got.UUID, ownClass.UUID)
 	}
 }

@@ -20,8 +20,8 @@ type Service interface {
 	Upload(ctx context.Context, uploaderUUID string, req UploadFileRequest, reader io.Reader, size int64, mimeType string, originalName string) (*FileResponse, error)
 	ListByClassCourse(ctx context.Context, classCourseUUID string) ([]*FileResponse, error)
 	ListByLecture(ctx context.Context, lectureUUID string) ([]*FileResponse, error)
-	Get(ctx context.Context, fileUUID string) (*FileResponse, error)
-	GetDownloadURL(ctx context.Context, fileUUID string) (string, error)
+	Get(ctx context.Context, actorUUID string, fileUUID string) (*FileResponse, error)
+	GetDownloadURL(ctx context.Context, actorUUID string, fileUUID string) (string, error)
 	Review(ctx context.Context, fileUUID string, reviewerUUID string, req ReviewFileRequest) (*FileResponse, error)
 	Archive(ctx context.Context, fileUUID string, actorUUID string) error
 }
@@ -39,6 +39,10 @@ type LectureRepository interface {
 	FindLectureByUUID(ctx context.Context, uuid string) (*domain.Lecture, error)
 }
 
+type ClassRepository interface {
+	IsMember(ctx context.Context, classID, userID int64) (bool, error)
+}
+
 type PointRepository interface {
 	HasTransactionForSource(ctx context.Context, userID int64, sourceType domain.PointSource, sourceID int64) (bool, error)
 	AwardPoints(ctx context.Context, userID int64, delta int, sourceType domain.PointSource, sourceID int64, awardedBy int64) error
@@ -49,6 +53,7 @@ type service struct {
 	userRepo        UserRepository
 	classCourseRepo ClassCourseRepository
 	lectureRepo     LectureRepository
+	classRepo       ClassRepository
 	pointRepo       PointRepository
 	rbacSvc         rbac.Service
 	storage         storage.Storage
@@ -56,8 +61,8 @@ type service struct {
 	logger          *slog.Logger
 }
 
-func NewService(repo Repository, userRepo UserRepository, classCourseRepo ClassCourseRepository, lectureRepo LectureRepository, rbacSvc rbac.Service, stor storage.Storage, maxFileSize int64, pointRepo PointRepository, logger *slog.Logger) Service {
-	return &service{repo: repo, userRepo: userRepo, classCourseRepo: classCourseRepo, lectureRepo: lectureRepo, pointRepo: pointRepo, rbacSvc: rbacSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
+func NewService(repo Repository, userRepo UserRepository, classCourseRepo ClassCourseRepository, lectureRepo LectureRepository, classRepo ClassRepository, rbacSvc rbac.Service, stor storage.Storage, maxFileSize int64, pointRepo PointRepository, logger *slog.Logger) Service {
+	return &service{repo: repo, userRepo: userRepo, classCourseRepo: classCourseRepo, lectureRepo: lectureRepo, classRepo: classRepo, pointRepo: pointRepo, rbacSvc: rbacSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
 }
 
 func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error) {
@@ -69,6 +74,64 @@ func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error)
 		return 0, apperr.New("user not found", http.StatusNotFound)
 	}
 	return u.ID, nil
+}
+
+// authorizeRead allows the uploader, an approver of the file's class, or a
+// member of that class when the file is approved. Everything else is reported
+// as not found so file UUIDs cannot be probed.
+func (s *service) authorizeRead(ctx context.Context, actorUUID string, f *domain.File) error {
+	user, err := s.userRepo.FindByUUID(ctx, actorUUID)
+	if err != nil {
+		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if user == nil {
+		return apperr.New("user not found", http.StatusNotFound)
+	}
+	if f.UploadedBy == user.ID {
+		return nil
+	}
+
+	classCourse, err := s.classCourseRepo.FindClassCourseByID(ctx, f.ClassCourseID)
+	if err != nil {
+		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if classCourse == nil {
+		return apperr.New("file not found", http.StatusNotFound)
+	}
+
+	if f.Status != string(domain.FileStatusApproved) {
+		canReview, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, classCourse.ClassID, domain.PermFilesApprove)
+		if err != nil {
+			return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		}
+		if !canReview {
+			return apperr.New("file not found", http.StatusNotFound)
+		}
+		return nil
+	}
+
+	isMember, err := s.classRepo.IsMember(ctx, classCourse.ClassID, user.ID)
+	if err != nil {
+		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+	}
+	if !isMember {
+		return apperr.New("file not found", http.StatusNotFound)
+	}
+	return nil
+}
+
+func (s *service) findReadableFile(ctx context.Context, actorUUID string, fileUUID string) (*domain.File, error) {
+	f, err := s.repo.FindByUUID(ctx, fileUUID)
+	if err != nil {
+		return nil, apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
+	}
+	if f == nil {
+		return nil, apperr.New("file not found", http.StatusNotFound)
+	}
+	if err := s.authorizeRead(ctx, actorUUID, f); err != nil {
+		return nil, err
+	}
+	return f, nil
 }
 
 func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFileRequest, reader io.Reader, size int64, mimeType string, originalName string) (*FileResponse, error) {
@@ -180,24 +243,18 @@ func (s *service) ListByLecture(ctx context.Context, lectureUUID string) ([]*Fil
 	return resp, nil
 }
 
-func (s *service) Get(ctx context.Context, fileUUID string) (*FileResponse, error) {
-	f, err := s.repo.FindByUUID(ctx, fileUUID)
+func (s *service) Get(ctx context.Context, actorUUID string, fileUUID string) (*FileResponse, error) {
+	f, err := s.findReadableFile(ctx, actorUUID, fileUUID)
 	if err != nil {
-		return nil, apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
-	}
-	if f == nil {
-		return nil, apperr.New("file not found", http.StatusNotFound)
+		return nil, err
 	}
 	return toFileResponse(f), nil
 }
 
-func (s *service) GetDownloadURL(ctx context.Context, fileUUID string) (string, error) {
-	f, err := s.repo.FindByUUID(ctx, fileUUID)
+func (s *service) GetDownloadURL(ctx context.Context, actorUUID string, fileUUID string) (string, error) {
+	f, err := s.findReadableFile(ctx, actorUUID, fileUUID)
 	if err != nil {
-		return "", apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
-	}
-	if f == nil {
-		return "", apperr.New("file not found", http.StatusNotFound)
+		return "", err
 	}
 	url, err := s.storage.GetSignedURL(ctx, f.StorageKey, 15*time.Minute)
 	if err != nil {

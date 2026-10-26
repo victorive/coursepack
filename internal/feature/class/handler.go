@@ -75,7 +75,8 @@ func (h *Handler) List(c *fiber.Ctx) error {
 // @Router       /classes/{id} [get]
 func (h *Handler) Get(c *fiber.Ctx) error {
 	classUUID := c.Params("id")
-	cls, err := h.svc.Get(c.UserContext(), classUUID)
+	userUUID, _ := middleware.UserUUID(c)
+	cls, err := h.svc.Get(c.UserContext(), userUUID, classUUID)
 	if err != nil {
 		return err
 	}

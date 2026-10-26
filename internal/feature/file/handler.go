@@ -117,7 +117,8 @@ func (h *Handler) ListByLecture(c *fiber.Ctx) error {
 // @Router       /files/{id} [get]
 func (h *Handler) GetFile(c *fiber.Ctx) error {
 	fileUUID := c.Params("id")
-	resp, err := h.svc.Get(c.UserContext(), fileUUID)
+	actorUUID, _ := middleware.UserUUID(c)
+	resp, err := h.svc.Get(c.UserContext(), actorUUID, fileUUID)
 	if err != nil {
 		return err
 	}
@@ -136,7 +137,8 @@ func (h *Handler) GetFile(c *fiber.Ctx) error {
 // @Router       /files/{id}/download [get]
 func (h *Handler) GetDownloadURL(c *fiber.Ctx) error {
 	fileUUID := c.Params("id")
-	url, err := h.svc.GetDownloadURL(c.UserContext(), fileUUID)
+	actorUUID, _ := middleware.UserUUID(c)
+	url, err := h.svc.GetDownloadURL(c.UserContext(), actorUUID, fileUUID)
 	if err != nil {
 		return err
 	}
