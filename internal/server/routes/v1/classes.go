@@ -10,13 +10,13 @@ import (
 
 func classRoutes(r fiber.Router, c *app.Container) {
 	h := class.NewHandler(c.ClassService)
-	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
+	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService), middleware.Actor(c.UserRepository, c.PermissionsService)}
 
 	global := func(perm domain.PermissionName) fiber.Handler {
-		return middleware.RequireGlobalPermission(c.RBAC, perm)
+		return middleware.RequireGlobalPermission(perm)
 	}
 	scoped := func(perm domain.PermissionName, param string) fiber.Handler {
-		return middleware.RequireClassPermission(c.RBAC, perm, param)
+		return middleware.RequireClassPermission(c.PermissionsService, perm, param)
 	}
 
 	r.Group("/levels", auth...).Get("", h.ListLevels)

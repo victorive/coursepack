@@ -1,4 +1,4 @@
-package rbac
+package permissions
 
 import (
 	"context"
@@ -39,7 +39,7 @@ func (r *gormRepository) HasGlobalRole(ctx context.Context, userID int64, role d
 		Where("ur.user_id = ? AND ur.scope_type = 'global' AND r.name = ?", userID, string(role)).
 		Count(&count).Error
 	if err != nil {
-		return false, fmt.Errorf("rbac.HasGlobalRole: %w", err)
+		return false, fmt.Errorf("permissions.HasGlobalRole: %w", err)
 	}
 
 	return count > 0, nil
@@ -54,7 +54,7 @@ func (r *gormRepository) HasClassRole(ctx context.Context, userID, classID int64
 		Where("ur.user_id = ? AND ur.scope_type = 'class' AND ur.scope_id = ? AND r.name = ?", userID, classID, string(role)).
 		Count(&count).Error
 	if err != nil {
-		return false, fmt.Errorf("rbac.HasClassRole: %w", err)
+		return false, fmt.Errorf("permissions.HasClassRole: %w", err)
 	}
 
 	return count > 0, nil
@@ -76,7 +76,7 @@ func (r *gormRepository) AssignGlobalRole(ctx context.Context, userID int64, rol
 	if err := dbtx.Conn(ctx, r.db).
 		Clauses(clause.OnConflict{DoNothing: true}).
 		Create(&ur).Error; err != nil {
-		return fmt.Errorf("rbac.AssignGlobalRole: %w", err)
+		return fmt.Errorf("permissions.AssignGlobalRole: %w", err)
 	}
 
 	return nil
@@ -98,7 +98,7 @@ func (r *gormRepository) AssignClassRole(ctx context.Context, userID, classID in
 	if err := dbtx.Conn(ctx, r.db).
 		Clauses(clause.OnConflict{DoNothing: true}).
 		Create(&ur).Error; err != nil {
-		return fmt.Errorf("rbac.AssignClassRole: %w", err)
+		return fmt.Errorf("permissions.AssignClassRole: %w", err)
 	}
 
 	return nil
@@ -116,7 +116,7 @@ func (r *gormRepository) HasGlobalPermission(ctx context.Context, userUUID strin
 		Where("u.uuid = ? AND ur.scope_type = 'global' AND p.name = ?", userUUID, string(perm)).
 		Count(&count).Error
 	if err != nil {
-		return false, fmt.Errorf("rbac.HasGlobalPermission: %w", err)
+		return false, fmt.Errorf("permissions.HasGlobalPermission: %w", err)
 	}
 
 	return count > 0, nil
@@ -137,7 +137,7 @@ func (r *gormRepository) HasClassPermission(ctx context.Context, userUUID string
 		).
 		Count(&count).Error
 	if err != nil {
-		return false, fmt.Errorf("rbac.HasClassPermission: %w", err)
+		return false, fmt.Errorf("permissions.HasClassPermission: %w", err)
 	}
 
 	return count > 0, nil
@@ -159,7 +159,7 @@ func (r *gormRepository) HasClassPermissionByUUID(ctx context.Context, userUUID,
 		).
 		Count(&count).Error
 	if err != nil {
-		return false, fmt.Errorf("rbac.HasClassPermissionByUUID: %w", err)
+		return false, fmt.Errorf("permissions.HasClassPermissionByUUID: %w", err)
 	}
 
 	return count > 0, nil
@@ -176,7 +176,7 @@ func (r *gormRepository) GetUserRoles(ctx context.Context, userUUID string) ([]s
 		Distinct().
 		Pluck("ro.name", &roles).Error
 	if err != nil {
-		return nil, fmt.Errorf("rbac.GetUserRoles: %w", err)
+		return nil, fmt.Errorf("permissions.GetUserRoles: %w", err)
 	}
 
 	return roles, nil
@@ -195,7 +195,7 @@ func (r *gormRepository) GetUserPermissions(ctx context.Context, userUUID string
 		Distinct().
 		Pluck("p.name", &permissions).Error
 	if err != nil {
-		return nil, fmt.Errorf("rbac.GetUserPermissions: %w", err)
+		return nil, fmt.Errorf("permissions.GetUserPermissions: %w", err)
 	}
 
 	return permissions, nil
@@ -205,7 +205,7 @@ func (r *gormRepository) roleIDByName(ctx context.Context, name domain.RoleName)
 	var role domain.Role
 
 	if err := dbtx.Conn(ctx, r.db).Where("name = ?", string(name)).First(&role).Error; err != nil {
-		return 0, fmt.Errorf("rbac.roleIDByName(%s): %w", name, err)
+		return 0, fmt.Errorf("permissions.roleIDByName(%s): %w", name, err)
 	}
 
 	return role.ID, nil

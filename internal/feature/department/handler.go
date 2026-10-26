@@ -1,41 +1,20 @@
 package department
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/middleware"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/pagination"
 	"github.com/victorive/coursepack/internal/pkg/response"
 )
 
-type UserRepository interface {
-	FindByUUID(ctx context.Context, uuid string) (*domain.User, error)
-}
-
 type Handler struct {
-	svc      Service
-	userRepo UserRepository
+	svc Service
 }
 
-func NewHandler(svc Service, userRepo UserRepository) *Handler {
-	return &Handler{svc: svc, userRepo: userRepo}
-}
-
-func (h *Handler) resolveUniversityID(c *fiber.Ctx) (int64, bool) {
-	userUUID, err := middleware.UserUUID(c)
-	if err != nil {
-		return 0, false
-	}
-
-	u, err := h.userRepo.FindByUUID(c.UserContext(), userUUID)
-	if err != nil || u == nil || u.UniversityID == nil {
-		return 0, false
-	}
-
-	return *u.UniversityID, true
+func NewHandler(svc Service) *Handler {
+	return &Handler{svc: svc}
 }
 
 // List godoc
@@ -51,12 +30,12 @@ func (h *Handler) resolveUniversityID(c *fiber.Ctx) (int64, bool) {
 // @Router       /departments [get]
 func (h *Handler) List(c *fiber.Ctx) error {
 	q := pagination.Parse(c)
-	universityID, hasUniversity := h.resolveUniversityID(c)
-	if !hasUniversity {
-		return response.JSON(c, http.StatusOK, true, "departments retrieved", pagination.NewPaginated(c, []*DepartmentResponse{}, 0, q))
+	actor, err := permissions.ActorFrom(c.UserContext())
+	if err != nil {
+		return err
 	}
 
-	items, total, err := h.svc.ListByUniversity(c.UserContext(), universityID, *q)
+	items, total, err := h.svc.ListByUniversity(c.UserContext(), actor, *q)
 	if err != nil {
 		return err
 	}
@@ -77,12 +56,12 @@ func (h *Handler) List(c *fiber.Ctx) error {
 func (h *Handler) Get(c *fiber.Ctx) error {
 	uuid := c.Params("id")
 
-	universityID, hasUniversity := h.resolveUniversityID(c)
-	if !hasUniversity {
-		return response.Error(c, http.StatusNotFound, "department not found")
+	actor, err := permissions.ActorFrom(c.UserContext())
+	if err != nil {
+		return err
 	}
 
-	dept, err := h.svc.GetByUUIDAndUniversity(c.UserContext(), uuid, universityID)
+	dept, err := h.svc.GetByUUIDAndUniversity(c.UserContext(), actor, uuid)
 	if err != nil {
 		return err
 	}

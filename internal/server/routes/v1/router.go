@@ -12,7 +12,7 @@ func Register(r fiber.Router, c *app.Container) {
 	universityRoutes(v1, c)
 	departmentRoutes(v1, c)
 	classRoutes(v1, c)
-	academicRoutes(v1, c)
+	semesterRoutes(v1, c)
 	courseRoutes(v1, c)
 	fileRoutes(v1, c)
 	miscRoutes(v1, c)

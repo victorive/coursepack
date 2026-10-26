@@ -11,13 +11,12 @@ import (
 func fileRoutes(r fiber.Router, c *app.Container) {
 	h := file.NewHandler(c.FileService)
 
-	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
+	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService), middleware.Actor(c.UserRepository, c.PermissionsService)}
 
 	files := r.Group("/files", auth...)
-	files.Post("", middleware.RequireGlobalPermission(c.RBAC, domain.PermFilesUpload), h.Upload)
+	files.Post("", middleware.RequireGlobalPermission(domain.PermFilesUpload), h.Upload)
 	files.Get("/:id", h.GetFile)
 	files.Get("/:id/download", h.GetDownloadURL)
 	files.Patch("/:id/review", h.Review)
 	files.Patch("/:id/archive", h.Archive)
 }
-

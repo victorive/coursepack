@@ -1,29 +1,22 @@
 package course
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/middleware"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/pkg/pagination"
 	"github.com/victorive/coursepack/internal/pkg/response"
 	"github.com/victorive/coursepack/internal/pkg/validator"
 )
 
-type UserRepository interface {
-	FindByUUID(ctx context.Context, uuid string) (*domain.User, error)
-}
-
 type Handler struct {
-	svc      Service
-	userRepo UserRepository
+	svc Service
 }
 
-func NewHandler(svc Service, userRepo UserRepository) *Handler {
-	return &Handler{svc: svc, userRepo: userRepo}
+func NewHandler(svc Service) *Handler {
+	return &Handler{svc: svc}
 }
 
 // ListCourses godoc
@@ -39,18 +32,13 @@ func NewHandler(svc Service, userRepo UserRepository) *Handler {
 // @Security     BearerAuth
 // @Router       /courses [get]
 func (h *Handler) ListCourses(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
-	if err != nil || u == nil {
-		return apperr.New("user not found", http.StatusUnauthorized)
-	}
-	if u.UniversityID == nil {
+	if actor.UniversityID == nil {
 		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
 	}
-	universityID := *u.UniversityID
 
 	var departmentCode *string
 	if s := c.Query("department_code"); s != "" {
@@ -58,7 +46,7 @@ func (h *Handler) ListCourses(c *fiber.Ctx) error {
 	}
 
 	q := pagination.ParseCursor(c)
-	items, nextCursor, err := h.svc.ListCourses(c.UserContext(), universityID, departmentCode, *q)
+	items, nextCursor, err := h.svc.ListCourses(c.UserContext(), actor, departmentCode, *q)
 	if err != nil {
 		return err
 	}
@@ -76,22 +64,16 @@ func (h *Handler) ListCourses(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{id} [get]
 func (h *Handler) GetCourse(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-
-	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
-	if err != nil || u == nil {
-		return apperr.New("user not found", http.StatusUnauthorized)
-	}
-
-	if u.UniversityID == nil {
+	if actor.UniversityID == nil {
 		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
 	}
 
 	courseUUID := c.Params("id")
-	resp, err := h.svc.GetCourse(c.UserContext(), courseUUID, *u.UniversityID)
+	resp, err := h.svc.GetCourse(c.UserContext(), actor, courseUUID)
 	if err != nil {
 		return err
 	}
@@ -111,16 +93,11 @@ func (h *Handler) GetCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /classes/{id}/courses [post]
 func (h *Handler) AddClassCourse(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
-	if err != nil || u == nil {
-		return apperr.New("user not found", http.StatusUnauthorized)
-	}
-
-	if u.UniversityID == nil {
+	if actor.UniversityID == nil {
 		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
 	}
 
@@ -129,7 +106,7 @@ func (h *Handler) AddClassCourse(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	resp, err := h.svc.AddClassCourse(c.UserContext(), actorUUID, classUUID, *u.UniversityID, req)
+	resp, err := h.svc.AddClassCourse(c.UserContext(), actor, classUUID, req)
 	if err != nil {
 		return err
 	}
@@ -149,15 +126,11 @@ func (h *Handler) AddClassCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /classes/{id}/courses [get]
 func (h *Handler) ListClassCourses(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
-	if err != nil || u == nil {
-		return apperr.New("user not found", http.StatusUnauthorized)
-	}
-	if u.UniversityID == nil {
+	if actor.UniversityID == nil {
 		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
 	}
 
@@ -172,7 +145,7 @@ func (h *Handler) ListClassCourses(c *fiber.Ctx) error {
 		kind = &k
 	}
 
-	resp, err := h.svc.ListClassCourses(c.UserContext(), classUUID, *u.UniversityID, semesterUUID, kind)
+	resp, err := h.svc.ListClassCourses(c.UserContext(), actor, classUUID, semesterUUID, kind)
 	if err != nil {
 		return err
 	}
@@ -190,21 +163,17 @@ func (h *Handler) ListClassCourses(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{id} [get]
 func (h *Handler) GetClassCourse(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
-	if err != nil || u == nil {
-		return apperr.New("user not found", http.StatusUnauthorized)
-	}
-	if u.UniversityID == nil {
+	if actor.UniversityID == nil {
 		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
 	}
 
 	classCourseUUID := c.Params("id")
 
-	resp, err := h.svc.GetClassCourse(c.UserContext(), classCourseUUID, *u.UniversityID)
+	resp, err := h.svc.GetClassCourse(c.UserContext(), actor, classCourseUUID)
 	if err != nil {
 		return err
 	}
@@ -224,13 +193,13 @@ func (h *Handler) GetClassCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /classes/{id}/courses/{classCourseId} [delete]
 func (h *Handler) RemoveClassCourse(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
 	classUUID := c.Params("id")
 	classCourseUUID := c.Params("classCourseId")
-	if err := h.svc.RemoveClassCourse(c.UserContext(), actorUUID, classUUID, classCourseUUID); err != nil {
+	if err := h.svc.RemoveClassCourse(c.UserContext(), actor, classUUID, classCourseUUID); err != nil {
 		return err
 	}
 	return c.SendStatus(http.StatusNoContent)
@@ -249,7 +218,7 @@ func (h *Handler) RemoveClassCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{id}/lectures [post]
 func (h *Handler) CreateLecture(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
@@ -260,7 +229,7 @@ func (h *Handler) CreateLecture(c *fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.svc.CreateLecture(c.UserContext(), actorUUID, classCourseUUID, req)
+	resp, err := h.svc.CreateLecture(c.UserContext(), actor, classCourseUUID, req)
 	if err != nil {
 		return err
 	}
@@ -279,21 +248,16 @@ func (h *Handler) CreateLecture(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{id}/lectures [get]
 func (h *Handler) ListLectures(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
-	if err != nil || u == nil {
-		return apperr.New("user not found", http.StatusUnauthorized)
-	}
-
-	if u.UniversityID == nil {
+	if actor.UniversityID == nil {
 		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
 	}
 
 	classCourseUUID := c.Params("id")
-	resp, err := h.svc.ListLectures(c.UserContext(), classCourseUUID, *u.UniversityID)
+	resp, err := h.svc.ListLectures(c.UserContext(), actor, classCourseUUID)
 	if err != nil {
 		return err
 	}
@@ -311,20 +275,16 @@ func (h *Handler) ListLectures(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /lectures/{id} [get]
 func (h *Handler) GetLecture(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
-	if err != nil || u == nil {
-		return apperr.New("user not found", http.StatusUnauthorized)
-	}
-	if u.UniversityID == nil {
+	if actor.UniversityID == nil {
 		return apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
 	}
 
 	lectureUUID := c.Params("id")
-	resp, err := h.svc.GetLecture(c.UserContext(), lectureUUID, *u.UniversityID)
+	resp, err := h.svc.GetLecture(c.UserContext(), actor, lectureUUID)
 	if err != nil {
 		return err
 	}
@@ -344,7 +304,7 @@ func (h *Handler) GetLecture(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /lectures/{id} [patch]
 func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
@@ -353,7 +313,7 @@ func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	resp, err := h.svc.UpdateLecture(c.UserContext(), actorUUID, lectureUUID, req)
+	resp, err := h.svc.UpdateLecture(c.UserContext(), actor, lectureUUID, req)
 	if err != nil {
 		return err
 	}
@@ -371,12 +331,12 @@ func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /lectures/{id}/archive [patch]
 func (h *Handler) ArchiveLecture(c *fiber.Ctx) error {
-	actorUUID, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
 	lectureUUID := c.Params("id")
-	if err := h.svc.ArchiveLecture(c.UserContext(), actorUUID, lectureUUID); err != nil {
+	if err := h.svc.ArchiveLecture(c.UserContext(), actor, lectureUUID); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "lecture archived", nil)

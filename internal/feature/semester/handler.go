@@ -1,4 +1,4 @@
-package academic
+package semester
 
 import (
 	"net/http"

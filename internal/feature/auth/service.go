@@ -13,8 +13,7 @@ import (
 	"github.com/victorive/coursepack/internal/cache"
 	"github.com/victorive/coursepack/internal/domain"
 	"github.com/victorive/coursepack/internal/email"
-	"github.com/victorive/coursepack/internal/feature/rbac"
-	"github.com/victorive/coursepack/internal/feature/university"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/pkg/hash"
 	"github.com/victorive/coursepack/internal/pkg/job"
@@ -46,17 +45,17 @@ type Service interface {
 	Logout(ctx context.Context, accessToken string, req *LogoutRequest) error
 	ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) error
 	ResetPassword(ctx context.Context, req *ResetPasswordRequest) error
-	Me(ctx context.Context, uuid string) (*UserResponse, error)
+	Me(ctx context.Context, actor permissions.Actor) (*UserResponse, error)
 	CheckEmailVerified(ctx context.Context, uuid string) (emailVerified bool, isOAuthUser bool, err error)
 }
 
 type service struct {
-	repo     Repository
-	cache    cache.Cache
-	mailer   email.Mailer
-	jwt      *jwt.Manager
-	cfg      Config
-	rbacSvc rbac.Service
+	repo    Repository
+	cache   cache.Cache
+	mailer  email.Mailer
+	jwt     *jwt.Manager
+	cfg     Config
+	permSvc permissions.Service
 	logger  *slog.Logger
 }
 
@@ -66,7 +65,7 @@ func NewService(
 	mailer email.Mailer,
 	jwt *jwt.Manager,
 	cfg Config,
-	rbacSvc rbac.Service,
+	permSvc permissions.Service,
 	logger *slog.Logger,
 ) Service {
 	return &service{
@@ -75,7 +74,7 @@ func NewService(
 		mailer:  mailer,
 		jwt:     jwt,
 		cfg:     cfg,
-		rbacSvc: rbacSvc,
+		permSvc: permSvc,
 		logger:  logger,
 	}
 }
@@ -114,20 +113,28 @@ func (s *service) issueTokens(ctx context.Context, u *domain.User) (*TokensRespo
 	}, nil
 }
 
+func toUniversityResponse(u *domain.University) *UniversityResponse {
+	return &UniversityResponse{
+		UUID:    u.UUID,
+		Name:    u.Name,
+		Acronym: u.Acronym,
+	}
+}
+
 func (s *service) buildUserResponse(ctx context.Context, u *domain.User) (*UserResponse, error) {
-	roles, err := s.rbacSvc.GetUserRoles(ctx, u.UUID)
+	roles, err := s.permSvc.GetUserRoles(ctx, u.UUID)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
 
-	perms, err := s.rbacSvc.GetUserPermissions(ctx, u.UUID)
+	perms, err := s.permSvc.GetUserPermissions(ctx, u.UUID)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
 
-	var uniInfo *university.UniversityResponse
+	var uniInfo *UniversityResponse
 	if u.University != nil {
-		uniInfo = university.ToUniversityResponse(u.University)
+		uniInfo = toUniversityResponse(u.University)
 	}
 
 	return &UserResponse{
@@ -210,8 +217,8 @@ func (s *service) SignUp(ctx context.Context, req *SignUpRequest) (*TokensRespon
 	if err := s.repo.Create(ctx, u); err != nil {
 		return nil, apperr.Internal(err)
 	}
-	
-	if err := s.rbacSvc.AssignGlobalRole(ctx, u.ID, domain.RoleStudent); err != nil {
+
+	if err := s.permSvc.AssignGlobalRole(ctx, u.ID, domain.RoleStudent); err != nil {
 		return nil, apperr.Internal(err)
 	}
 
@@ -331,7 +338,7 @@ func (s *service) GoogleCallback(ctx context.Context, code, state string) (strin
 		if err := s.repo.Create(ctx, u); err != nil {
 			return "", apperr.Internal(err)
 		}
-		if err := s.rbacSvc.AssignGlobalRole(ctx, u.ID, domain.RoleStudent); err != nil {
+		if err := s.permSvc.AssignGlobalRole(ctx, u.ID, domain.RoleStudent); err != nil {
 			return "", apperr.Internal(err)
 		}
 	} else if u.Provider == nil || *u.Provider != string(domain.ProviderGoogle) {
@@ -413,7 +420,7 @@ func (s *service) ResendOTP(ctx context.Context, req *ResendOTPRequest) error {
 	if err != nil {
 		return apperr.Internal(err)
 	}
-	
+
 	if u != nil && u.EmailVerified && scope == defaultOTPScope {
 		return apperr.New("email already verified", http.StatusConflict)
 	}
@@ -559,8 +566,8 @@ func (s *service) CheckEmailVerified(ctx context.Context, userUUID string) (bool
 	return u.EmailVerified, u.Provider != nil, nil
 }
 
-func (s *service) Me(ctx context.Context, userUUID string) (*UserResponse, error) {
-	u, err := s.repo.FindByUUID(ctx, userUUID)
+func (s *service) Me(ctx context.Context, actor permissions.Actor) (*UserResponse, error) {
+	u, err := s.repo.FindByUUID(ctx, actor.UUID)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}

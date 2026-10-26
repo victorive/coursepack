@@ -7,23 +7,23 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/pkg/pagination"
 )
 
 type Service interface {
-	ListCourses(ctx context.Context, universityID int64, departmentCode *string, q pagination.CursorQuery) ([]*CourseRegistryResponse, *string, error)
-	GetCourse(ctx context.Context, courseUUID string, universityID int64) (*CourseRegistryResponse, error)
-	AddClassCourse(ctx context.Context, actorUUID string, classUUID string, universityID int64, req AddClassCourseRequest) (*ClassCourseResponse, error)
-	ListClassCourses(ctx context.Context, classUUID string, universityID int64, semesterUUID *string, kind *string) ([]*ClassCourseResponse, error)
-	GetClassCourse(ctx context.Context, uuid string, universityID int64) (*ClassCourseResponse, error)
-	RemoveClassCourse(ctx context.Context, actorUUID string, classUUID string, classCourseUUID string) error
-	CreateLecture(ctx context.Context, actorUUID string, classCourseUUID string, req CreateLectureRequest) (*LectureResponse, error)
-	ListLectures(ctx context.Context, classCourseUUID string, universityID int64) ([]*LectureResponse, error)
-	GetLecture(ctx context.Context, uuid string, universityID int64) (*LectureResponse, error)
-	UpdateLecture(ctx context.Context, actorUUID string, uuid string, req UpdateLectureRequest) (*LectureResponse, error)
-	ArchiveLecture(ctx context.Context, actorUUID string, uuid string) error
+	ListCourses(ctx context.Context, actor permissions.Actor, departmentCode *string, q pagination.CursorQuery) ([]*CourseRegistryResponse, *string, error)
+	GetCourse(ctx context.Context, actor permissions.Actor, courseUUID string) (*CourseRegistryResponse, error)
+	AddClassCourse(ctx context.Context, actor permissions.Actor, classUUID string, req AddClassCourseRequest) (*ClassCourseResponse, error)
+	ListClassCourses(ctx context.Context, actor permissions.Actor, classUUID string, semesterUUID *string, kind *string) ([]*ClassCourseResponse, error)
+	GetClassCourse(ctx context.Context, actor permissions.Actor, uuid string) (*ClassCourseResponse, error)
+	RemoveClassCourse(ctx context.Context, actor permissions.Actor, classUUID string, classCourseUUID string) error
+	CreateLecture(ctx context.Context, actor permissions.Actor, classCourseUUID string, req CreateLectureRequest) (*LectureResponse, error)
+	ListLectures(ctx context.Context, actor permissions.Actor, classCourseUUID string) ([]*LectureResponse, error)
+	GetLecture(ctx context.Context, actor permissions.Actor, uuid string) (*LectureResponse, error)
+	UpdateLecture(ctx context.Context, actor permissions.Actor, uuid string, req UpdateLectureRequest) (*LectureResponse, error)
+	ArchiveLecture(ctx context.Context, actor permissions.Actor, uuid string) error
 }
 
 type ClassRepository interface {
@@ -39,15 +39,19 @@ type service struct {
 	repo      Repository
 	classRepo ClassRepository
 	semRepo   SemesterRepository
-	rbacSvc   rbac.Service
+	permSvc   permissions.Service
 	logger    *slog.Logger
 }
 
-func NewService(repo Repository, classRepo ClassRepository, semRepo SemesterRepository, rbacSvc rbac.Service, logger *slog.Logger) Service {
-	return &service{repo: repo, classRepo: classRepo, semRepo: semRepo, rbacSvc: rbacSvc, logger: logger}
+func NewService(repo Repository, classRepo ClassRepository, semRepo SemesterRepository, permSvc permissions.Service, logger *slog.Logger) Service {
+	return &service{repo: repo, classRepo: classRepo, semRepo: semRepo, permSvc: permSvc, logger: logger}
 }
 
-func (s *service) ListCourses(ctx context.Context, universityID int64, departmentCode *string, q pagination.CursorQuery) ([]*CourseRegistryResponse, *string, error) {
+func (s *service) ListCourses(ctx context.Context, actor permissions.Actor, departmentCode *string, q pagination.CursorQuery) ([]*CourseRegistryResponse, *string, error) {
+	if actor.UniversityID == nil {
+		return []*CourseRegistryResponse{}, nil, nil
+	}
+	universityID := *actor.UniversityID
 	courses, err := s.repo.FindCoursesByUniversityCursor(ctx, universityID, departmentCode, q.After, q.Limit)
 	if err != nil {
 		return nil, nil, apperr.New("failed to fetch courses", http.StatusInternalServerError).Wrap(err)
@@ -66,19 +70,25 @@ func (s *service) ListCourses(ctx context.Context, universityID int64, departmen
 	return resp, nextCursor, nil
 }
 
-func (s *service) GetCourse(ctx context.Context, courseUUID string, universityID int64) (*CourseRegistryResponse, error) {
+func (s *service) GetCourse(ctx context.Context, actor permissions.Actor, courseUUID string) (*CourseRegistryResponse, error) {
+	if actor.UniversityID == nil {
+		return nil, apperr.NotFound("course")
+	}
 	c, err := s.repo.FindCourseByUUID(ctx, courseUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch course", http.StatusInternalServerError).Wrap(err)
 	}
-	if c == nil || c.UniversityID != universityID {
+	if c == nil || c.UniversityID != *actor.UniversityID {
 		return nil, apperr.NotFound("course")
 	}
 	return toCourseRegistryResponse(c), nil
 }
 
-func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUID string, universityID int64, req AddClassCourseRequest) (*ClassCourseResponse, error) {
-	ok, err := s.rbacSvc.HasClassPermissionByUUID(ctx, actorUUID, classUUID, domain.PermCoursesManage)
+func (s *service) AddClassCourse(ctx context.Context, actor permissions.Actor, classUUID string, req AddClassCourseRequest) (*ClassCourseResponse, error) {
+	if actor.UniversityID == nil {
+		return nil, apperr.New("user is not associated with a university", http.StatusUnprocessableEntity)
+	}
+	ok, err := s.permSvc.HasClassPermissionByUUID(ctx, actor.UUID, classUUID, domain.PermCoursesManage)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -110,7 +120,7 @@ func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUI
 	if course == nil {
 		return nil, apperr.NotFound("course")
 	}
-	if course.UniversityID != universityID {
+	if course.UniversityID != *actor.UniversityID {
 		return nil, apperr.New("course does not belong to your university", http.StatusUnprocessableEntity)
 	}
 
@@ -140,8 +150,11 @@ func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUI
 	return toClassCourseResponse(cc), nil
 }
 
-func (s *service) ListClassCourses(ctx context.Context, classUUID string, universityID int64, semesterUUID *string, kind *string) ([]*ClassCourseResponse, error) {
-	cls, err := s.classRepo.FindByUUIDAndUniversity(ctx, classUUID, universityID)
+func (s *service) ListClassCourses(ctx context.Context, actor permissions.Actor, classUUID string, semesterUUID *string, kind *string) ([]*ClassCourseResponse, error) {
+	if actor.UniversityID == nil {
+		return nil, apperr.NotFound("class")
+	}
+	cls, err := s.classRepo.FindByUUIDAndUniversity(ctx, classUUID, *actor.UniversityID)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -176,8 +189,11 @@ func (s *service) ListClassCourses(ctx context.Context, classUUID string, univer
 	return resp, nil
 }
 
-func (s *service) GetClassCourse(ctx context.Context, classCourseUUID string, universityID int64) (*ClassCourseResponse, error) {
-	cc, err := s.repo.FindClassCourseByUUIDAndUniversity(ctx, classCourseUUID, universityID)
+func (s *service) GetClassCourse(ctx context.Context, actor permissions.Actor, classCourseUUID string) (*ClassCourseResponse, error) {
+	if actor.UniversityID == nil {
+		return nil, apperr.NotFound("class course")
+	}
+	cc, err := s.repo.FindClassCourseByUUIDAndUniversity(ctx, classCourseUUID, *actor.UniversityID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
@@ -187,8 +203,8 @@ func (s *service) GetClassCourse(ctx context.Context, classCourseUUID string, un
 	return toClassCourseResponse(cc), nil
 }
 
-func (s *service) RemoveClassCourse(ctx context.Context, actorUUID string, classUUID string, classCourseUUID string) error {
-	ok, err := s.rbacSvc.HasClassPermissionByUUID(ctx, actorUUID, classUUID, domain.PermCoursesManage)
+func (s *service) RemoveClassCourse(ctx context.Context, actor permissions.Actor, classUUID string, classCourseUUID string) error {
+	ok, err := s.permSvc.HasClassPermissionByUUID(ctx, actor.UUID, classUUID, domain.PermCoursesManage)
 	if err != nil {
 		return apperr.Internal(err)
 	}
@@ -216,7 +232,7 @@ func (s *service) RemoveClassCourse(ctx context.Context, actorUUID string, class
 	return s.repo.DeleteClassCourse(ctx, cc.ID)
 }
 
-func (s *service) CreateLecture(ctx context.Context, actorUUID string, classCourseUUID string, req CreateLectureRequest) (*LectureResponse, error) {
+func (s *service) CreateLecture(ctx context.Context, actor permissions.Actor, classCourseUUID string, req CreateLectureRequest) (*LectureResponse, error) {
 	cc, err := s.repo.FindClassCourseByUUID(ctx, classCourseUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
@@ -225,7 +241,7 @@ func (s *service) CreateLecture(ctx context.Context, actorUUID string, classCour
 		return nil, apperr.NotFound("class course")
 	}
 
-	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
+	ok, err := s.permSvc.HasClassPermission(ctx, actor.UUID, cc.ClassID, domain.PermLecturesManage)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -251,8 +267,11 @@ func (s *service) CreateLecture(ctx context.Context, actorUUID string, classCour
 	return toLectureResponse(l), nil
 }
 
-func (s *service) ListLectures(ctx context.Context, classCourseUUID string, universityID int64) ([]*LectureResponse, error) {
-	cc, err := s.repo.FindClassCourseByUUIDAndUniversity(ctx, classCourseUUID, universityID)
+func (s *service) ListLectures(ctx context.Context, actor permissions.Actor, classCourseUUID string) ([]*LectureResponse, error) {
+	if actor.UniversityID == nil {
+		return nil, apperr.NotFound("class course")
+	}
+	cc, err := s.repo.FindClassCourseByUUIDAndUniversity(ctx, classCourseUUID, *actor.UniversityID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
@@ -273,8 +292,11 @@ func (s *service) ListLectures(ctx context.Context, classCourseUUID string, univ
 	return resp, nil
 }
 
-func (s *service) GetLecture(ctx context.Context, lectureUUID string, universityID int64) (*LectureResponse, error) {
-	l, err := s.repo.FindLectureByUUIDAndUniversity(ctx, lectureUUID, universityID)
+func (s *service) GetLecture(ctx context.Context, actor permissions.Actor, lectureUUID string) (*LectureResponse, error) {
+	if actor.UniversityID == nil {
+		return nil, apperr.NotFound("lecture")
+	}
+	l, err := s.repo.FindLectureByUUIDAndUniversity(ctx, lectureUUID, *actor.UniversityID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch lecture", http.StatusInternalServerError).Wrap(err)
 	}
@@ -284,7 +306,7 @@ func (s *service) GetLecture(ctx context.Context, lectureUUID string, university
 	return toLectureResponse(l), nil
 }
 
-func (s *service) UpdateLecture(ctx context.Context, actorUUID string, lectureUUID string, req UpdateLectureRequest) (*LectureResponse, error) {
+func (s *service) UpdateLecture(ctx context.Context, actor permissions.Actor, lectureUUID string, req UpdateLectureRequest) (*LectureResponse, error) {
 	l, err := s.repo.FindLectureByUUID(ctx, lectureUUID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch lecture", http.StatusInternalServerError).Wrap(err)
@@ -298,7 +320,7 @@ func (s *service) UpdateLecture(ctx context.Context, actorUUID string, lectureUU
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
 
-	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
+	ok, err := s.permSvc.HasClassPermission(ctx, actor.UUID, cc.ClassID, domain.PermLecturesManage)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -323,7 +345,7 @@ func (s *service) UpdateLecture(ctx context.Context, actorUUID string, lectureUU
 	return toLectureResponse(l), nil
 }
 
-func (s *service) ArchiveLecture(ctx context.Context, actorUUID string, lectureUUID string) error {
+func (s *service) ArchiveLecture(ctx context.Context, actor permissions.Actor, lectureUUID string) error {
 	l, err := s.repo.FindLectureByUUID(ctx, lectureUUID)
 	if err != nil {
 		return apperr.New("failed to fetch lecture", http.StatusInternalServerError).Wrap(err)
@@ -337,7 +359,7 @@ func (s *service) ArchiveLecture(ctx context.Context, actorUUID string, lectureU
 		return apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
 
-	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
+	ok, err := s.permSvc.HasClassPermission(ctx, actor.UUID, cc.ClassID, domain.PermLecturesManage)
 	if err != nil {
 		return apperr.Internal(err)
 	}

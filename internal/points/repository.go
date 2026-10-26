@@ -1,4 +1,4 @@
-package file
+package points
 
 import (
 	"context"
@@ -9,17 +9,21 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-type pointRepository struct {
+type Repository interface {
+	AwardPoints(ctx context.Context, userID int64, delta int, sourceType domain.PointSource, sourceID int64, awardedBy int64) error
+}
+
+type repository struct {
 	db *gorm.DB
 }
 
-func NewPointRepository(db *gorm.DB) PointRepository {
-	return &pointRepository{db: db}
+func NewRepository(db *gorm.DB) Repository {
+	return &repository{db: db}
 }
 
 // AwardPoints records one point transaction per source. A duplicate source is
 // silently ignored, so the caller can retry without checking first.
-func (r *pointRepository) AwardPoints(ctx context.Context, userID int64, delta int, sourceType domain.PointSource, sourceID int64, awardedBy int64) error {
+func (r *repository) AwardPoints(ctx context.Context, userID int64, delta int, sourceType domain.PointSource, sourceID int64, awardedBy int64) error {
 	return dbtx.Conn(ctx, r.db).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "user_id"}},

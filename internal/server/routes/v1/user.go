@@ -12,7 +12,7 @@ func userRoutes(r fiber.Router, c *app.Container) {
 	authHandler := auth.NewHandler(c.AuthService, c.Config.Google.FrontendURL)
 	userHandler := user.NewHandler(c.UserService)
 
-	protected := r.Group("/users", middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService))
+	protected := r.Group("/users", middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService), middleware.Actor(c.UserRepository, c.PermissionsService))
 	protected.Get("/me", authHandler.Me)
 	protected.Patch("/me", userHandler.UpdateProfile)
 }
