@@ -13,7 +13,7 @@ func classRoutes(r fiber.Router, c *app.Container) {
 	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
 
 	global := func(perm domain.PermissionName) fiber.Handler {
-		return middleware.RequireGlobalPermission(c.PermissionsService, perm)
+		return middleware.RequireGlobalPermission(perm)
 	}
 	scoped := func(perm domain.PermissionName, param string) fiber.Handler {
 		return middleware.RequireClassPermission(c.PermissionsService, perm, param)

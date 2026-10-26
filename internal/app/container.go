@@ -40,6 +40,7 @@ type Container struct {
 	PermissionsService permissions.Service
 	AuthService        auth.Service
 	AuthRepository     auth.Repository
+	UserRepository     user.Repository
 	UserService        user.Service
 	UniversityService  university.Service
 	DepartmentService  department.Service
@@ -149,6 +150,7 @@ func (c *Container) initServices() {
 		c.Logger,
 	)
 
+	c.UserRepository = user.NewRepository(c.GORM)
 	c.UserService = user.NewService(
 		user.NewRepository(c.GORM),
 		c.Logger,

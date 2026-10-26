@@ -9,17 +9,13 @@ import (
 	"github.com/victorive/coursepack/internal/pkg/response"
 )
 
-func RequireGlobalPermission(repo permissions.Service, perm domain.PermissionName) fiber.Handler {
+func RequireGlobalPermission(perm domain.PermissionName) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		uuid, err := UserUUID(c)
+		actor, err := permissions.ActorFrom(c.UserContext())
 		if err != nil {
 			return err
 		}
-		allowed, err := repo.HasGlobalPermission(c.UserContext(), uuid, perm)
-		if err != nil {
-			return response.Error(c, http.StatusInternalServerError, "an unexpected error occurred")
-		}
-		if !allowed {
+		if !actor.HasPermission(perm) {
 			return response.Error(c, http.StatusForbidden, "insufficient permissions")
 		}
 		return c.Next()
@@ -28,7 +24,7 @@ func RequireGlobalPermission(repo permissions.Service, perm domain.PermissionNam
 
 func RequireClassPermission(repo permissions.Service, perm domain.PermissionName, paramName string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userUUID, err := UserUUID(c)
+		actor, err := permissions.ActorFrom(c.UserContext())
 		if err != nil {
 			return err
 		}
@@ -36,7 +32,7 @@ func RequireClassPermission(repo permissions.Service, perm domain.PermissionName
 		if classUUID == "" {
 			return response.Error(c, http.StatusBadRequest, "invalid class id")
 		}
-		allowed, err := repo.HasClassPermissionByUUID(c.UserContext(), userUUID, classUUID, perm)
+		allowed, err := repo.HasClassPermissionByUUID(c.UserContext(), actor.UUID, classUUID, perm)
 		if err != nil {
 			return response.Error(c, http.StatusInternalServerError, "an unexpected error occurred")
 		}
