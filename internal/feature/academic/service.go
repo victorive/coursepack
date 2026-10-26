@@ -36,15 +36,15 @@ func NewService(repo Repository, classRepo ClassRepository, logger *slog.Logger)
 func (s *service) CreateSemester(ctx context.Context, classUUID string, req *CreateSemesterRequest) (*SemesterResponse, error) {
 	cls, err := s.classRepo.FindByUUID(ctx, classUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if cls == nil {
-		return nil, apperr.New("class not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class")
 	}
 
 	existing, err := s.repo.FindSemesterByClassSessionKind(ctx, cls.ID, req.Session, req.Kind)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if existing != nil {
 		return nil, apperr.New("a "+req.Kind+" semester for session "+req.Session+" already exists for this class", http.StatusConflict)
@@ -83,10 +83,10 @@ func (s *service) CreateSemester(ctx context.Context, classUUID string, req *Cre
 func (s *service) ListSemestersByClass(ctx context.Context, classUUID string) ([]*SemesterResponse, error) {
 	cls, err := s.classRepo.FindByUUID(ctx, classUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if cls == nil {
-		return nil, apperr.New("class not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class")
 	}
 	semesters, err := s.repo.FindSemestersByClassID(ctx, cls.ID)
 	if err != nil {
@@ -102,10 +102,10 @@ func (s *service) ListSemestersByClass(ctx context.Context, classUUID string) ([
 func (s *service) GetSemester(ctx context.Context, semUUID string) (*SemesterResponse, error) {
 	sem, err := s.repo.FindSemesterByUUID(ctx, semUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if sem == nil {
-		return nil, apperr.New("semester not found", http.StatusNotFound)
+		return nil, apperr.NotFound("semester")
 	}
 	return ToSemesterResponse(sem), nil
 }
@@ -113,10 +113,10 @@ func (s *service) GetSemester(ctx context.Context, semUUID string) (*SemesterRes
 func (s *service) UpdateSemester(ctx context.Context, semUUID string, req *UpdateSemesterRequest) (*SemesterResponse, error) {
 	sem, err := s.repo.FindSemesterByUUID(ctx, semUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if sem == nil {
-		return nil, apperr.New("semester not found", http.StatusNotFound)
+		return nil, apperr.NotFound("semester")
 	}
 	if req.IsCurrent && !sem.IsCurrent {
 		if err := s.repo.UnsetCurrentSemesterForClass(ctx, sem.ClassID); err != nil {
@@ -148,10 +148,10 @@ func (s *service) UpdateSemester(ctx context.Context, semUUID string, req *Updat
 func (s *service) DeleteSemester(ctx context.Context, semUUID string) error {
 	sem, err := s.repo.FindSemesterByUUID(ctx, semUUID)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	if sem == nil {
-		return apperr.New("semester not found", http.StatusNotFound)
+		return apperr.NotFound("semester")
 	}
 	if err := s.repo.DeleteSemester(ctx, sem.ID); err != nil {
 		return apperr.New("failed to delete semester", http.StatusInternalServerError).Wrap(err)

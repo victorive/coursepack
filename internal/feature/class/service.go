@@ -52,10 +52,10 @@ func NewService(repo Repository, userRepo UserRepository, deptRepo DepartmentRep
 func (s *service) resolveUser(ctx context.Context, uuid string) (*domain.User, error) {
 	u, err := s.userRepo.FindByUUID(ctx, uuid)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if u == nil {
-		return nil, apperr.New("user not found", http.StatusNotFound)
+		return nil, apperr.NotFound("user")
 	}
 	return u, nil
 }
@@ -76,10 +76,10 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 
 	dept, err := s.deptRepo.FindByID(ctx, req.DepartmentID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if dept == nil {
-		return nil, apperr.New("department not found", http.StatusNotFound)
+		return nil, apperr.NotFound("department")
 	}
 	if creator.UniversityID == nil || dept.UniversityID != *creator.UniversityID {
 		return nil, apperr.New("invalid department", http.StatusUnprocessableEntity)
@@ -154,10 +154,10 @@ func (s *service) List(ctx context.Context, userUUID string, q pagination.Query)
 func (s *service) resolveClass(ctx context.Context, classUUID string) (*domain.Class, error) {
 	c, err := s.repo.FindByUUID(ctx, classUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if c == nil {
-		return nil, apperr.New("class not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class")
 	}
 
 	return c, nil
@@ -169,15 +169,15 @@ func (s *service) Get(ctx context.Context, userUUID string, classUUID string) (*
 		return nil, err
 	}
 	if user.UniversityID == nil {
-		return nil, apperr.New("class not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class")
 	}
 
 	c, err := s.repo.FindByUUIDAndUniversity(ctx, classUUID, *user.UniversityID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if c == nil {
-		return nil, apperr.New("class not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class")
 	}
 
 	return toClassResponse(c), nil
@@ -224,7 +224,7 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 
 	cls, err := s.repo.FindByInviteCode(ctx, req.InviteCode)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if cls == nil {
 		return nil, apperr.New("invalid invite code", http.StatusNotFound)
@@ -232,7 +232,7 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 
 	dept, err := s.deptRepo.FindByID(ctx, cls.DepartmentID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if dept == nil || user.UniversityID == nil || dept.UniversityID != *user.UniversityID {
 		return nil, apperr.New("invalid invite code", http.StatusNotFound)
@@ -240,7 +240,7 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 
 	isMember, err := s.repo.IsMember(ctx, cls.ID, userID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if isMember {
 		return nil, apperr.New("already a member of this class", http.StatusConflict)
@@ -249,7 +249,7 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 	if user.UniversityID != nil {
 		isActive, err := s.repo.IsActiveMemberAnywhere(ctx, userID, *user.UniversityID)
 		if err != nil {
-			return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+			return nil, apperr.Internal(err)
 		}
 		if isActive {
 			return nil, apperr.New("you must leave your current class before joining another", http.StatusConflict)
@@ -258,7 +258,7 @@ func (s *service) RequestJoin(ctx context.Context, userUUID string, req *JoinReq
 
 	existing, err := s.repo.FindJoinRequestByClassAndUser(ctx, cls.ID, userID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if existing != nil && existing.Status == domain.JoinStatusPending {
 		return nil, apperr.New("join request already pending", http.StatusConflict)
@@ -303,13 +303,13 @@ func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, cl
 	}
 	jr, err := s.repo.FindJoinRequestByID(ctx, requestID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if jr == nil {
-		return nil, apperr.New("join request not found", http.StatusNotFound)
+		return nil, apperr.NotFound("join request")
 	}
 	if jr.ClassID != cls.ID {
-		return nil, apperr.New("join request not found", http.StatusNotFound)
+		return nil, apperr.NotFound("join request")
 	}
 	if jr.Status != domain.JoinStatusPending {
 		return nil, apperr.New("join request already resolved", http.StatusConflict)
@@ -365,19 +365,19 @@ func (s *service) RemoveMember(ctx context.Context, classUUID string, targetUser
 
 	targetUser, err := s.userRepo.FindByUUID(ctx, targetUserUUID)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 
 	if targetUser == nil {
-		return apperr.New("user not found", http.StatusNotFound)
+		return apperr.NotFound("user")
 	}
 
 	isMember, err := s.repo.IsMember(ctx, cls.ID, targetUser.ID)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	if !isMember {
-		return apperr.New("member not found", http.StatusNotFound)
+		return apperr.NotFound("member")
 	}
 	if err := s.repo.RemoveMember(ctx, cls.ID, targetUser.ID); err != nil {
 		return apperr.New("failed to remove member", http.StatusInternalServerError).Wrap(err)

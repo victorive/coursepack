@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"log/slog"
-	"net/http"
 
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 )
@@ -24,20 +23,20 @@ func NewService(repo Repository, logger *slog.Logger) Service {
 func (s *service) UpdateProfile(ctx context.Context, userUUID string, req *UpdateProfileRequest) error {
 	u, err := s.repo.FindByUUID(ctx, userUUID)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	if u == nil {
-		return apperr.New("user not found", http.StatusNotFound)
+		return apperr.NotFound("user")
 	}
 	if req.Phone != nil {
 		if err := s.repo.UpdatePhone(ctx, u.ID, *req.Phone); err != nil {
-			return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+			return apperr.Internal(err)
 		}
 	}
-	
+
 	if req.UniversityID != nil {
 		if err := s.repo.UpdateUniversity(ctx, u.ID, *req.UniversityID); err != nil {
-			return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+			return apperr.Internal(err)
 		}
 	}
 

@@ -17,10 +17,10 @@ func RequireGlobalPermission(repo rbac.Service, perm domain.PermissionName) fibe
 		}
 		allowed, err := repo.HasGlobalPermission(c.UserContext(), uuid, perm)
 		if err != nil {
-			return response.JSON(c, http.StatusInternalServerError, false, "an unexpected error occurred", nil)
+			return response.Error(c, http.StatusInternalServerError, "an unexpected error occurred")
 		}
 		if !allowed {
-			return response.JSON(c, http.StatusForbidden, false, "insufficient permissions", nil)
+			return response.Error(c, http.StatusForbidden, "insufficient permissions")
 		}
 		return c.Next()
 	}
@@ -34,14 +34,14 @@ func RequireClassPermission(repo rbac.Service, perm domain.PermissionName, param
 		}
 		classUUID := c.Params(paramName)
 		if classUUID == "" {
-			return response.JSON(c, http.StatusBadRequest, false, "invalid class id", nil)
+			return response.Error(c, http.StatusBadRequest, "invalid class id")
 		}
 		allowed, err := repo.HasClassPermissionByUUID(c.UserContext(), userUUID, classUUID, perm)
 		if err != nil {
-			return response.JSON(c, http.StatusInternalServerError, false, "an unexpected error occurred", nil)
+			return response.Error(c, http.StatusInternalServerError, "an unexpected error occurred")
 		}
 		if !allowed {
-			return response.JSON(c, http.StatusForbidden, false, "insufficient permissions", nil)
+			return response.Error(c, http.StatusForbidden, "insufficient permissions")
 		}
 		return c.Next()
 	}

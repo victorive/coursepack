@@ -50,11 +50,11 @@ func (s *service) ListByUniversity(ctx context.Context, universityID int64, q pa
 func (s *service) GetByIDAndUniversity(ctx context.Context, id int64, universityID int64) (*DepartmentResponse, error) {
 	d, err := s.repo.FindByIDAndUniversity(ctx, id, universityID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	if d == nil {
-		return nil, apperr.New("department not found", http.StatusNotFound)
+		return nil, apperr.NotFound("department")
 	}
 
 	return ToDepartmentResponse(d), nil
@@ -63,11 +63,11 @@ func (s *service) GetByIDAndUniversity(ctx context.Context, id int64, university
 func (s *service) GetByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*DepartmentResponse, error) {
 	d, err := s.repo.FindByUUIDAndUniversity(ctx, uuid, universityID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	if d == nil {
-		return nil, apperr.New("department not found", http.StatusNotFound)
+		return nil, apperr.NotFound("department")
 	}
 
 	return ToDepartmentResponse(d), nil

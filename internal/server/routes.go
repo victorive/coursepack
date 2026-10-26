@@ -15,6 +15,6 @@ func RegisterRoutes(appFiber *fiber.App, cfg *config.Config, container *app.Cont
 	v1.Register(api, container)
 
 	appFiber.Use(func(c *fiber.Ctx) error {
-	return response.JSON(c, http.StatusNotFound, false, "route not found", nil)
+	return response.Error(c, http.StatusNotFound, "route not found")
 	})
 }

@@ -202,7 +202,7 @@ func (h *Handler) ReviewJoinRequest(c *fiber.Ctx) error {
 	classUUID := c.Params("id")
 	requestID, err := strconv.ParseInt(c.Params("requestId"), 10, 64)
 	if err != nil {
-		return response.JSON(c, http.StatusBadRequest, false, "invalid request id", nil)
+		return response.Error(c, http.StatusBadRequest, "invalid request id")
 	}
 	var req ReviewJoinRequest
 	if err := validator.ParseAndValidate(c, &req); err != nil {

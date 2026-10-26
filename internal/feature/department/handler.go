@@ -79,7 +79,7 @@ func (h *Handler) Get(c *fiber.Ctx) error {
 
 	universityID, hasUniversity := h.resolveUniversityID(c)
 	if !hasUniversity {
-		return response.JSON(c, http.StatusNotFound, false, "department not found", nil)
+		return response.Error(c, http.StatusNotFound, "department not found")
 	}
 
 	dept, err := h.svc.GetByUUIDAndUniversity(c.UserContext(), uuid, universityID)
