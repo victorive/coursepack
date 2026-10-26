@@ -83,7 +83,7 @@ func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUI
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !ok {
-		return nil, apperr.New("unauthorized", http.StatusForbidden)
+		return nil, apperr.New("insufficient permissions", http.StatusForbidden)
 	}
 
 	cls, err := s.classRepo.FindByUUID(ctx, classUUID)
@@ -193,7 +193,7 @@ func (s *service) RemoveClassCourse(ctx context.Context, actorUUID string, class
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !ok {
-		return apperr.New("unauthorized", http.StatusForbidden)
+		return apperr.New("insufficient permissions", http.StatusForbidden)
 	}
 	cls, err := s.classRepo.FindByUUID(ctx, classUUID)
 	if err != nil {
@@ -230,7 +230,7 @@ func (s *service) CreateLecture(ctx context.Context, actorUUID string, classCour
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !ok {
-		return nil, apperr.New("unauthorized", http.StatusForbidden)
+		return nil, apperr.New("insufficient permissions", http.StatusForbidden)
 	}
 
 	l := &domain.Lecture{
@@ -303,7 +303,7 @@ func (s *service) UpdateLecture(ctx context.Context, actorUUID string, lectureUU
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !ok {
-		return nil, apperr.New("unauthorized", http.StatusForbidden)
+		return nil, apperr.New("insufficient permissions", http.StatusForbidden)
 	}
 
 	if req.Topic != "" {
@@ -342,7 +342,7 @@ func (s *service) ArchiveLecture(ctx context.Context, actorUUID string, lectureU
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !ok {
-		return apperr.New("unauthorized", http.StatusForbidden)
+		return apperr.New("insufficient permissions", http.StatusForbidden)
 	}
 
 	l.Status = string(domain.LectureStatusArchived)

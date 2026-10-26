@@ -166,7 +166,7 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !ok {
-		return nil, apperr.New("unauthorized", http.StatusForbidden)
+		return nil, apperr.New("insufficient permissions", http.StatusForbidden)
 	}
 	if size > s.maxFileSize {
 		return nil, apperr.New(fmt.Sprintf("file exceeds maximum allowed size of %d bytes", s.maxFileSize), http.StatusRequestEntityTooLarge)
@@ -287,7 +287,7 @@ func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID stri
 		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !ok {
-		return nil, apperr.New("unauthorized", http.StatusForbidden)
+		return nil, apperr.New("insufficient permissions", http.StatusForbidden)
 	}
 
 	now := time.Now()
@@ -339,7 +339,7 @@ func (s *service) Archive(ctx context.Context, fileUUID string, actorUUID string
 		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
 	}
 	if !ok {
-		return apperr.New("unauthorized", http.StatusForbidden)
+		return apperr.New("insufficient permissions", http.StatusForbidden)
 	}
 
 	f.Status = string(domain.FileStatusArchived)

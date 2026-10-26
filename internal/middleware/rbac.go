@@ -20,7 +20,7 @@ func RequireGlobalPermission(repo rbac.Service, perm domain.PermissionName) fibe
 			return response.JSON(c, http.StatusInternalServerError, false, "an unexpected error occurred", nil)
 		}
 		if !ok {
-			return response.JSON(c, http.StatusForbidden, false, "unauthorized", nil)
+			return response.JSON(c, http.StatusForbidden, false, "insufficient permissions", nil)
 		}
 		return c.Next()
 	}
@@ -41,7 +41,7 @@ func RequireClassPermission(repo rbac.Service, perm domain.PermissionName, param
 			return response.JSON(c, http.StatusInternalServerError, false, "an unexpected error occurred", nil)
 		}
 		if !ok {
-			return response.JSON(c, http.StatusForbidden, false, "unauthorized", nil)
+			return response.JSON(c, http.StatusForbidden, false, "insufficient permissions", nil)
 		}
 		return c.Next()
 	}
