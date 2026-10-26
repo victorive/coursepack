@@ -9,6 +9,7 @@ import (
 )
 
 type Repository interface {
+	Transact(ctx context.Context, fn func(context.Context) error) error
 	Create(ctx context.Context, c *domain.Class) error
 	Update(ctx context.Context, c *domain.Class) error
 	UpdateInviteCode(ctx context.Context, classID int64, code string) error
@@ -38,6 +39,10 @@ type repository struct {
 
 func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
+}
+
+func (r *repository) Transact(ctx context.Context, fn func(context.Context) error) error {
+	return dbtx.WithTx(ctx, r.db, fn)
 }
 
 func (r *repository) Create(ctx context.Context, c *domain.Class) error {

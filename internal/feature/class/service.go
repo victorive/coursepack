@@ -100,21 +100,27 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 		CreatedBy:        &creator.ID,
 	}
 
-	if err := s.repo.Create(ctx, c); err != nil {
-		return nil, apperr.New("failed to create class", http.StatusInternalServerError).Wrap(err)
-	}
+	err = s.repo.Transact(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, c); err != nil {
+			return apperr.New("failed to create class", http.StatusInternalServerError).Wrap(err)
+		}
 
-	if err := s.rbacSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleClassRep); err != nil {
-		s.logger.Warn("failed to assign class_rep role", "error", err)
-	}
+		if err := s.rbacSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleClassRep); err != nil {
+			return apperr.New("failed to assign class rep role", http.StatusInternalServerError).Wrap(err)
+		}
 
-	member := &domain.ClassMember{ClassID: c.ID, UserID: creator.ID}
-	if err := s.repo.AddMember(ctx, member); err != nil {
-		s.logger.Warn("failed to add creator as member", "error", err)
-	}
+		member := &domain.ClassMember{ClassID: c.ID, UserID: creator.ID}
+		if err := s.repo.AddMember(ctx, member); err != nil {
+			return apperr.New("failed to add creator as member", http.StatusInternalServerError).Wrap(err)
+		}
 
-	if err := s.rbacSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleStudent); err != nil {
-		s.logger.Warn("failed to assign student role to creator", "error", err)
+		if err := s.rbacSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleStudent); err != nil {
+			return apperr.New("failed to assign student role", http.StatusInternalServerError).Wrap(err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	c.Department = dept
