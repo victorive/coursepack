@@ -19,7 +19,7 @@ func OTPVerified(svc OTPVerifiedChecker) fiber.Handler {
 			return response.JSON(c, http.StatusUnauthorized, false, "unauthenticated", nil)
 		}
 
-		verified, isOAuth, err := svc.CheckEmailVerified(c.Context(), userID)
+		verified, isOAuth, err := svc.CheckEmailVerified(c.UserContext(), userID)
 		if err != nil {
 			return response.JSON(c, http.StatusInternalServerError, false, "internal error", nil)
 		}

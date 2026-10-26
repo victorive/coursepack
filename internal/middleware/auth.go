@@ -33,7 +33,7 @@ func Auth(v TokenValidator) fiber.Handler {
 		}
 
 		tokenString := parts[1]
-		sub, err := v.ValidateToken(c.Context(), tokenString)
+		sub, err := v.ValidateToken(c.UserContext(), tokenString)
 		if err != nil {
 			return response.JSON(c, http.StatusUnauthorized, false, "invalid or expired token", nil)
 		}
