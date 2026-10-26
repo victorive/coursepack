@@ -11,9 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/points"
 	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
+	"github.com/victorive/coursepack/internal/points"
 	"github.com/victorive/coursepack/internal/storage"
 )
 

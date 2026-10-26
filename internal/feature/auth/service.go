@@ -13,7 +13,6 @@ import (
 	"github.com/victorive/coursepack/internal/cache"
 	"github.com/victorive/coursepack/internal/domain"
 	"github.com/victorive/coursepack/internal/email"
-	"github.com/victorive/coursepack/internal/feature/university"
 	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/pkg/hash"
@@ -114,6 +113,14 @@ func (s *service) issueTokens(ctx context.Context, u *domain.User) (*TokensRespo
 	}, nil
 }
 
+func toUniversityResponse(u *domain.University) *UniversityResponse {
+	return &UniversityResponse{
+		UUID:    u.UUID,
+		Name:    u.Name,
+		Acronym: u.Acronym,
+	}
+}
+
 func (s *service) buildUserResponse(ctx context.Context, u *domain.User) (*UserResponse, error) {
 	roles, err := s.permSvc.GetUserRoles(ctx, u.UUID)
 	if err != nil {
@@ -125,9 +132,9 @@ func (s *service) buildUserResponse(ctx context.Context, u *domain.User) (*UserR
 		return nil, apperr.Internal(err)
 	}
 
-	var uniInfo *university.UniversityResponse
+	var uniInfo *UniversityResponse
 	if u.University != nil {
-		uniInfo = university.ToUniversityResponse(u.University)
+		uniInfo = toUniversityResponse(u.University)
 	}
 
 	return &UserResponse{

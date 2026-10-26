@@ -1,7 +1,5 @@
 package auth
 
-import "github.com/victorive/coursepack/internal/feature/university"
-
 type SignUpRequest struct {
 	FullName string `json:"full_name" validate:"required,min=2,max=100"`
 	Email    string `json:"email"     validate:"required,email"`
@@ -51,14 +49,21 @@ type TokensResponse struct {
 }
 
 type UserResponse struct {
-	UUID          string                         `json:"uuid"`
-	Email         string                         `json:"email"`
-	FullName      string                         `json:"full_name"`
-	Phone         *string                        `json:"phone"`
-	AvatarURL     *string                        `json:"avatar_url"`
-	Provider      *string                        `json:"provider"`
-	EmailVerified bool                           `json:"email_verified"`
-	University    *university.UniversityResponse `json:"university"`
-	Roles         []string                       `json:"roles"`
-	Permissions   []string                       `json:"permissions"`
+	UUID          string              `json:"uuid"`
+	Email         string              `json:"email"`
+	FullName      string              `json:"full_name"`
+	Phone         *string             `json:"phone"`
+	AvatarURL     *string             `json:"avatar_url"`
+	Provider      *string             `json:"provider"`
+	EmailVerified bool                `json:"email_verified"`
+	University    *UniversityResponse `json:"university"`
+	Roles         []string            `json:"roles"`
+	Permissions   []string            `json:"permissions"`
+}
+
+// UniversityResponse is a local copy so auth does not depend on the university feature.
+type UniversityResponse struct {
+	UUID    string `json:"uuid"`
+	Name    string `json:"name"`
+	Acronym string `json:"acronym"`
 }

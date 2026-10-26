@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/semester"
 	"github.com/victorive/coursepack/internal/pkg/pagination"
 )
 
@@ -35,10 +34,43 @@ type AddClassCourseRequest struct {
 }
 
 type ClassCourseResponse struct {
-	UUID      string                     `json:"uuid"`
-	Semester  *semester.SemesterResponse `json:"semester,omitempty"`
-	Course    *CourseRegistryResponse    `json:"course,omitempty"`
-	CreatedAt time.Time                  `json:"created_at"`
+	UUID      string                  `json:"uuid"`
+	Semester  *SemesterResponse       `json:"semester,omitempty"`
+	Course    *CourseRegistryResponse `json:"course,omitempty"`
+	CreatedAt time.Time               `json:"created_at"`
+}
+
+// SemesterResponse is a local copy so course does not depend on the semester feature.
+type SemesterResponse struct {
+	UUID      string  `json:"uuid"`
+	Session   string  `json:"session"`
+	Kind      string  `json:"kind"`
+	IsCurrent bool    `json:"is_current"`
+	StartsAt  *string `json:"starts_at"`
+	EndsAt    *string `json:"ends_at"`
+	CreatedAt string  `json:"created_at"`
+}
+
+func toSemesterResponse(s *domain.Semester) *SemesterResponse {
+	var startsAt *string
+	if s.StartsAt != nil {
+		v := s.StartsAt.Format("2006-01-02")
+		startsAt = &v
+	}
+	var endsAt *string
+	if s.EndsAt != nil {
+		v := s.EndsAt.Format("2006-01-02")
+		endsAt = &v
+	}
+	return &SemesterResponse{
+		UUID:      s.UUID,
+		Session:   s.Session,
+		Kind:      s.Kind,
+		IsCurrent: s.IsCurrent,
+		StartsAt:  startsAt,
+		EndsAt:    endsAt,
+		CreatedAt: s.CreatedAt.Format("2006-01-02"),
+	}
 }
 
 func toClassCourseResponse(cc *domain.ClassCourse) *ClassCourseResponse {
@@ -47,7 +79,7 @@ func toClassCourseResponse(cc *domain.ClassCourse) *ClassCourseResponse {
 		CreatedAt: cc.CreatedAt,
 	}
 	if cc.Semester != nil {
-		resp.Semester = semester.ToSemesterResponse(cc.Semester)
+		resp.Semester = toSemesterResponse(cc.Semester)
 	}
 	if cc.Course != nil {
 		resp.Course = toCourseRegistryResponse(cc.Course)
