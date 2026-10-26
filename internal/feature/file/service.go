@@ -44,7 +44,6 @@ type ClassRepository interface {
 }
 
 type PointRepository interface {
-	HasTransactionForSource(ctx context.Context, userID int64, sourceType domain.PointSource, sourceID int64) (bool, error)
 	AwardPoints(ctx context.Context, userID int64, delta int, sourceType domain.PointSource, sourceID int64, awardedBy int64) error
 }
 
@@ -301,11 +300,8 @@ func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID stri
 			return nil, apperr.New("failed to update file", http.StatusInternalServerError).Wrap(err)
 		}
 
-		alreadyAwarded, _ := s.pointRepo.HasTransactionForSource(ctx, f.UploadedBy, domain.PointSourceFileApproval, f.ID)
-		if !alreadyAwarded {
-			if err := s.pointRepo.AwardPoints(ctx, f.UploadedBy, 10, domain.PointSourceFileApproval, f.ID, reviewerID); err != nil {
-				s.logger.Warn("failed to award points for file approval", "file_id", f.ID, "error", err)
-			}
+		if err := s.pointRepo.AwardPoints(ctx, f.UploadedBy, domain.PointsFileApproval, domain.PointSourceFileApproval, f.ID, reviewerID); err != nil {
+			s.logger.Warn("failed to award points for file approval", "file_id", f.ID, "error", err)
 		}
 	} else {
 		f.Status = string(domain.FileStatusRejected)
