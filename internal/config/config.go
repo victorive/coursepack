@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
@@ -102,7 +103,25 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("JWT_SECRET must not be empty")
 	}
 
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
 	return cfg, nil
+}
+
+// Validate rejects settings that would only fail silently once deployed.
+func (c *Config) Validate() error {
+	if c.App.Env != "production" {
+		return nil
+	}
+	if strings.HasSuffix(c.SMTP.FromEmail, "@example.com") {
+		return fmt.Errorf("SMTP_FROM_EMAIL still points at example.com")
+	}
+	if c.CORS.AllowedOrigins == "*" {
+		return fmt.Errorf("CORS_ALLOWED_ORIGINS must list explicit origins in production")
+	}
+	return nil
 }
 
 func (c *Config) GetDSN() string {
