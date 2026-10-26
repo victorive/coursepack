@@ -14,9 +14,9 @@ type OTPVerifiedChecker interface {
 
 func OTPVerified(svc OTPVerifiedChecker) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userID, ok := c.Locals(LocalsUserId).(string)
-		if !ok || userID == "" {
-			return response.JSON(c, http.StatusUnauthorized, false, "unauthenticated", nil)
+		userID, err := UserUUID(c)
+		if err != nil {
+			return err
 		}
 
 		verified, isOAuth, err := svc.CheckEmailVerified(c.UserContext(), userID)

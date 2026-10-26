@@ -35,7 +35,10 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	uuid, _ := c.Locals(middleware.LocalsUserId).(string)
+	uuid, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
+	}
 	cls, err := h.svc.Create(c.UserContext(), uuid, &req)
 	if err != nil {
 		return err
@@ -55,7 +58,10 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 // @Router       /classes [get]
 func (h *Handler) List(c *fiber.Ctx) error {
 	q := pagination.Parse(c)
-	uuid, _ := middleware.UserUUID(c)
+	uuid, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
+	}
 	items, total, err := h.svc.List(c.UserContext(), uuid, *q)
 	if err != nil {
 		return err
@@ -75,7 +81,10 @@ func (h *Handler) List(c *fiber.Ctx) error {
 // @Router       /classes/{id} [get]
 func (h *Handler) Get(c *fiber.Ctx) error {
 	classUUID := c.Params("id")
-	userUUID, _ := middleware.UserUUID(c)
+	userUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
+	}
 	cls, err := h.svc.Get(c.UserContext(), userUUID, classUUID)
 	if err != nil {
 		return err
@@ -119,7 +128,10 @@ func (h *Handler) Update(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	userUUID, _ := c.Locals(middleware.LocalsUserId).(string)
+	userUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
+	}
 	cls, err := h.svc.Update(c.UserContext(), userUUID, classUUID, &req)
 	if err != nil {
 		return err
@@ -143,7 +155,10 @@ func (h *Handler) RequestJoin(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	uuid, _ := c.Locals(middleware.LocalsUserId).(string)
+	uuid, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
+	}
 	jr, err := h.svc.RequestJoin(c.UserContext(), uuid, &req)
 	if err != nil {
 		return err
@@ -193,7 +208,10 @@ func (h *Handler) ReviewJoinRequest(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	reviewerUUID, _ := c.Locals(middleware.LocalsUserId).(string)
+	reviewerUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
+	}
 	jr, err := h.svc.ReviewJoinRequest(c.UserContext(), reviewerUUID, classUUID, requestID, &req)
 	if err != nil {
 		return err
@@ -269,9 +287,9 @@ func (h *Handler) ListLevels(c *fiber.Ctx) error {
 func (h *Handler) RegenerateInviteCode(c *fiber.Ctx) error {
 	classUUID := c.Params("id")
 
-	userUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return fiber.ErrUnauthorized
+	userUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 
 	cls, err := h.svc.RegenerateInviteCode(c.UserContext(), userUUID, classUUID)

@@ -11,15 +11,15 @@ import (
 
 func RequireGlobalPermission(repo rbac.Service, perm domain.PermissionName) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		uuid, ok := UserUUID(c)
-		if !ok {
-			return response.JSON(c, http.StatusUnauthorized, false, "unauthenticated", nil)
+		uuid, err := UserUUID(c)
+		if err != nil {
+			return err
 		}
-		ok, err := repo.HasGlobalPermission(c.UserContext(), uuid, perm)
+		allowed, err := repo.HasGlobalPermission(c.UserContext(), uuid, perm)
 		if err != nil {
 			return response.JSON(c, http.StatusInternalServerError, false, "an unexpected error occurred", nil)
 		}
-		if !ok {
+		if !allowed {
 			return response.JSON(c, http.StatusForbidden, false, "insufficient permissions", nil)
 		}
 		return c.Next()
@@ -28,19 +28,19 @@ func RequireGlobalPermission(repo rbac.Service, perm domain.PermissionName) fibe
 
 func RequireClassPermission(repo rbac.Service, perm domain.PermissionName, paramName string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userUUID, ok := UserUUID(c)
-		if !ok {
-			return response.JSON(c, http.StatusUnauthorized, false, "unauthenticated", nil)
+		userUUID, err := UserUUID(c)
+		if err != nil {
+			return err
 		}
 		classUUID := c.Params(paramName)
 		if classUUID == "" {
 			return response.JSON(c, http.StatusBadRequest, false, "invalid class id", nil)
 		}
-		ok, err := repo.HasClassPermissionByUUID(c.UserContext(), userUUID, classUUID, perm)
+		allowed, err := repo.HasClassPermissionByUUID(c.UserContext(), userUUID, classUUID, perm)
 		if err != nil {
 			return response.JSON(c, http.StatusInternalServerError, false, "an unexpected error occurred", nil)
 		}
-		if !ok {
+		if !allowed {
 			return response.JSON(c, http.StatusForbidden, false, "insufficient permissions", nil)
 		}
 		return c.Next()

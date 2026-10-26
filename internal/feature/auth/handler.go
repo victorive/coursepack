@@ -280,7 +280,10 @@ func (h *Handler) ResetPassword(c *fiber.Ctx) error {
 // @Failure      401 {object} response.Response
 // @Router       /users/me [get]
 func (h *Handler) Me(c *fiber.Ctx) error {
-	uuid, _ := c.Locals(middleware.LocalsUserId).(string)
+	uuid, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
+	}
 	u, err := h.svc.Me(c.UserContext(), uuid)
 	if err != nil {
 		return err
