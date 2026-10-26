@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/storage"
 )
@@ -54,14 +54,14 @@ type service struct {
 	lectureRepo     LectureRepository
 	classRepo       ClassRepository
 	pointRepo       PointRepository
-	rbacSvc         rbac.Service
+	permSvc         permissions.Service
 	storage         storage.Storage
 	maxFileSize     int64
 	logger          *slog.Logger
 }
 
-func NewService(repo Repository, userRepo UserRepository, classCourseRepo ClassCourseRepository, lectureRepo LectureRepository, classRepo ClassRepository, rbacSvc rbac.Service, stor storage.Storage, maxFileSize int64, pointRepo PointRepository, logger *slog.Logger) Service {
-	return &service{repo: repo, userRepo: userRepo, classCourseRepo: classCourseRepo, lectureRepo: lectureRepo, classRepo: classRepo, pointRepo: pointRepo, rbacSvc: rbacSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
+func NewService(repo Repository, userRepo UserRepository, classCourseRepo ClassCourseRepository, lectureRepo LectureRepository, classRepo ClassRepository, permSvc permissions.Service, stor storage.Storage, maxFileSize int64, pointRepo PointRepository, logger *slog.Logger) Service {
+	return &service{repo: repo, userRepo: userRepo, classCourseRepo: classCourseRepo, lectureRepo: lectureRepo, classRepo: classRepo, pointRepo: pointRepo, permSvc: permSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
 }
 
 func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error) {
@@ -99,7 +99,7 @@ func (s *service) authorizeRead(ctx context.Context, actorUUID string, f *domain
 	}
 
 	if f.Status != string(domain.FileStatusApproved) {
-		canReview, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, classCourse.ClassID, domain.PermFilesApprove)
+		canReview, err := s.permSvc.HasClassPermission(ctx, actorUUID, classCourse.ClassID, domain.PermFilesApprove)
 		if err != nil {
 			return apperr.Internal(err)
 		}
@@ -160,7 +160,7 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 		lectureID = &l.ID
 	}
 
-	ok, err := s.rbacSvc.HasClassPermission(ctx, uploaderUUID, classCourse.ClassID, domain.PermFilesUpload)
+	ok, err := s.permSvc.HasClassPermission(ctx, uploaderUUID, classCourse.ClassID, domain.PermFilesUpload)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -281,7 +281,7 @@ func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID stri
 	if classCourse == nil {
 		return nil, apperr.NotFound("class course")
 	}
-	ok, err := s.rbacSvc.HasClassPermission(ctx, reviewerUUID, classCourse.ClassID, domain.PermFilesApprove)
+	ok, err := s.permSvc.HasClassPermission(ctx, reviewerUUID, classCourse.ClassID, domain.PermFilesApprove)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -330,7 +330,7 @@ func (s *service) Archive(ctx context.Context, fileUUID string, actorUUID string
 		return apperr.NotFound("class course")
 	}
 
-	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, classCourse.ClassID, domain.PermFilesApprove)
+	ok, err := s.permSvc.HasClassPermission(ctx, actorUUID, classCourse.ClassID, domain.PermFilesApprove)
 	if err != nil {
 		return apperr.Internal(err)
 	}

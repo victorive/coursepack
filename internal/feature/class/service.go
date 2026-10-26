@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/pkg/hash"
 	"github.com/victorive/coursepack/internal/pkg/pagination"
@@ -41,12 +41,12 @@ type service struct {
 	repo     Repository
 	userRepo UserRepository
 	deptRepo DepartmentRepository
-	rbacSvc  rbac.Service
+	permSvc  permissions.Service
 	logger   *slog.Logger
 }
 
-func NewService(repo Repository, userRepo UserRepository, deptRepo DepartmentRepository, rbacSvc rbac.Service, logger *slog.Logger) Service {
-	return &service{repo: repo, userRepo: userRepo, deptRepo: deptRepo, rbacSvc: rbacSvc, logger: logger}
+func NewService(repo Repository, userRepo UserRepository, deptRepo DepartmentRepository, permSvc permissions.Service, logger *slog.Logger) Service {
+	return &service{repo: repo, userRepo: userRepo, deptRepo: deptRepo, permSvc: permSvc, logger: logger}
 }
 
 func (s *service) resolveUser(ctx context.Context, uuid string) (*domain.User, error) {
@@ -105,7 +105,7 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 			return apperr.New("failed to create class", http.StatusInternalServerError).Wrap(err)
 		}
 
-		if err := s.rbacSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleClassRep); err != nil {
+		if err := s.permSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleClassRep); err != nil {
 			return apperr.New("failed to assign class rep role", http.StatusInternalServerError).Wrap(err)
 		}
 
@@ -114,7 +114,7 @@ func (s *service) Create(ctx context.Context, creatorUUID string, req *CreateCla
 			return apperr.New("failed to add creator as member", http.StatusInternalServerError).Wrap(err)
 		}
 
-		if err := s.rbacSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleStudent); err != nil {
+		if err := s.permSvc.AssignClassRole(ctx, creator.ID, c.ID, domain.RoleStudent); err != nil {
 			return apperr.New("failed to assign student role", http.StatusInternalServerError).Wrap(err)
 		}
 		return nil
@@ -328,7 +328,7 @@ func (s *service) ReviewJoinRequest(ctx context.Context, reviewerUUID string, cl
 		if err := s.repo.AddMember(ctx, m); err != nil {
 			return nil, apperr.New("failed to add member", http.StatusInternalServerError).Wrap(err)
 		}
-		if err := s.rbacSvc.AssignClassRole(ctx, jr.UserID, jr.ClassID, domain.RoleStudent); err != nil {
+		if err := s.permSvc.AssignClassRole(ctx, jr.UserID, jr.ClassID, domain.RoleStudent); err != nil {
 			s.logger.Warn("failed to assign student role", "error", err)
 		}
 	} else {

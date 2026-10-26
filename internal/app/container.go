@@ -17,10 +17,10 @@ import (
 	"github.com/victorive/coursepack/internal/feature/course"
 	"github.com/victorive/coursepack/internal/feature/department"
 	"github.com/victorive/coursepack/internal/feature/file"
-	"github.com/victorive/coursepack/internal/feature/rbac"
 	"github.com/victorive/coursepack/internal/feature/semester"
 	"github.com/victorive/coursepack/internal/feature/university"
 	"github.com/victorive/coursepack/internal/feature/user"
+	"github.com/victorive/coursepack/internal/permissions"
 	jwt "github.com/victorive/coursepack/internal/pkg/jwt"
 	"github.com/victorive/coursepack/internal/storage"
 	"github.com/victorive/coursepack/internal/storage/local"
@@ -29,24 +29,24 @@ import (
 )
 
 type Container struct {
-	Config            *config.Config
-	Logger            *slog.Logger
-	DB                *pgxpool.Pool
-	GORM              *gorm.DB
-	JWT               *jwt.Manager
-	Cache             cache.Cache
-	Storage           storage.Storage
-	Mailer            email.Mailer
-	RBAC              rbac.Service
-	AuthService       auth.Service
-	AuthRepository    auth.Repository
-	UserService       user.Service
-	UniversityService university.Service
-	DepartmentService department.Service
-	ClassService      class.Service
-	AcademicService   semester.Service
-	CourseService     course.Service
-	FileService       file.Service
+	Config             *config.Config
+	Logger             *slog.Logger
+	DB                 *pgxpool.Pool
+	GORM               *gorm.DB
+	JWT                *jwt.Manager
+	Cache              cache.Cache
+	Storage            storage.Storage
+	Mailer             email.Mailer
+	PermissionsService permissions.Service
+	AuthService        auth.Service
+	AuthRepository     auth.Repository
+	UserService        user.Service
+	UniversityService  university.Service
+	DepartmentService  department.Service
+	ClassService       class.Service
+	AcademicService    semester.Service
+	CourseService      course.Service
+	FileService        file.Service
 }
 
 func New(ctx context.Context, cfg *config.Config, logger *slog.Logger) (*Container, error) {
@@ -129,8 +129,8 @@ func (c *Container) initServices() {
 
 	authRepo := auth.NewRepository(c.GORM)
 	c.AuthRepository = authRepo
-	rbacRepo := rbac.NewRepository(c.GORM)
-	c.RBAC = rbac.NewService(rbacRepo, c.Logger)
+	permissionsRepo := permissions.NewRepository(c.GORM)
+	c.PermissionsService = permissions.NewService(permissionsRepo, c.Logger)
 	c.AuthService = auth.NewService(
 		authRepo,
 		c.Cache,
@@ -145,7 +145,7 @@ func (c *Container) initServices() {
 			GoogleRedirectURL:        googleRedirectURL,
 			FrontendURL:              cfg.App.FrontendURL,
 		},
-		c.RBAC,
+		c.PermissionsService,
 		c.Logger,
 	)
 
@@ -158,11 +158,11 @@ func (c *Container) initServices() {
 	deptRepo := department.NewRepository(c.GORM)
 	c.UniversityService = university.NewService(university.NewRepository(c.GORM))
 	c.DepartmentService = department.NewService(deptRepo, c.Logger)
-	c.ClassService = class.NewService(class.NewRepository(c.GORM), authRepo, deptRepo, c.RBAC, c.Logger)
+	c.ClassService = class.NewService(class.NewRepository(c.GORM), authRepo, deptRepo, c.PermissionsService, c.Logger)
 	c.AcademicService = semester.NewService(semester.NewRepository(c.GORM), class.NewRepository(c.GORM), c.Logger)
-	c.CourseService = course.NewService(courseRepo, class.NewRepository(c.GORM), semester.NewRepository(c.GORM), c.RBAC, c.Logger)
+	c.CourseService = course.NewService(courseRepo, class.NewRepository(c.GORM), semester.NewRepository(c.GORM), c.PermissionsService, c.Logger)
 	pointRepo := file.NewPointRepository(c.GORM)
-	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, courseRepo, courseRepo, class.NewRepository(c.GORM), c.RBAC, c.Storage, cfg.Storage.MaxFileSize, pointRepo, c.Logger)
+	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, courseRepo, courseRepo, class.NewRepository(c.GORM), c.PermissionsService, c.Storage, cfg.Storage.MaxFileSize, pointRepo, c.Logger)
 }
 
 func (c *Container) Close() error {

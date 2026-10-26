@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 )
 
@@ -49,7 +49,7 @@ func (f *fakeClassRepository) IsMember(ctx context.Context, classID, userID int6
 }
 
 type fakeRBACService struct {
-	rbac.Service
+	permissions.Service
 	canApprove bool
 }
 

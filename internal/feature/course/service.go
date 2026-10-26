@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/pkg/pagination"
 )
@@ -39,12 +39,12 @@ type service struct {
 	repo      Repository
 	classRepo ClassRepository
 	semRepo   SemesterRepository
-	rbacSvc   rbac.Service
+	permSvc   permissions.Service
 	logger    *slog.Logger
 }
 
-func NewService(repo Repository, classRepo ClassRepository, semRepo SemesterRepository, rbacSvc rbac.Service, logger *slog.Logger) Service {
-	return &service{repo: repo, classRepo: classRepo, semRepo: semRepo, rbacSvc: rbacSvc, logger: logger}
+func NewService(repo Repository, classRepo ClassRepository, semRepo SemesterRepository, permSvc permissions.Service, logger *slog.Logger) Service {
+	return &service{repo: repo, classRepo: classRepo, semRepo: semRepo, permSvc: permSvc, logger: logger}
 }
 
 func (s *service) ListCourses(ctx context.Context, universityID int64, departmentCode *string, q pagination.CursorQuery) ([]*CourseRegistryResponse, *string, error) {
@@ -78,7 +78,7 @@ func (s *service) GetCourse(ctx context.Context, courseUUID string, universityID
 }
 
 func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUID string, universityID int64, req AddClassCourseRequest) (*ClassCourseResponse, error) {
-	ok, err := s.rbacSvc.HasClassPermissionByUUID(ctx, actorUUID, classUUID, domain.PermCoursesManage)
+	ok, err := s.permSvc.HasClassPermissionByUUID(ctx, actorUUID, classUUID, domain.PermCoursesManage)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -188,7 +188,7 @@ func (s *service) GetClassCourse(ctx context.Context, classCourseUUID string, un
 }
 
 func (s *service) RemoveClassCourse(ctx context.Context, actorUUID string, classUUID string, classCourseUUID string) error {
-	ok, err := s.rbacSvc.HasClassPermissionByUUID(ctx, actorUUID, classUUID, domain.PermCoursesManage)
+	ok, err := s.permSvc.HasClassPermissionByUUID(ctx, actorUUID, classUUID, domain.PermCoursesManage)
 	if err != nil {
 		return apperr.Internal(err)
 	}
@@ -225,7 +225,7 @@ func (s *service) CreateLecture(ctx context.Context, actorUUID string, classCour
 		return nil, apperr.NotFound("class course")
 	}
 
-	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
+	ok, err := s.permSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -298,7 +298,7 @@ func (s *service) UpdateLecture(ctx context.Context, actorUUID string, lectureUU
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
 
-	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
+	ok, err := s.permSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}
@@ -337,7 +337,7 @@ func (s *service) ArchiveLecture(ctx context.Context, actorUUID string, lectureU
 		return apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
 
-	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
+	ok, err := s.permSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
 	if err != nil {
 		return apperr.Internal(err)
 	}

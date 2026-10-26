@@ -5,11 +5,11 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/response"
 )
 
-func RequireGlobalPermission(repo rbac.Service, perm domain.PermissionName) fiber.Handler {
+func RequireGlobalPermission(repo permissions.Service, perm domain.PermissionName) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		uuid, err := UserUUID(c)
 		if err != nil {
@@ -26,7 +26,7 @@ func RequireGlobalPermission(repo rbac.Service, perm domain.PermissionName) fibe
 	}
 }
 
-func RequireClassPermission(repo rbac.Service, perm domain.PermissionName, paramName string) fiber.Handler {
+func RequireClassPermission(repo permissions.Service, perm domain.PermissionName, paramName string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userUUID, err := UserUUID(c)
 		if err != nil {

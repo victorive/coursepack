@@ -13,9 +13,9 @@ func semesterRoutes(r fiber.Router, c *app.Container) {
 	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
 
 	classes := r.Group("/classes", auth...)
-	classes.Post("/:classId/semesters", middleware.RequireClassPermission(c.RBAC, domain.PermManageSemesters, "classId"), h.CreateSemester)
+	classes.Post("/:classId/semesters", middleware.RequireClassPermission(c.PermissionsService, domain.PermManageSemesters, "classId"), h.CreateSemester)
 	classes.Get("/:classId/semesters", h.ListSemestersByClass)
 	classes.Get("/:classId/semesters/:semId", h.GetSemester)
-	classes.Patch("/:classId/semesters/:semId", middleware.RequireClassPermission(c.RBAC, domain.PermManageSemesters, "classId"), h.UpdateSemester)
-	classes.Delete("/:classId/semesters/:semId", middleware.RequireClassPermission(c.RBAC, domain.PermManageSemesters, "classId"), h.DeleteSemester)
+	classes.Patch("/:classId/semesters/:semId", middleware.RequireClassPermission(c.PermissionsService, domain.PermManageSemesters, "classId"), h.UpdateSemester)
+	classes.Delete("/:classId/semesters/:semId", middleware.RequireClassPermission(c.PermissionsService, domain.PermManageSemesters, "classId"), h.DeleteSemester)
 }

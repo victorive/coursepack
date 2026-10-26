@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 )
 
@@ -64,7 +64,7 @@ func (f *fakeDepartmentRepository) FindByID(ctx context.Context, id int64) (*dom
 }
 
 type fakeRBACService struct {
-	rbac.Service
+	permissions.Service
 	assignErr error
 }
 
