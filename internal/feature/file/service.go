@@ -67,10 +67,10 @@ func NewService(repo Repository, userRepo UserRepository, classCourseRepo ClassC
 func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error) {
 	u, err := s.userRepo.FindByUUID(ctx, uuid)
 	if err != nil {
-		return 0, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return 0, apperr.Internal(err)
 	}
 	if u == nil {
-		return 0, apperr.New("user not found", http.StatusNotFound)
+		return 0, apperr.NotFound("user")
 	}
 	return u.ID, nil
 }
@@ -81,10 +81,10 @@ func (s *service) resolveUserID(ctx context.Context, uuid string) (int64, error)
 func (s *service) authorizeRead(ctx context.Context, actorUUID string, f *domain.File) error {
 	user, err := s.userRepo.FindByUUID(ctx, actorUUID)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	if user == nil {
-		return apperr.New("user not found", http.StatusNotFound)
+		return apperr.NotFound("user")
 	}
 	if f.UploadedBy == user.ID {
 		return nil
@@ -92,29 +92,29 @@ func (s *service) authorizeRead(ctx context.Context, actorUUID string, f *domain
 
 	classCourse, err := s.classCourseRepo.FindClassCourseByID(ctx, f.ClassCourseID)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	if classCourse == nil {
-		return apperr.New("file not found", http.StatusNotFound)
+		return apperr.NotFound("file")
 	}
 
 	if f.Status != string(domain.FileStatusApproved) {
 		canReview, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, classCourse.ClassID, domain.PermFilesApprove)
 		if err != nil {
-			return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+			return apperr.Internal(err)
 		}
 		if !canReview {
-			return apperr.New("file not found", http.StatusNotFound)
+			return apperr.NotFound("file")
 		}
 		return nil
 	}
 
 	isMember, err := s.classRepo.IsMember(ctx, classCourse.ClassID, user.ID)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	if !isMember {
-		return apperr.New("file not found", http.StatusNotFound)
+		return apperr.NotFound("file")
 	}
 	return nil
 }
@@ -125,7 +125,7 @@ func (s *service) findReadableFile(ctx context.Context, actorUUID string, fileUU
 		return nil, apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
 	}
 	if f == nil {
-		return nil, apperr.New("file not found", http.StatusNotFound)
+		return nil, apperr.NotFound("file")
 	}
 	if err := s.authorizeRead(ctx, actorUUID, f); err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
 	if classCourse == nil {
-		return nil, apperr.New("class course not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class course")
 	}
 
 	var lectureID *int64
@@ -154,7 +154,7 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 		}
 
 		if l == nil {
-			return nil, apperr.New("lecture not found", http.StatusNotFound)
+			return nil, apperr.NotFound("lecture")
 		}
 
 		lectureID = &l.ID
@@ -162,10 +162,10 @@ func (s *service) Upload(ctx context.Context, uploaderUUID string, req UploadFil
 
 	ok, err := s.rbacSvc.HasClassPermission(ctx, uploaderUUID, classCourse.ClassID, domain.PermFilesUpload)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if !ok {
-		return nil, apperr.New("insufficient permissions", http.StatusForbidden)
+		return nil, apperr.Forbidden()
 	}
 	if size > s.maxFileSize {
 		return nil, apperr.New(fmt.Sprintf("file exceeds maximum allowed size of %d bytes", s.maxFileSize), http.StatusRequestEntityTooLarge)
@@ -203,7 +203,7 @@ func (s *service) ListByClassCourse(ctx context.Context, classCourseUUID string)
 	}
 
 	if cc == nil {
-		return nil, apperr.New("class course not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class course")
 	}
 
 	files, err := s.repo.FindByClassCourse(ctx, cc.ID)
@@ -226,7 +226,7 @@ func (s *service) ListByLecture(ctx context.Context, lectureUUID string) ([]*Fil
 	}
 
 	if l == nil {
-		return nil, apperr.New("lecture not found", http.StatusNotFound)
+		return nil, apperr.NotFound("lecture")
 	}
 
 	files, err := s.repo.FindByLecture(ctx, l.ID)
@@ -272,21 +272,21 @@ func (s *service) Review(ctx context.Context, fileUUID string, reviewerUUID stri
 		return nil, apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
 	}
 	if f == nil {
-		return nil, apperr.New("file not found", http.StatusNotFound)
+		return nil, apperr.NotFound("file")
 	}
 	classCourse, err := s.classCourseRepo.FindClassCourseByID(ctx, f.ClassCourseID)
 	if err != nil {
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
 	if classCourse == nil {
-		return nil, apperr.New("class course not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class course")
 	}
 	ok, err := s.rbacSvc.HasClassPermission(ctx, reviewerUUID, classCourse.ClassID, domain.PermFilesApprove)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if !ok {
-		return nil, apperr.New("insufficient permissions", http.StatusForbidden)
+		return nil, apperr.Forbidden()
 	}
 
 	now := time.Now()
@@ -319,7 +319,7 @@ func (s *service) Archive(ctx context.Context, fileUUID string, actorUUID string
 		return apperr.New("failed to fetch file", http.StatusInternalServerError).Wrap(err)
 	}
 	if f == nil {
-		return apperr.New("file not found", http.StatusNotFound)
+		return apperr.NotFound("file")
 	}
 
 	classCourse, err := s.classCourseRepo.FindClassCourseByID(ctx, f.ClassCourseID)
@@ -327,15 +327,15 @@ func (s *service) Archive(ctx context.Context, fileUUID string, actorUUID string
 		return apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
 	if classCourse == nil {
-		return apperr.New("class course not found", http.StatusNotFound)
+		return apperr.NotFound("class course")
 	}
 
 	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, classCourse.ClassID, domain.PermFilesApprove)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	if !ok {
-		return apperr.New("insufficient permissions", http.StatusForbidden)
+		return apperr.Forbidden()
 	}
 
 	f.Status = string(domain.FileStatusArchived)

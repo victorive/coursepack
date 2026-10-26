@@ -93,18 +93,18 @@ const (
 func (s *service) issueTokens(ctx context.Context, u *domain.User) (*TokensResponse, error) {
 	access, err := s.jwt.Sign(u.UUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	refresh, err := hash.GenerateSecureToken()
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	ttl := time.Duration(s.cfg.RefreshExpirationMinutes) * time.Minute
 	userIDStr := strconv.FormatInt(u.ID, 10)
 	if err := s.cache.Set(ctx, refreshKeyPrefix+refresh, userIDStr, ttl); err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	return &TokensResponse{
@@ -117,12 +117,12 @@ func (s *service) issueTokens(ctx context.Context, u *domain.User) (*TokensRespo
 func (s *service) buildUserResponse(ctx context.Context, u *domain.User) (*UserResponse, error) {
 	roles, err := s.rbacSvc.GetUserRoles(ctx, u.UUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	perms, err := s.rbacSvc.GetUserPermissions(ctx, u.UUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	var uniInfo *university.UniversityResponse
@@ -190,7 +190,7 @@ func (s *service) sendOTPAsync(ctx context.Context, userEmail, scope string) {
 func (s *service) SignUp(ctx context.Context, req *SignUpRequest) (*TokensResponse, error) {
 	existing, err := s.repo.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if existing != nil {
 		return nil, apperr.New("email already registered", http.StatusConflict)
@@ -198,7 +198,7 @@ func (s *service) SignUp(ctx context.Context, req *SignUpRequest) (*TokensRespon
 
 	ph, err := hash.HashPassword(req.Password)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	u := &domain.User{
@@ -208,11 +208,11 @@ func (s *service) SignUp(ctx context.Context, req *SignUpRequest) (*TokensRespon
 		Password: &ph,
 	}
 	if err := s.repo.Create(ctx, u); err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	
 	if err := s.rbacSvc.AssignGlobalRole(ctx, u.ID, domain.RoleStudent); err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	s.sendOTPAsync(ctx, u.Email, defaultOTPScope)
@@ -223,7 +223,7 @@ func (s *service) SignUp(ctx context.Context, req *SignUpRequest) (*TokensRespon
 func (s *service) SignIn(ctx context.Context, req *SignInRequest) (*TokensResponse, error) {
 	u, err := s.repo.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if u == nil {
 		return nil, apperr.New("invalid email or password", http.StatusUnauthorized)
@@ -237,7 +237,7 @@ func (s *service) SignIn(ctx context.Context, req *SignInRequest) (*TokensRespon
 
 	ok, err := hash.VerifyPassword(*u.Password, req.Password)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if !ok {
 		return nil, apperr.New("invalid email or password", http.StatusUnauthorized)
@@ -265,10 +265,10 @@ func (s *service) GoogleInitiate(ctx context.Context) (string, error) {
 	}
 	state, err := hash.GenerateSecureToken()
 	if err != nil {
-		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return "", apperr.Internal(err)
 	}
 	if err := s.cache.Set(ctx, googleStateKeyPrefix+state, "1", 10*time.Minute); err != nil {
-		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return "", apperr.Internal(err)
 	}
 	return s.googleOAuthConfig().AuthCodeURL(state, oauth2.AccessTypeOnline), nil
 }
@@ -296,7 +296,7 @@ func (s *service) GoogleCallback(ctx context.Context, code, state string) (strin
 	client := oauthCfg.Client(ctx, googleToken)
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
-		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return "", apperr.Internal(err)
 	}
 	defer resp.Body.Close()
 
@@ -306,12 +306,12 @@ func (s *service) GoogleCallback(ctx context.Context, code, state string) (strin
 
 	var info googleUserInfo
 	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
-		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return "", apperr.Internal(err)
 	}
 
 	u, err := s.repo.FindByEmail(ctx, info.Email)
 	if err != nil {
-		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return "", apperr.Internal(err)
 	}
 
 	if u == nil {
@@ -329,10 +329,10 @@ func (s *service) GoogleCallback(ctx context.Context, code, state string) (strin
 			EmailVerified: info.VerifiedEmail,
 		}
 		if err := s.repo.Create(ctx, u); err != nil {
-			return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+			return "", apperr.Internal(err)
 		}
 		if err := s.rbacSvc.AssignGlobalRole(ctx, u.ID, domain.RoleStudent); err != nil {
-			return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+			return "", apperr.Internal(err)
 		}
 	} else if u.Provider == nil || *u.Provider != string(domain.ProviderGoogle) {
 		return "", apperr.New("account registered with a different sign-in method", http.StatusUnprocessableEntity)
@@ -353,11 +353,11 @@ func (s *service) GoogleCallback(ctx context.Context, code, state string) (strin
 
 	exchangeCode, err := hash.GenerateSecureToken()
 	if err != nil {
-		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return "", apperr.Internal(err)
 	}
 
 	if err := s.cache.SetJSON(ctx, googleCodeKeyPrefix+exchangeCode, tokens, 5*time.Minute); err != nil {
-		return "", apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return "", apperr.Internal(err)
 	}
 
 	return exchangeCode, nil
@@ -392,14 +392,14 @@ func (s *service) VerifyOTP(ctx context.Context, req *VerifyOTPRequest) error {
 
 	u, err := s.repo.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	if u == nil {
-		return apperr.New("user not found", http.StatusNotFound)
+		return apperr.NotFound("user")
 	}
 
 	if err := s.repo.UpdateEmailVerified(ctx, u.ID, true); err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	_ = s.cache.Delete(ctx, otpKey)
 	_ = s.cache.Delete(ctx, attemptsKey)
@@ -411,7 +411,7 @@ func (s *service) ResendOTP(ctx context.Context, req *ResendOTPRequest) error {
 
 	u, err := s.repo.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	
 	if u != nil && u.EmailVerified && scope == defaultOTPScope {
@@ -451,10 +451,10 @@ func (s *service) Refresh(ctx context.Context, req *RefreshRequest) (*TokensResp
 
 	u, err := s.repo.FindByID(ctx, userID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if u == nil {
-		return nil, apperr.New("user not found", http.StatusNotFound)
+		return nil, apperr.NotFound("user")
 	}
 
 	return s.toAuthResponse(ctx, u)
@@ -536,11 +536,11 @@ func (s *service) ResetPassword(ctx context.Context, req *ResetPasswordRequest) 
 
 	ph, err := hash.HashPassword(req.Password)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 
 	if err := s.repo.UpdatePassword(ctx, userID, ph); err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 
 	_ = s.cache.Delete(ctx, key)
@@ -562,10 +562,10 @@ func (s *service) CheckEmailVerified(ctx context.Context, userUUID string) (bool
 func (s *service) Me(ctx context.Context, userUUID string) (*UserResponse, error) {
 	u, err := s.repo.FindByUUID(ctx, userUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if u == nil {
-		return nil, apperr.New("user not found", http.StatusNotFound)
+		return nil, apperr.NotFound("user")
 	}
 	return s.buildUserResponse(ctx, u)
 }

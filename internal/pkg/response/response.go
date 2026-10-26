@@ -25,3 +25,7 @@ func JSON(c *fiber.Ctx, httpStatus int, success bool, message string, data any) 
 		Data:    data,
 	})
 }
+
+func Error(c *fiber.Ctx, httpStatus int, message string) error {
+	return JSON(c, httpStatus, false, message, nil)
+}

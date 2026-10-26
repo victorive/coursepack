@@ -72,7 +72,7 @@ func (s *service) GetCourse(ctx context.Context, courseUUID string, universityID
 		return nil, apperr.New("failed to fetch course", http.StatusInternalServerError).Wrap(err)
 	}
 	if c == nil || c.UniversityID != universityID {
-		return nil, apperr.New("course not found", http.StatusNotFound)
+		return nil, apperr.NotFound("course")
 	}
 	return toCourseRegistryResponse(c), nil
 }
@@ -80,24 +80,24 @@ func (s *service) GetCourse(ctx context.Context, courseUUID string, universityID
 func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUID string, universityID int64, req AddClassCourseRequest) (*ClassCourseResponse, error) {
 	ok, err := s.rbacSvc.HasClassPermissionByUUID(ctx, actorUUID, classUUID, domain.PermCoursesManage)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if !ok {
-		return nil, apperr.New("insufficient permissions", http.StatusForbidden)
+		return nil, apperr.Forbidden()
 	}
 
 	cls, err := s.classRepo.FindByUUID(ctx, classUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	if cls == nil {
-		return nil, apperr.New("class not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class")
 	}
 
 	sem, err := s.semRepo.FindSemesterByUUID(ctx, req.SemesterUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if sem == nil || sem.ClassID != cls.ID {
 		return nil, apperr.New("semester not found for this class", http.StatusUnprocessableEntity)
@@ -105,10 +105,10 @@ func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUI
 
 	course, err := s.repo.FindCourseByUUID(ctx, req.CourseUUID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if course == nil {
-		return nil, apperr.New("course not found", http.StatusNotFound)
+		return nil, apperr.NotFound("course")
 	}
 	if course.UniversityID != universityID {
 		return nil, apperr.New("course does not belong to your university", http.StatusUnprocessableEntity)
@@ -116,7 +116,7 @@ func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUI
 
 	existing, err := s.repo.FindClassCourseByConstraint(ctx, cls.ID, sem.ID, course.ID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if existing != nil {
 		return nil, apperr.New("course already registered for this semester", http.StatusConflict)
@@ -143,21 +143,21 @@ func (s *service) AddClassCourse(ctx context.Context, actorUUID string, classUUI
 func (s *service) ListClassCourses(ctx context.Context, classUUID string, universityID int64, semesterUUID *string, kind *string) ([]*ClassCourseResponse, error) {
 	cls, err := s.classRepo.FindByUUIDAndUniversity(ctx, classUUID, universityID)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 
 	if cls == nil {
-		return nil, apperr.New("class not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class")
 	}
 
 	var semesterID *int64
 	if semesterUUID != nil {
 		sem, err := s.semRepo.FindSemesterByUUID(ctx, *semesterUUID)
 		if err != nil {
-			return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+			return nil, apperr.Internal(err)
 		}
 		if sem == nil {
-			return nil, apperr.New("semester not found", http.StatusNotFound)
+			return nil, apperr.NotFound("semester")
 		}
 		semesterID = &sem.ID
 	}
@@ -182,7 +182,7 @@ func (s *service) GetClassCourse(ctx context.Context, classCourseUUID string, un
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
 	if cc == nil {
-		return nil, apperr.New("class course not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class course")
 	}
 	return toClassCourseResponse(cc), nil
 }
@@ -190,18 +190,18 @@ func (s *service) GetClassCourse(ctx context.Context, classCourseUUID string, un
 func (s *service) RemoveClassCourse(ctx context.Context, actorUUID string, classUUID string, classCourseUUID string) error {
 	ok, err := s.rbacSvc.HasClassPermissionByUUID(ctx, actorUUID, classUUID, domain.PermCoursesManage)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	if !ok {
-		return apperr.New("insufficient permissions", http.StatusForbidden)
+		return apperr.Forbidden()
 	}
 	cls, err := s.classRepo.FindByUUID(ctx, classUUID)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 
 	if cls == nil {
-		return apperr.New("class not found", http.StatusNotFound)
+		return apperr.NotFound("class")
 	}
 
 	cc, err := s.repo.FindClassCourseByUUID(ctx, classCourseUUID)
@@ -210,7 +210,7 @@ func (s *service) RemoveClassCourse(ctx context.Context, actorUUID string, class
 	}
 
 	if cc == nil || cc.ClassID != cls.ID {
-		return apperr.New("class course not found", http.StatusNotFound)
+		return apperr.NotFound("class course")
 	}
 
 	return s.repo.DeleteClassCourse(ctx, cc.ID)
@@ -222,15 +222,15 @@ func (s *service) CreateLecture(ctx context.Context, actorUUID string, classCour
 		return nil, apperr.New("failed to fetch class course", http.StatusInternalServerError).Wrap(err)
 	}
 	if cc == nil {
-		return nil, apperr.New("class course not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class course")
 	}
 
 	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if !ok {
-		return nil, apperr.New("insufficient permissions", http.StatusForbidden)
+		return nil, apperr.Forbidden()
 	}
 
 	l := &domain.Lecture{
@@ -258,7 +258,7 @@ func (s *service) ListLectures(ctx context.Context, classCourseUUID string, univ
 	}
 
 	if cc == nil {
-		return nil, apperr.New("class course not found", http.StatusNotFound)
+		return nil, apperr.NotFound("class course")
 	}
 
 	lectures, err := s.repo.FindLecturesByClassCourse(ctx, cc.ID)
@@ -279,7 +279,7 @@ func (s *service) GetLecture(ctx context.Context, lectureUUID string, university
 		return nil, apperr.New("failed to fetch lecture", http.StatusInternalServerError).Wrap(err)
 	}
 	if l == nil {
-		return nil, apperr.New("lecture not found", http.StatusNotFound)
+		return nil, apperr.NotFound("lecture")
 	}
 	return toLectureResponse(l), nil
 }
@@ -290,7 +290,7 @@ func (s *service) UpdateLecture(ctx context.Context, actorUUID string, lectureUU
 		return nil, apperr.New("failed to fetch lecture", http.StatusInternalServerError).Wrap(err)
 	}
 	if l == nil {
-		return nil, apperr.New("lecture not found", http.StatusNotFound)
+		return nil, apperr.NotFound("lecture")
 	}
 
 	cc, err := s.repo.FindClassCourseByID(ctx, l.ClassCourseID)
@@ -300,10 +300,10 @@ func (s *service) UpdateLecture(ctx context.Context, actorUUID string, lectureUU
 
 	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
 	if err != nil {
-		return nil, apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return nil, apperr.Internal(err)
 	}
 	if !ok {
-		return nil, apperr.New("insufficient permissions", http.StatusForbidden)
+		return nil, apperr.Forbidden()
 	}
 
 	if req.Topic != "" {
@@ -329,7 +329,7 @@ func (s *service) ArchiveLecture(ctx context.Context, actorUUID string, lectureU
 		return apperr.New("failed to fetch lecture", http.StatusInternalServerError).Wrap(err)
 	}
 	if l == nil {
-		return apperr.New("lecture not found", http.StatusNotFound)
+		return apperr.NotFound("lecture")
 	}
 
 	cc, err := s.repo.FindClassCourseByID(ctx, l.ClassCourseID)
@@ -339,10 +339,10 @@ func (s *service) ArchiveLecture(ctx context.Context, actorUUID string, lectureU
 
 	ok, err := s.rbacSvc.HasClassPermission(ctx, actorUUID, cc.ClassID, domain.PermLecturesManage)
 	if err != nil {
-		return apperr.New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+		return apperr.Internal(err)
 	}
 	if !ok {
-		return apperr.New("insufficient permissions", http.StatusForbidden)
+		return apperr.Forbidden()
 	}
 
 	l.Status = string(domain.LectureStatusArchived)

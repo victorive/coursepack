@@ -1,6 +1,9 @@
 package apperr
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type AppError struct {
 	Message    string `json:"message"`
@@ -32,4 +35,19 @@ func (e *AppError) WithMessage(msg string) *AppError {
 
 func (e *AppError) WithData(data any) *AppError {
 	return &AppError{Message: e.Message, HTTPStatus: e.HTTPStatus, Err: e.Err, Data: data}
+}
+
+// Internal reports an unexpected failure without exposing it to the client.
+func Internal(err error) *AppError {
+	return New("an unexpected error occurred", http.StatusInternalServerError).Wrap(err)
+}
+
+// NotFound reports a missing resource.
+func NotFound(resource string) *AppError {
+	return New(resource+" not found", http.StatusNotFound)
+}
+
+// Forbidden reports a permission failure for an authenticated user.
+func Forbidden() *AppError {
+	return New("insufficient permissions", http.StatusForbidden)
 }

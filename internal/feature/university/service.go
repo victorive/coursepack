@@ -37,7 +37,7 @@ func (s *service) GetByID(ctx context.Context, id int64) (*domain.University, er
 		return nil, apperr.New("failed to fetch university", http.StatusInternalServerError).Wrap(err)
 	}
 	if u == nil {
-		return nil, apperr.New("university not found", http.StatusNotFound)
+		return nil, apperr.NotFound("university")
 	}
 	return u, nil
 }
@@ -48,7 +48,7 @@ func (s *service) GetByUUID(ctx context.Context, uuid string) (*domain.Universit
 		return nil, apperr.New("failed to fetch university", http.StatusInternalServerError).Wrap(err)
 	}
 	if u == nil {
-		return nil, apperr.New("university not found", http.StatusNotFound)
+		return nil, apperr.NotFound("university")
 	}
 
 	return u, nil
@@ -60,7 +60,7 @@ func (s *service) GetByAcronym(ctx context.Context, acronym string) (*domain.Uni
 		return nil, apperr.New("failed to fetch university", http.StatusInternalServerError).Wrap(err)
 	}
 	if u == nil {
-		return nil, apperr.New("university not found", http.StatusNotFound)
+		return nil, apperr.NotFound("university")
 	}
 	return u, nil
 }

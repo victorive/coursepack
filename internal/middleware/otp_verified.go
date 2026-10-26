@@ -21,11 +21,11 @@ func OTPVerified(svc OTPVerifiedChecker) fiber.Handler {
 
 		verified, isOAuth, err := svc.CheckEmailVerified(c.UserContext(), userID)
 		if err != nil {
-			return response.JSON(c, http.StatusInternalServerError, false, "internal error", nil)
+			return response.Error(c, http.StatusInternalServerError, "internal error")
 		}
 
 		if !isOAuth && !verified {
-			return response.JSON(c, http.StatusForbidden, false, "email not verified", nil)
+			return response.Error(c, http.StatusForbidden, "email not verified")
 		}
 
 		return c.Next()

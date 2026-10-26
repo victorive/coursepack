@@ -30,13 +30,13 @@ func Auth(v TokenValidator) fiber.Handler {
 		header := c.Get(fiber.HeaderAuthorization)
 		parts := strings.SplitN(header, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" || parts[1] == "" {
-			return response.JSON(c, http.StatusUnauthorized, false, "unauthenticated", nil)
+			return response.Error(c, http.StatusUnauthorized, "unauthenticated")
 		}
 
 		tokenString := parts[1]
 		sub, err := v.ValidateToken(c.UserContext(), tokenString)
 		if err != nil {
-			return response.JSON(c, http.StatusUnauthorized, false, "invalid or expired token", nil)
+			return response.Error(c, http.StatusUnauthorized, "invalid or expired token")
 		}
 
 		c.Locals(LocalsUserID, sub)
