@@ -17,6 +17,7 @@ import (
 	"github.com/victorive/coursepack/internal/feature/course"
 	"github.com/victorive/coursepack/internal/feature/department"
 	"github.com/victorive/coursepack/internal/feature/file"
+	"github.com/victorive/coursepack/internal/feature/points"
 	"github.com/victorive/coursepack/internal/feature/semester"
 	"github.com/victorive/coursepack/internal/feature/university"
 	"github.com/victorive/coursepack/internal/feature/user"
@@ -47,6 +48,7 @@ type Container struct {
 	ClassService       class.Service
 	AcademicService    semester.Service
 	CourseService      course.Service
+	PointsService      points.Service
 	FileService        file.Service
 }
 
@@ -163,8 +165,9 @@ func (c *Container) initServices() {
 	c.ClassService = class.NewService(class.NewRepository(c.GORM), authRepo, deptRepo, c.PermissionsService, c.Logger)
 	c.AcademicService = semester.NewService(semester.NewRepository(c.GORM), class.NewRepository(c.GORM), c.Logger)
 	c.CourseService = course.NewService(courseRepo, class.NewRepository(c.GORM), semester.NewRepository(c.GORM), c.PermissionsService, c.Logger)
-	pointRepo := file.NewPointRepository(c.GORM)
-	c.FileService = file.NewService(file.NewRepository(c.GORM), courseRepo, courseRepo, class.NewRepository(c.GORM), c.PermissionsService, c.Storage, cfg.Storage.MaxFileSize, pointRepo, c.Logger)
+	pointsRepo := points.NewRepository(c.GORM)
+	c.PointsService = points.NewService(pointsRepo)
+	c.FileService = file.NewService(file.NewRepository(c.GORM), courseRepo, courseRepo, class.NewRepository(c.GORM), c.PermissionsService, c.Storage, cfg.Storage.MaxFileSize, c.PointsService, c.Logger)
 }
 
 func (c *Container) Close() error {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/feature/points"
 	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/storage"
@@ -39,24 +40,20 @@ type ClassRepository interface {
 	IsMember(ctx context.Context, classID, userID int64) (bool, error)
 }
 
-type PointRepository interface {
-	AwardPoints(ctx context.Context, userID int64, delta int, sourceType domain.PointSource, sourceID int64, awardedBy int64) error
-}
-
 type service struct {
 	repo            Repository
 	classCourseRepo ClassCourseRepository
 	lectureRepo     LectureRepository
 	classRepo       ClassRepository
-	pointRepo       PointRepository
+	pointsSvc       points.Service
 	permSvc         permissions.Service
 	storage         storage.Storage
 	maxFileSize     int64
 	logger          *slog.Logger
 }
 
-func NewService(repo Repository, classCourseRepo ClassCourseRepository, lectureRepo LectureRepository, classRepo ClassRepository, permSvc permissions.Service, stor storage.Storage, maxFileSize int64, pointRepo PointRepository, logger *slog.Logger) Service {
-	return &service{repo: repo, classCourseRepo: classCourseRepo, lectureRepo: lectureRepo, classRepo: classRepo, pointRepo: pointRepo, permSvc: permSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
+func NewService(repo Repository, classCourseRepo ClassCourseRepository, lectureRepo LectureRepository, classRepo ClassRepository, permSvc permissions.Service, stor storage.Storage, maxFileSize int64, pointsSvc points.Service, logger *slog.Logger) Service {
+	return &service{repo: repo, classCourseRepo: classCourseRepo, lectureRepo: lectureRepo, classRepo: classRepo, pointsSvc: pointsSvc, permSvc: permSvc, storage: stor, maxFileSize: maxFileSize, logger: logger}
 }
 
 // authorizeRead allows the uploader, an approver of the file's class, or a
@@ -269,7 +266,7 @@ func (s *service) Review(ctx context.Context, actor permissions.Actor, fileUUID 
 			return nil, apperr.New("failed to update file", http.StatusInternalServerError).Wrap(err)
 		}
 
-		if err := s.pointRepo.AwardPoints(ctx, f.UploadedBy, domain.PointsFileApproval, domain.PointSourceFileApproval, f.ID, actor.UserID); err != nil {
+		if err := s.pointsSvc.Award(ctx, f.UploadedBy, domain.PointsFileApproval, domain.PointSourceFileApproval, f.ID, actor.UserID); err != nil {
 			s.logger.Warn("failed to award points for file approval", "file_id", f.ID, "error", err)
 		}
 	} else {
