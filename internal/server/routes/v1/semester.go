@@ -4,12 +4,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/victorive/coursepack/internal/app"
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/academic"
+	"github.com/victorive/coursepack/internal/feature/semester"
 	"github.com/victorive/coursepack/internal/middleware"
 )
 
-func academicRoutes(r fiber.Router, c *app.Container) {
-	h := academic.NewHandler(c.AcademicService)
+func semesterRoutes(r fiber.Router, c *app.Container) {
+	h := semester.NewHandler(c.AcademicService)
 	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
 
 	classes := r.Group("/classes", auth...)

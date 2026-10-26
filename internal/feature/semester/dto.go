@@ -1,4 +1,4 @@
-package academic
+package semester
 
 import (
 	"github.com/victorive/coursepack/internal/domain"

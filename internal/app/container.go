@@ -12,13 +12,13 @@ import (
 	"github.com/victorive/coursepack/internal/email"
 	"github.com/victorive/coursepack/internal/email/smtp"
 	"github.com/victorive/coursepack/internal/email/templates"
-	"github.com/victorive/coursepack/internal/feature/academic"
 	"github.com/victorive/coursepack/internal/feature/auth"
 	"github.com/victorive/coursepack/internal/feature/class"
 	"github.com/victorive/coursepack/internal/feature/course"
 	"github.com/victorive/coursepack/internal/feature/department"
 	"github.com/victorive/coursepack/internal/feature/file"
 	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/feature/semester"
 	"github.com/victorive/coursepack/internal/feature/university"
 	"github.com/victorive/coursepack/internal/feature/user"
 	jwt "github.com/victorive/coursepack/internal/pkg/jwt"
@@ -44,7 +44,7 @@ type Container struct {
 	UniversityService university.Service
 	DepartmentService department.Service
 	ClassService      class.Service
-	AcademicService   academic.Service
+	AcademicService   semester.Service
 	CourseService     course.Service
 	FileService       file.Service
 }
@@ -159,8 +159,8 @@ func (c *Container) initServices() {
 	c.UniversityService = university.NewService(university.NewRepository(c.GORM))
 	c.DepartmentService = department.NewService(deptRepo, c.Logger)
 	c.ClassService = class.NewService(class.NewRepository(c.GORM), authRepo, deptRepo, c.RBAC, c.Logger)
-	c.AcademicService = academic.NewService(academic.NewRepository(c.GORM), class.NewRepository(c.GORM), c.Logger)
-	c.CourseService = course.NewService(courseRepo, class.NewRepository(c.GORM), academic.NewRepository(c.GORM), c.RBAC, c.Logger)
+	c.AcademicService = semester.NewService(semester.NewRepository(c.GORM), class.NewRepository(c.GORM), c.Logger)
+	c.CourseService = course.NewService(courseRepo, class.NewRepository(c.GORM), semester.NewRepository(c.GORM), c.RBAC, c.Logger)
 	pointRepo := file.NewPointRepository(c.GORM)
 	c.FileService = file.NewService(file.NewRepository(c.GORM), authRepo, courseRepo, courseRepo, class.NewRepository(c.GORM), c.RBAC, c.Storage, cfg.Storage.MaxFileSize, pointRepo, c.Logger)
 }

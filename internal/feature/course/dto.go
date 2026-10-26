@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/victorive/coursepack/internal/domain"
-	"github.com/victorive/coursepack/internal/feature/academic"
+	"github.com/victorive/coursepack/internal/feature/semester"
 	"github.com/victorive/coursepack/internal/pkg/pagination"
 )
 
@@ -35,10 +35,10 @@ type AddClassCourseRequest struct {
 }
 
 type ClassCourseResponse struct {
-	UUID      string                  `json:"uuid"`
-	Semester  *academic.SemesterResponse `json:"semester,omitempty"`
-	Course    *CourseRegistryResponse `json:"course,omitempty"`
-	CreatedAt time.Time               `json:"created_at"`
+	UUID      string                     `json:"uuid"`
+	Semester  *semester.SemesterResponse `json:"semester,omitempty"`
+	Course    *CourseRegistryResponse    `json:"course,omitempty"`
+	CreatedAt time.Time                  `json:"created_at"`
 }
 
 func toClassCourseResponse(cc *domain.ClassCourse) *ClassCourseResponse {
@@ -47,7 +47,7 @@ func toClassCourseResponse(cc *domain.ClassCourse) *ClassCourseResponse {
 		CreatedAt: cc.CreatedAt,
 	}
 	if cc.Semester != nil {
-		resp.Semester = academic.ToSemesterResponse(cc.Semester)
+		resp.Semester = semester.ToSemesterResponse(cc.Semester)
 	}
 	if cc.Course != nil {
 		resp.Course = toCourseRegistryResponse(cc.Course)
