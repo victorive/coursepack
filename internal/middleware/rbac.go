@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/klaro-backend/internal/domain"
-	"github.com/victorive/klaro-backend/internal/feature/rbac"
-	"github.com/victorive/klaro-backend/internal/pkg/response"
+	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/pkg/response"
 )
 
 func RequireGlobalPermission(repo rbac.Service, perm domain.PermissionName) fiber.Handler {

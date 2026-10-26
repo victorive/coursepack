@@ -2,9 +2,9 @@ package v1
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/klaro-backend/internal/app"
-	"github.com/victorive/klaro-backend/internal/feature/auth"
-	"github.com/victorive/klaro-backend/internal/middleware"
+	"github.com/victorive/coursepack/internal/app"
+	"github.com/victorive/coursepack/internal/feature/auth"
+	"github.com/victorive/coursepack/internal/middleware"
 )
 
 func authRoutes(r fiber.Router, c *app.Container) {

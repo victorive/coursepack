@@ -3,9 +3,9 @@ package course
 import (
 	"time"
 
-	"github.com/victorive/klaro-backend/internal/domain"
-	"github.com/victorive/klaro-backend/internal/feature/academic"
-	"github.com/victorive/klaro-backend/internal/pkg/pagination"
+	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/feature/academic"
+	"github.com/victorive/coursepack/internal/pkg/pagination"
 )
 
 type CourseRegistryResponse struct {

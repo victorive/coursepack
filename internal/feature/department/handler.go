@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/klaro-backend/internal/domain"
-	"github.com/victorive/klaro-backend/internal/middleware"
-	"github.com/victorive/klaro-backend/internal/pkg/pagination"
-	"github.com/victorive/klaro-backend/internal/pkg/response"
+	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/middleware"
+	"github.com/victorive/coursepack/internal/pkg/pagination"
+	"github.com/victorive/coursepack/internal/pkg/response"
 )
 
 type UserRepository interface {

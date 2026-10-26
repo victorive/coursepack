@@ -1,7 +1,7 @@
 .PHONY: help build run dev test test-coverage lint fmt clean docker-up docker-down migrate-create migrate-up migrate-down migrate-status migrate-reset migrate-refresh migrate-up-to migrate-down-to swag install-tools seed-all seed
 
 # Variables
-BINARY_NAME=klaro-api
+BINARY_NAME=coursepack
 BUILD_DIR=bin
 MIGRATIONS_DIR=database/migrations
 

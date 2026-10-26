@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/victorive/klaro-backend/internal/domain"
-	"github.com/victorive/klaro-backend/internal/pkg/apperr"
+	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/apperr"
 )
 
 type Service interface {

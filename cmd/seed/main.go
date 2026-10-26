@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/victorive/klaro-backend/database/seeders"
-	"github.com/victorive/klaro-backend/internal/config"
+	"github.com/victorive/coursepack/database/seeders"
+	"github.com/victorive/coursepack/internal/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

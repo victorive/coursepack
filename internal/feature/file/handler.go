@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/klaro-backend/internal/middleware"
-	"github.com/victorive/klaro-backend/internal/pkg/apperr"
-	"github.com/victorive/klaro-backend/internal/pkg/response"
-	"github.com/victorive/klaro-backend/internal/pkg/validator"
+	"github.com/victorive/coursepack/internal/middleware"
+	"github.com/victorive/coursepack/internal/pkg/apperr"
+	"github.com/victorive/coursepack/internal/pkg/response"
+	"github.com/victorive/coursepack/internal/pkg/validator"
 )
 
 type Handler struct {

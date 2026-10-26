@@ -1,6 +1,6 @@
 package auth
 
-import "github.com/victorive/klaro-backend/internal/feature/university"
+import "github.com/victorive/coursepack/internal/feature/university"
 
 type SignUpRequest struct {
 	FullName string `json:"full_name" validate:"required,min=2,max=100"`

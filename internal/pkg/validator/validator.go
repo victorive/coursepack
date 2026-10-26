@@ -10,8 +10,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/klaro-backend/internal/pkg/apperr"
-	"github.com/victorive/klaro-backend/internal/pkg/response"
+	"github.com/victorive/coursepack/internal/pkg/apperr"
+	"github.com/victorive/coursepack/internal/pkg/response"
 )
 
 var globalValidator = func() *validator.Validate {

@@ -1,6 +1,6 @@
 package university
 
-import "github.com/victorive/klaro-backend/internal/domain"
+import "github.com/victorive/coursepack/internal/domain"
 
 type UniversityResponse struct {
 	UUID    string `json:"uuid"`

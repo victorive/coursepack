@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/victorive/klaro-backend/internal/domain"
-	"github.com/victorive/klaro-backend/internal/feature/rbac"
-	"github.com/victorive/klaro-backend/internal/pkg/apperr"
-	"github.com/victorive/klaro-backend/internal/storage"
+	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/pkg/apperr"
+	"github.com/victorive/coursepack/internal/storage"
 )
 
 type Service interface {

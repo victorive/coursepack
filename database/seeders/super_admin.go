@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/victorive/klaro-backend/internal/domain"
-	"github.com/victorive/klaro-backend/internal/pkg/hash"
+	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/hash"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -22,7 +22,7 @@ func (superAdminSeeder) Run(db *gorm.DB) error {
 
 	u := domain.User{
 		UUID:          uuid.New().String(),
-		Email:         "admin@klaro.app",
+		Email:         "admin@example.com",
 		FullName:      "Super Admin",
 		Password:      &ph,
 		EmailVerified: true,

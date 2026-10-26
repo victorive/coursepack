@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/coursepack/internal/domain"
 	"gorm.io/gorm"
 )
 

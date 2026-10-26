@@ -15,7 +15,7 @@ dist/
 *.a
 *.so
 
-/klaro-api
+/coursepack
 
 *.db
 *.sqlite

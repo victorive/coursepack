@@ -3,8 +3,8 @@ root = "."
 watch = ["cmd", "internal", "pkg"]
 
 [build]
-cmd = "go build -o ./bin/klaro-api ./cmd/api"
-bin = "bin/klaro-api"
+cmd = "go build -o ./bin/coursepack ./cmd/api"
+bin = "bin/coursepack"
 delay = 1000
 
 exclude_dir = ["tmp", "vendor", "testdata"]

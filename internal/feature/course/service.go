@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/victorive/klaro-backend/internal/domain"
-	"github.com/victorive/klaro-backend/internal/feature/rbac"
-	"github.com/victorive/klaro-backend/internal/pkg/apperr"
-	"github.com/victorive/klaro-backend/internal/pkg/pagination"
+	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/feature/rbac"
+	"github.com/victorive/coursepack/internal/pkg/apperr"
+	"github.com/victorive/coursepack/internal/pkg/pagination"
 )
 
 type Service interface {

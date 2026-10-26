@@ -10,10 +10,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/gofiber/swagger"
-	"github.com/victorive/klaro-backend/internal/app"
-	"github.com/victorive/klaro-backend/internal/config"
-	"github.com/victorive/klaro-backend/internal/pkg/apperr"
-	"github.com/victorive/klaro-backend/internal/pkg/response"
+	"github.com/victorive/coursepack/internal/app"
+	"github.com/victorive/coursepack/internal/config"
+	"github.com/victorive/coursepack/internal/pkg/apperr"
+	"github.com/victorive/coursepack/internal/pkg/response"
 )
 
 type Server struct {

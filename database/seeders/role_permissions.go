@@ -3,7 +3,7 @@ package seeders
 import (
 	"fmt"
 
-	"github.com/victorive/klaro-backend/internal/domain"
+	"github.com/victorive/coursepack/internal/domain"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

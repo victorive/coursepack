@@ -2,8 +2,8 @@ package v1
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/klaro-backend/internal/app"
-	"github.com/victorive/klaro-backend/internal/feature/university"
+	"github.com/victorive/coursepack/internal/app"
+	"github.com/victorive/coursepack/internal/feature/university"
 )
 
 func universityRoutes(r fiber.Router, c *app.Container) {
