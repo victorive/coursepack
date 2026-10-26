@@ -31,9 +31,9 @@ func NewHandler(svc Service) *Handler {
 // @Security     BearerAuth
 // @Router       /files [post]
 func (h *Handler) Upload(c *fiber.Ctx) error {
-	uuid, ok := c.Locals(middleware.LocalsUserId).(string)
-	if !ok || uuid == "" {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	uuid, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 
 	var req UploadFileRequest
@@ -117,7 +117,11 @@ func (h *Handler) ListByLecture(c *fiber.Ctx) error {
 // @Router       /files/{id} [get]
 func (h *Handler) GetFile(c *fiber.Ctx) error {
 	fileUUID := c.Params("id")
-	resp, err := h.svc.Get(c.UserContext(), fileUUID)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
+	}
+	resp, err := h.svc.Get(c.UserContext(), actorUUID, fileUUID)
 	if err != nil {
 		return err
 	}
@@ -136,7 +140,11 @@ func (h *Handler) GetFile(c *fiber.Ctx) error {
 // @Router       /files/{id}/download [get]
 func (h *Handler) GetDownloadURL(c *fiber.Ctx) error {
 	fileUUID := c.Params("id")
-	url, err := h.svc.GetDownloadURL(c.UserContext(), fileUUID)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
+	}
+	url, err := h.svc.GetDownloadURL(c.UserContext(), actorUUID, fileUUID)
 	if err != nil {
 		return err
 	}
@@ -156,9 +164,9 @@ func (h *Handler) GetDownloadURL(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /files/{id}/review [patch]
 func (h *Handler) Review(c *fiber.Ctx) error {
-	reviewerUUID, ok := c.Locals(middleware.LocalsUserId).(string)
-	if !ok || reviewerUUID == "" {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	reviewerUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	fileUUID := c.Params("id")
 	var req ReviewFileRequest
@@ -183,9 +191,9 @@ func (h *Handler) Review(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /files/{id}/archive [patch]
 func (h *Handler) Archive(c *fiber.Ctx) error {
-	actorUUID, ok := c.Locals(middleware.LocalsUserId).(string)
-	if !ok || actorUUID == "" {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 
 	fileUUID := c.Params("id")

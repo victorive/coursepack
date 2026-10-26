@@ -25,8 +25,8 @@ func NewHandler(svc Service, userRepo UserRepository) *Handler {
 }
 
 func (h *Handler) resolveUniversityID(c *fiber.Ctx) (int64, bool) {
-	userUUID, ok := middleware.UserUUID(c)
-	if !ok {
+	userUUID, err := middleware.UserUUID(c)
+	if err != nil {
 		return 0, false
 	}
 

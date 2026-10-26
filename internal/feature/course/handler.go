@@ -39,9 +39,9 @@ func NewHandler(svc Service, userRepo UserRepository) *Handler {
 // @Security     BearerAuth
 // @Router       /courses [get]
 func (h *Handler) ListCourses(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
 	if err != nil || u == nil {
@@ -76,9 +76,9 @@ func (h *Handler) ListCourses(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{id} [get]
 func (h *Handler) GetCourse(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 
 	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
@@ -111,9 +111,9 @@ func (h *Handler) GetCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /classes/{id}/courses [post]
 func (h *Handler) AddClassCourse(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
 	if err != nil || u == nil {
@@ -149,9 +149,9 @@ func (h *Handler) AddClassCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /classes/{id}/courses [get]
 func (h *Handler) ListClassCourses(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
 	if err != nil || u == nil {
@@ -190,9 +190,9 @@ func (h *Handler) ListClassCourses(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{id} [get]
 func (h *Handler) GetClassCourse(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
 	if err != nil || u == nil {
@@ -224,9 +224,9 @@ func (h *Handler) GetClassCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /classes/{id}/courses/{classCourseId} [delete]
 func (h *Handler) RemoveClassCourse(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	classUUID := c.Params("id")
 	classCourseUUID := c.Params("classCourseId")
@@ -249,9 +249,9 @@ func (h *Handler) RemoveClassCourse(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{id}/lectures [post]
 func (h *Handler) CreateLecture(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	classCourseUUID := c.Params("id")
 
@@ -279,9 +279,9 @@ func (h *Handler) CreateLecture(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /courses/{id}/lectures [get]
 func (h *Handler) ListLectures(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
 	if err != nil || u == nil {
@@ -311,9 +311,9 @@ func (h *Handler) ListLectures(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /lectures/{id} [get]
 func (h *Handler) GetLecture(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	u, err := h.userRepo.FindByUUID(c.UserContext(), actorUUID)
 	if err != nil || u == nil {
@@ -344,9 +344,9 @@ func (h *Handler) GetLecture(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /lectures/{id} [patch]
 func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	lectureUUID := c.Params("id")
 	var req UpdateLectureRequest
@@ -371,9 +371,9 @@ func (h *Handler) UpdateLecture(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Router       /lectures/{id}/archive [patch]
 func (h *Handler) ArchiveLecture(c *fiber.Ctx) error {
-	actorUUID, ok := middleware.UserUUID(c)
-	if !ok {
-		return apperr.New("unauthorized", http.StatusUnauthorized)
+	actorUUID, err := middleware.UserUUID(c)
+	if err != nil {
+		return err
 	}
 	lectureUUID := c.Params("id")
 	if err := h.svc.ArchiveLecture(c.UserContext(), actorUUID, lectureUUID); err != nil {

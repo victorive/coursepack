@@ -6,18 +6,19 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/pkg/response"
 )
 
-const LocalsUserId = "userId"
+const LocalsUserID = "userId"
 
-// UserUUID extracts the authenticated user's UUID from Fiber context locals.
-func UserUUID(c *fiber.Ctx) (string, bool) {
-	uuid, ok := c.Locals(LocalsUserId).(string)
+// UserUUID returns the authenticated user's UUID from the Fiber locals.
+func UserUUID(c *fiber.Ctx) (string, error) {
+	uuid, ok := c.Locals(LocalsUserID).(string)
 	if !ok || uuid == "" {
-		return "", false
+		return "", apperr.New("unauthenticated", http.StatusUnauthorized)
 	}
-	return uuid, true
+	return uuid, nil
 }
 
 type TokenValidator interface {
@@ -33,12 +34,12 @@ func Auth(v TokenValidator) fiber.Handler {
 		}
 
 		tokenString := parts[1]
-		sub, err := v.ValidateToken(c.Context(), tokenString)
+		sub, err := v.ValidateToken(c.UserContext(), tokenString)
 		if err != nil {
-			return response.JSON(c, http.StatusUnauthorized, false, err.Error(), nil)
+			return response.JSON(c, http.StatusUnauthorized, false, "invalid or expired token", nil)
 		}
 
-		c.Locals(LocalsUserId, sub) //uuid
+		c.Locals(LocalsUserID, sub)
 		return c.Next()
 	}
 }

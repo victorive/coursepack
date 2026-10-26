@@ -18,7 +18,7 @@ install-tools: ## Install development tools
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-build: ## Build the application
+build: swag ## Build the application
 	mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=0 go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/api
 
