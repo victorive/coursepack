@@ -46,7 +46,7 @@ type Service interface {
 	Logout(ctx context.Context, accessToken string, req *LogoutRequest) error
 	ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) error
 	ResetPassword(ctx context.Context, req *ResetPasswordRequest) error
-	Me(ctx context.Context, uuid string) (*UserResponse, error)
+	Me(ctx context.Context, actor permissions.Actor) (*UserResponse, error)
 	CheckEmailVerified(ctx context.Context, uuid string) (emailVerified bool, isOAuthUser bool, err error)
 }
 
@@ -559,8 +559,8 @@ func (s *service) CheckEmailVerified(ctx context.Context, userUUID string) (bool
 	return u.EmailVerified, u.Provider != nil, nil
 }
 
-func (s *service) Me(ctx context.Context, userUUID string) (*UserResponse, error) {
-	u, err := s.repo.FindByUUID(ctx, userUUID)
+func (s *service) Me(ctx context.Context, actor permissions.Actor) (*UserResponse, error) {
+	u, err := s.repo.FindByUUID(ctx, actor.UUID)
 	if err != nil {
 		return nil, apperr.Internal(err)
 	}

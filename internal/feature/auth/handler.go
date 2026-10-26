@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/coursepack/internal/middleware"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/apperr"
 	"github.com/victorive/coursepack/internal/pkg/response"
 	"github.com/victorive/coursepack/internal/pkg/validator"
@@ -280,11 +280,11 @@ func (h *Handler) ResetPassword(c *fiber.Ctx) error {
 // @Failure      401 {object} response.Response
 // @Router       /users/me [get]
 func (h *Handler) Me(c *fiber.Ctx) error {
-	uuid, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	u, err := h.svc.Me(c.UserContext(), uuid)
+	u, err := h.svc.Me(c.UserContext(), actor)
 	if err != nil {
 		return err
 	}

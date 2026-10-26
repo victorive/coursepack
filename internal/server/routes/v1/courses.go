@@ -11,7 +11,7 @@ import (
 func courseRoutes(r fiber.Router, c *app.Container) {
 	h := course.NewHandler(c.CourseService)
 	fh := file.NewHandler(c.FileService)
-	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
+	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService), middleware.Actor(c.UserRepository, c.PermissionsService)}
 
 	courses := r.Group("/courses", auth...)
 	courses.Get("", h.ListCourses)

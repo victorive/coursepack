@@ -10,7 +10,7 @@ import (
 
 func semesterRoutes(r fiber.Router, c *app.Container) {
 	h := semester.NewHandler(c.AcademicService)
-	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
+	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService), middleware.Actor(c.UserRepository, c.PermissionsService)}
 
 	classes := r.Group("/classes", auth...)
 	classes.Post("/:classId/semesters", middleware.RequireClassPermission(c.PermissionsService, domain.PermManageSemesters, "classId"), h.CreateSemester)

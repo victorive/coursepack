@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/victorive/coursepack/internal/middleware"
+	"github.com/victorive/coursepack/internal/permissions"
 	"github.com/victorive/coursepack/internal/pkg/response"
 	"github.com/victorive/coursepack/internal/pkg/validator"
 )
@@ -34,11 +34,11 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 	if err := validator.ParseAndValidate(c, &req); err != nil {
 		return err
 	}
-	uuid, err := middleware.UserUUID(c)
+	actor, err := permissions.ActorFrom(c.UserContext())
 	if err != nil {
 		return err
 	}
-	if err := h.svc.UpdateProfile(c.UserContext(), uuid, &req); err != nil {
+	if err := h.svc.UpdateProfile(c.UserContext(), actor, &req); err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusOK, true, "profile updated", nil)

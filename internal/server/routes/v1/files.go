@@ -11,7 +11,7 @@ import (
 func fileRoutes(r fiber.Router, c *app.Container) {
 	h := file.NewHandler(c.FileService)
 
-	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService)}
+	auth := []fiber.Handler{middleware.Auth(c.AuthService), middleware.OTPVerified(c.AuthService), middleware.Actor(c.UserRepository, c.PermissionsService)}
 
 	files := r.Group("/files", auth...)
 	files.Post("", middleware.RequireGlobalPermission(domain.PermFilesUpload), h.Upload)
