@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/dbtx"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -16,36 +17,26 @@ func NewPointRepository(db *gorm.DB) PointRepository {
 	return &pointRepository{db: db}
 }
 
-func (r *pointRepository) HasTransactionForSource(ctx context.Context, userID int64, sourceType domain.PointSource, sourceID int64) (bool, error) {
-	var count int64
-	err := r.db.WithContext(ctx).Model(&domain.PointTransaction{}).
-		Where("user_id = ? AND source_type = ? AND source_id = ?", userID, sourceType, sourceID).
-		Count(&count).Error
-	return count > 0, err
-}
-
+// AwardPoints records one point transaction per source. A duplicate source is
+// silently ignored, so the caller can retry without checking first.
 func (r *pointRepository) AwardPoints(ctx context.Context, userID int64, delta int, sourceType domain.PointSource, sourceID int64, awardedBy int64) error {
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		up := domain.UserPoint{UserID: userID}
+	return dbtx.Conn(ctx, r.db).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "user_id"}},
-			DoUpdates: clause.Assignments(map[string]interface{}{}),
-		}).FirstOrCreate(&up).Error; err != nil {
+			DoNothing: true,
+		}).Create(&domain.UserPoint{UserID: userID}).Error; err != nil {
 			return err
 		}
 
-		newBalance := up.Balance + delta
-		newTotalEarned := up.TotalEarned + delta
-
-		if err := tx.Model(&domain.UserPoint{}).Where("user_id = ?", userID).
-			Updates(map[string]interface{}{
-				"balance":      newBalance,
-				"total_earned": newTotalEarned,
-			}).Error; err != nil {
+		var points domain.UserPoint
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("user_id = ?", userID).
+			First(&points).Error; err != nil {
 			return err
 		}
 
-		pt := &domain.PointTransaction{
+		newBalance := points.Balance + delta
+		entry := &domain.PointTransaction{
 			UserID:       userID,
 			Delta:        delta,
 			BalanceAfter: newBalance,
@@ -53,6 +44,22 @@ func (r *pointRepository) AwardPoints(ctx context.Context, userID int64, delta i
 			SourceID:     &sourceID,
 			CreatedBy:    &awardedBy,
 		}
-		return tx.Create(pt).Error
+
+		result := tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "user_id"}, {Name: "source_type"}, {Name: "source_id"}},
+			DoNothing: true,
+		}).Create(entry)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return nil
+		}
+
+		return tx.Model(&domain.UserPoint{}).Where("user_id = ?", userID).
+			Updates(map[string]interface{}{
+				"balance":      newBalance,
+				"total_earned": points.TotalEarned + delta,
+			}).Error
 	})
 }

@@ -54,6 +54,9 @@ const (
 	FileStatusArchived FileStatus = "archived"
 )
 
+// PointsFileApproval is awarded once per approved file.
+const PointsFileApproval = 10
+
 type SemesterKind string
 
 const (

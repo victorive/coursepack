@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/dbtx"
 	"gorm.io/gorm"
 )
 
@@ -24,7 +25,7 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *repository) FindAll(ctx context.Context) ([]*domain.University, error) {
 	var universities []*domain.University
-	if err := r.db.WithContext(ctx).Order("name ASC").Find(&universities).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Order("name ASC").Find(&universities).Error; err != nil {
 		return nil, err
 	}
 	return universities, nil
@@ -32,7 +33,7 @@ func (r *repository) FindAll(ctx context.Context) ([]*domain.University, error) 
 
 func (r *repository) FindByID(ctx context.Context, id int64) (*domain.University, error) {
 	var u domain.University
-	if err := r.db.WithContext(ctx).First(&u, id).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).First(&u, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -43,19 +44,19 @@ func (r *repository) FindByID(ctx context.Context, id int64) (*domain.University
 
 func (r *repository) FindByUUID(ctx context.Context, uuid string) (*domain.University, error) {
 	var u domain.University
-	if err := r.db.WithContext(ctx).Where("uuid = ?", uuid).First(&u).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Where("uuid = ?", uuid).First(&u).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
 		return nil, err
 	}
-	
+
 	return &u, nil
 }
 
 func (r *repository) FindByAcronym(ctx context.Context, acronym string) (*domain.University, error) {
 	var u domain.University
-	if err := r.db.WithContext(ctx).Where("acronym = ?", acronym).First(&u).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Where("acronym = ?", acronym).First(&u).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}

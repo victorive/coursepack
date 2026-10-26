@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/dbtx"
 	"gorm.io/gorm"
 )
 
@@ -32,12 +33,12 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) Create(ctx context.Context, d *domain.Department) error {
-	return r.db.WithContext(ctx).Create(d).Error
+	return dbtx.Conn(ctx, r.db).Create(d).Error
 }
 
 func (r *repository) FindAll(ctx context.Context) ([]*domain.Department, error) {
 	var departments []*domain.Department
-	if err := r.db.WithContext(ctx).Order("name ASC").Find(&departments).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Order("name ASC").Find(&departments).Error; err != nil {
 		return nil, err
 	}
 	return departments, nil
@@ -45,7 +46,7 @@ func (r *repository) FindAll(ctx context.Context) ([]*domain.Department, error) 
 
 func (r *repository) FindAllByUniversity(ctx context.Context, universityID int64) ([]*domain.Department, error) {
 	var departments []*domain.Department
-	if err := r.db.WithContext(ctx).
+	if err := dbtx.Conn(ctx, r.db).
 		Where("university_id = ?", universityID).
 		Order("name ASC").
 		Find(&departments).Error; err != nil {
@@ -57,7 +58,7 @@ func (r *repository) FindAllByUniversity(ctx context.Context, universityID int64
 
 func (r *repository) Count(ctx context.Context) (int64, error) {
 	var count int64
-	if err := r.db.WithContext(ctx).Model(&domain.Department{}).Count(&count).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Model(&domain.Department{}).Count(&count).Error; err != nil {
 		return 0, err
 	}
 	return count, nil
@@ -65,7 +66,7 @@ func (r *repository) Count(ctx context.Context) (int64, error) {
 
 func (r *repository) CountByUniversity(ctx context.Context, universityID int64) (int64, error) {
 	var count int64
-	if err := r.db.WithContext(ctx).
+	if err := dbtx.Conn(ctx, r.db).
 		Model(&domain.Department{}).
 		Where("university_id = ?", universityID).
 		Count(&count).Error; err != nil {
@@ -77,7 +78,7 @@ func (r *repository) CountByUniversity(ctx context.Context, universityID int64) 
 
 func (r *repository) FindPaginated(ctx context.Context, offset, limit int) ([]*domain.Department, error) {
 	var departments []*domain.Department
-	if err := r.db.WithContext(ctx).Order("name ASC").Offset(offset).Limit(limit).Find(&departments).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Order("name ASC").Offset(offset).Limit(limit).Find(&departments).Error; err != nil {
 		return nil, err
 	}
 	return departments, nil
@@ -85,7 +86,7 @@ func (r *repository) FindPaginated(ctx context.Context, offset, limit int) ([]*d
 
 func (r *repository) FindPaginatedByUniversity(ctx context.Context, universityID int64, offset, limit int) ([]*domain.Department, error) {
 	var departments []*domain.Department
-	if err := r.db.WithContext(ctx).
+	if err := dbtx.Conn(ctx, r.db).
 		Preload("University").
 		Where("university_id = ?", universityID).
 		Order("name ASC").
@@ -100,7 +101,7 @@ func (r *repository) FindPaginatedByUniversity(ctx context.Context, universityID
 
 func (r *repository) FindByID(ctx context.Context, id int64) (*domain.Department, error) {
 	var d domain.Department
-	if err := r.db.WithContext(ctx).First(&d, id).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).First(&d, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -111,7 +112,7 @@ func (r *repository) FindByID(ctx context.Context, id int64) (*domain.Department
 
 func (r *repository) FindByUUID(ctx context.Context, uuid string) (*domain.Department, error) {
 	var d domain.Department
-	if err := r.db.WithContext(ctx).Where("uuid = ?", uuid).First(&d).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Where("uuid = ?", uuid).First(&d).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -122,7 +123,7 @@ func (r *repository) FindByUUID(ctx context.Context, uuid string) (*domain.Depar
 
 func (r *repository) FindByIDAndUniversity(ctx context.Context, id int64, universityID int64) (*domain.Department, error) {
 	var d domain.Department
-	if err := r.db.WithContext(ctx).
+	if err := dbtx.Conn(ctx, r.db).
 		Preload("University").
 		Where("id = ? AND university_id = ?", id, universityID).
 		First(&d).Error; err != nil {
@@ -137,7 +138,7 @@ func (r *repository) FindByIDAndUniversity(ctx context.Context, id int64, univer
 
 func (r *repository) FindByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*domain.Department, error) {
 	var d domain.Department
-	if err := r.db.WithContext(ctx).
+	if err := dbtx.Conn(ctx, r.db).
 		Preload("University").
 		Where("uuid = ? AND university_id = ?", uuid, universityID).
 		First(&d).Error; err != nil {
@@ -151,9 +152,9 @@ func (r *repository) FindByUUIDAndUniversity(ctx context.Context, uuid string, u
 }
 
 func (r *repository) Update(ctx context.Context, d *domain.Department) error {
-	return r.db.WithContext(ctx).Save(d).Error
+	return dbtx.Conn(ctx, r.db).Save(d).Error
 }
 
 func (r *repository) Delete(ctx context.Context, id int64) error {
-	return r.db.WithContext(ctx).Delete(&domain.Department{}, id).Error
+	return dbtx.Conn(ctx, r.db).Delete(&domain.Department{}, id).Error
 }

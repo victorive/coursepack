@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/dbtx"
 	"gorm.io/gorm"
 )
 
@@ -36,13 +37,13 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *repository) FindCoursesByUniversityCursor(ctx context.Context, universityID int64, departmentCode *string, after string, limit int) ([]*domain.Course, error) {
 	var courses []*domain.Course
-	q := r.db.WithContext(ctx).
+	q := dbtx.Conn(ctx, r.db).
 		Joins("JOIN departments d ON d.id = courses.department_id").
 		Where("courses.university_id = ?", universityID)
 	if departmentCode != nil {
 		q = q.Where("d.code = ?", *departmentCode)
 	}
-	
+
 	if after != "" {
 		q = q.Where("courses.code > ?", after)
 	}
@@ -55,7 +56,7 @@ func (r *repository) FindCoursesByUniversityCursor(ctx context.Context, universi
 
 func (r *repository) FindCourseByID(ctx context.Context, id int64) (*domain.Course, error) {
 	var c domain.Course
-	if err := r.db.WithContext(ctx).First(&c, id).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).First(&c, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -66,7 +67,7 @@ func (r *repository) FindCourseByID(ctx context.Context, id int64) (*domain.Cour
 
 func (r *repository) FindCourseByUUID(ctx context.Context, uuid string) (*domain.Course, error) {
 	var c domain.Course
-	if err := r.db.WithContext(ctx).Where("uuid = ?", uuid).First(&c).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Where("uuid = ?", uuid).First(&c).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -77,19 +78,19 @@ func (r *repository) FindCourseByUUID(ctx context.Context, uuid string) (*domain
 }
 
 func (r *repository) CreateClassCourse(ctx context.Context, cc *domain.ClassCourse) error {
-	return r.db.WithContext(ctx).Create(cc).Error
+	return dbtx.Conn(ctx, r.db).Create(cc).Error
 }
 
 func (r *repository) FindClassCoursesByClass(ctx context.Context, classID int64, semesterID *int64, kind *string) ([]*domain.ClassCourse, error) {
 	var classCourses []*domain.ClassCourse
-	q := r.db.WithContext(ctx).Preload("Course").Preload("Semester").Where("class_courses.class_id = ?", classID)
+	q := dbtx.Conn(ctx, r.db).Preload("Course").Preload("Semester").Where("class_courses.class_id = ?", classID)
 
 	if semesterID != nil {
 		q = q.Where("class_courses.semester_id = ?", *semesterID)
 	}
 
 	if kind != nil {
-		q = q.Where("class_courses.semester_id IN (?)", 
+		q = q.Where("class_courses.semester_id IN (?)",
 			r.db.Select("id").Where("kind = ?", *kind).Table("semesters"))
 	}
 
@@ -102,7 +103,7 @@ func (r *repository) FindClassCoursesByClass(ctx context.Context, classID int64,
 
 func (r *repository) FindClassCourseByID(ctx context.Context, id int64) (*domain.ClassCourse, error) {
 	var cc domain.ClassCourse
-	if err := r.db.WithContext(ctx).Preload("Course").Preload("Semester").First(&cc, id).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Preload("Course").Preload("Semester").First(&cc, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -114,7 +115,7 @@ func (r *repository) FindClassCourseByID(ctx context.Context, id int64) (*domain
 
 func (r *repository) FindClassCourseByUUID(ctx context.Context, uuid string) (*domain.ClassCourse, error) {
 	var cc domain.ClassCourse
-	if err := r.db.WithContext(ctx).Preload("Course").Preload("Semester").Where("uuid = ?", uuid).First(&cc).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Preload("Course").Preload("Semester").Where("uuid = ?", uuid).First(&cc).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -126,7 +127,7 @@ func (r *repository) FindClassCourseByUUID(ctx context.Context, uuid string) (*d
 
 func (r *repository) FindClassCourseByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*domain.ClassCourse, error) {
 	var cc domain.ClassCourse
-	err := r.db.WithContext(ctx).
+	err := dbtx.Conn(ctx, r.db).
 		Preload("Course").
 		Preload("Semester").
 		Joins("JOIN classes ON classes.id = class_courses.class_id").
@@ -145,7 +146,7 @@ func (r *repository) FindClassCourseByUUIDAndUniversity(ctx context.Context, uui
 
 func (r *repository) FindClassCourseByConstraint(ctx context.Context, classID, semesterID, courseID int64) (*domain.ClassCourse, error) {
 	var cc domain.ClassCourse
-	err := r.db.WithContext(ctx).
+	err := dbtx.Conn(ctx, r.db).
 		Where("class_id = ? AND semester_id = ? AND course_id = ?", classID, semesterID, courseID).
 		First(&cc).Error
 	if err != nil {
@@ -158,16 +159,16 @@ func (r *repository) FindClassCourseByConstraint(ctx context.Context, classID, s
 }
 
 func (r *repository) DeleteClassCourse(ctx context.Context, id int64) error {
-	return r.db.WithContext(ctx).Delete(&domain.ClassCourse{}, id).Error
+	return dbtx.Conn(ctx, r.db).Delete(&domain.ClassCourse{}, id).Error
 }
 
 func (r *repository) CreateLecture(ctx context.Context, l *domain.Lecture) error {
-	return r.db.WithContext(ctx).Create(l).Error
+	return dbtx.Conn(ctx, r.db).Create(l).Error
 }
 
 func (r *repository) FindLecturesByClassCourse(ctx context.Context, classCourseID int64) ([]*domain.Lecture, error) {
 	var lectures []*domain.Lecture
-	if err := r.db.WithContext(ctx).
+	if err := dbtx.Conn(ctx, r.db).
 		Where("class_course_id = ? AND status = 'published'", classCourseID).
 		Order("week_number ASC, created_at ASC").
 		Find(&lectures).Error; err != nil {
@@ -178,7 +179,7 @@ func (r *repository) FindLecturesByClassCourse(ctx context.Context, classCourseI
 
 func (r *repository) FindLectureByID(ctx context.Context, id int64) (*domain.Lecture, error) {
 	var l domain.Lecture
-	if err := r.db.WithContext(ctx).First(&l, id).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).First(&l, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -189,7 +190,7 @@ func (r *repository) FindLectureByID(ctx context.Context, id int64) (*domain.Lec
 
 func (r *repository) FindLectureByUUID(ctx context.Context, uuid string) (*domain.Lecture, error) {
 	var l domain.Lecture
-	if err := r.db.WithContext(ctx).Where("uuid = ?", uuid).First(&l).Error; err != nil {
+	if err := dbtx.Conn(ctx, r.db).Where("uuid = ?", uuid).First(&l).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -201,7 +202,7 @@ func (r *repository) FindLectureByUUID(ctx context.Context, uuid string) (*domai
 
 func (r *repository) FindLectureByUUIDAndUniversity(ctx context.Context, uuid string, universityID int64) (*domain.Lecture, error) {
 	var l domain.Lecture
-	err := r.db.WithContext(ctx).
+	err := dbtx.Conn(ctx, r.db).
 		Joins("JOIN class_courses cc ON cc.id = lectures.class_course_id").
 		Joins("JOIN classes ON classes.id = cc.class_id").
 		Joins("JOIN departments d ON d.id = classes.department_id").
@@ -218,5 +219,5 @@ func (r *repository) FindLectureByUUIDAndUniversity(ctx context.Context, uuid st
 }
 
 func (r *repository) UpdateLecture(ctx context.Context, l *domain.Lecture) error {
-	return r.db.WithContext(ctx).Save(l).Error
+	return dbtx.Conn(ctx, r.db).Save(l).Error
 }

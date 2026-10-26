@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/victorive/coursepack/internal/domain"
+	"github.com/victorive/coursepack/internal/pkg/dbtx"
 	"gorm.io/gorm"
 )
 
@@ -28,7 +29,7 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *repository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var u domain.User
-	err := r.db.WithContext(ctx).Preload("University").Where("email = ?", email).First(&u).Error
+	err := dbtx.Conn(ctx, r.db).Preload("University").Where("email = ?", email).First(&u).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -37,7 +38,7 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*domain.Use
 
 func (r *repository) FindByID(ctx context.Context, id int64) (*domain.User, error) {
 	var u domain.User
-	err := r.db.WithContext(ctx).Preload("University").First(&u, id).Error
+	err := dbtx.Conn(ctx, r.db).Preload("University").First(&u, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -46,7 +47,7 @@ func (r *repository) FindByID(ctx context.Context, id int64) (*domain.User, erro
 
 func (r *repository) FindByUUID(ctx context.Context, uuid string) (*domain.User, error) {
 	var u domain.User
-	err := r.db.WithContext(ctx).Preload("University").Where("uuid = ?", uuid).First(&u).Error
+	err := dbtx.Conn(ctx, r.db).Preload("University").Where("uuid = ?", uuid).First(&u).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -54,20 +55,20 @@ func (r *repository) FindByUUID(ctx context.Context, uuid string) (*domain.User,
 }
 
 func (r *repository) Create(ctx context.Context, u *domain.User) error {
-	return r.db.WithContext(ctx).Create(u).Error
+	return dbtx.Conn(ctx, r.db).Create(u).Error
 }
 
 func (r *repository) UpdateEmailVerified(ctx context.Context, id int64, verified bool) error {
-	return r.db.WithContext(ctx).Model(&domain.User{}).Where("id = ?", id).
+	return dbtx.Conn(ctx, r.db).Model(&domain.User{}).Where("id = ?", id).
 		Update("email_verified", verified).Error
 }
 
 func (r *repository) UpdatePassword(ctx context.Context, id int64, h string) error {
-	return r.db.WithContext(ctx).Model(&domain.User{}).Where("id = ?", id).
+	return dbtx.Conn(ctx, r.db).Model(&domain.User{}).Where("id = ?", id).
 		Update("password", h).Error
 }
 
 func (r *repository) UpdateGoogleProfile(ctx context.Context, id int64, fullName string, avatarURL *string) error {
 	updates := map[string]any{"full_name": fullName, "avatar_url": avatarURL}
-	return r.db.WithContext(ctx).Model(&domain.User{}).Where("id = ?", id).Updates(updates).Error
+	return dbtx.Conn(ctx, r.db).Model(&domain.User{}).Where("id = ?", id).Updates(updates).Error
 }

@@ -1,7 +1,10 @@
 package file
 
 import (
+	"bytes"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/victorive/coursepack/internal/middleware"
@@ -55,16 +58,37 @@ func (h *Handler) Upload(c *fiber.Ctx) error {
 	}
 	defer f.Close()
 
-	mimeType := fh.Header.Get("Content-Type")
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
+	head := make([]byte, sniffLen)
+	n, err := io.ReadFull(f, head)
+	if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
+		return apperr.New("failed to read file", http.StatusInternalServerError).Wrap(err)
+	}
+	head = head[:n]
+
+	mimeType := http.DetectContentType(head)
+	if isUnsafeUploadType(mimeType) {
+		return apperr.New("unsupported file type", http.StatusUnsupportedMediaType)
 	}
 
-	resp, err := h.svc.Upload(c.UserContext(), uuid, req, f, fh.Size, mimeType, fh.Filename)
+	reader := io.MultiReader(bytes.NewReader(head), f)
+	resp, err := h.svc.Upload(c.UserContext(), uuid, req, reader, fh.Size, mimeType, fh.Filename)
 	if err != nil {
 		return err
 	}
 	return response.JSON(c, http.StatusCreated, true, "file uploaded", resp)
+}
+
+const sniffLen = 512
+
+// isUnsafeUploadType rejects markup that browsers would execute when the
+// signed URL is opened directly.
+func isUnsafeUploadType(mimeType string) bool {
+	switch strings.Split(mimeType, ";")[0] {
+	case "text/html", "text/xml", "application/xml", "application/xhtml+xml",
+		"image/svg+xml", "text/javascript", "application/javascript":
+		return true
+	}
+	return false
 }
 
 // ListByClassCourse godoc

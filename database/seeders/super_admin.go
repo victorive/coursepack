@@ -2,6 +2,7 @@ package seeders
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/victorive/coursepack/internal/domain"
@@ -15,14 +16,23 @@ type superAdminSeeder struct{}
 func (superAdminSeeder) Name() string { return "super_admin" }
 
 func (superAdminSeeder) Run(db *gorm.DB) error {
-	ph, err := hash.HashPassword("Password@123!")
+	email := os.Getenv("SUPER_ADMIN_EMAIL")
+	password := os.Getenv("SUPER_ADMIN_PASSWORD")
+	if email == "" || password == "" {
+		return fmt.Errorf("SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD must be set to seed the super admin")
+	}
+	if len(password) < 12 {
+		return fmt.Errorf("SUPER_ADMIN_PASSWORD must be at least 12 characters")
+	}
+
+	ph, err := hash.HashPassword(password)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
 	}
 
 	u := domain.User{
 		UUID:          uuid.New().String(),
-		Email:         "admin@example.com",
+		Email:         email,
 		FullName:      "Super Admin",
 		Password:      &ph,
 		EmailVerified: true,
